@@ -36,27 +36,35 @@ classdef Simulator < handle
             obj.system.applyState(y);
             obj.time = t;
         end
+        
+        function propagate(obj, dt, time, varargin)
+            iterNum = round(time/dt);
+            for i = 1:iterNum
+                step(obj, dt, varargin{:});
+            end
+        end
     end
     
     methods(Static)
         function test()
             fprintf('== Test for Simulator class == \n')
             
-            mySystem = MySystem();
+            mySystem = MySystem(); % Refer to MySystem class
             saveHistory = true;
             simulator = Simulator(mySystem, saveHistory);
+            
+            initialState = mySystem.state;
             dt = 0.01;
+            finalTime = 10;
             
             tic
-            for i = 1:1000
-                simulator.step(dt);
-            end
+            simulator.propagate(dt, finalTime);
             elapsedTime = toc;
             
             fprintf('Initial state of the system: \n')
-            disp(mySystem.state)
+            disp(initialState)
             fprintf('Elapsed time: %.2f [s] \n', elapsedTime);
-            fprintf('State of the system after 1[s]: \n')
+            fprintf('State of the system after 10[s]: \n')
             disp(mySystem.state)
             
             mySystem.plot();
