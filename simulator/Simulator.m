@@ -18,8 +18,10 @@ classdef Simulator < handle
         
         function step(obj, dt, varargin)
             obj.system.forward();
-            obj.system.saveHistory();
-            
+            if obj.saveHistory
+                obj.system.saveHistory();
+            end
+                
             % remember initial state values
             t0 = obj.time;
             y0 = obj.system.state;
