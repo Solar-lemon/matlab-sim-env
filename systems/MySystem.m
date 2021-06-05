@@ -26,26 +26,58 @@ classdef MySystem < SequentialSystem
             obj.linearSystem.forward(u_lqr);
         end
         
-        function [fig, ax] = plot(obj, fig, ax)
+        function fig = plot(obj, fig)
             if nargin < 2
                 fig = figure();
             end
-            if nargin < 3
-                ax = axes('Parent', fig);
-            end
             
             history = obj.linearSystem.history;
-            [timeList, stateList] = history.get();
+            [timeList, stateList, controlList] = history.get();
             
             figure(fig);
+            subplot(2, 1, 1)
             hold on
-            plot(ax, timeList, stateList(1, :), 'DisplayName', 'x1')
-            plot(ax, timeList, stateList(2, :), 'DisplayName', 'x2')
+            plot(timeList, stateList(1, :), 'DisplayName', 'x1')
+            plot(timeList, stateList(2, :), 'DisplayName', 'x2')
+            title('State')
             xlabel('Time')
             ylabel('State')
             grid on
             box on
             legend()
+            
+            subplot(2, 1, 2)
+            hold on
+            plot(timeList, controlList, 'DisplayName', 'u')
+            title('Control input')
+            xlabel('Time')
+            ylabel('Control input')
+            grid on
+            box on
+            legend()
+        end
+    end
+    
+    methods(Static)
+        function test()
+            clear
+            clc
+            close all
+            
+            fprintf('== Test for an example system class == \n')
+            fprintf('Simulating the system... \n')
+            
+            mySystem = MySystem();
+            saveHistory = true;
+            dt = 0.01;
+            finalTime = 10;
+            
+            tic
+            mySystem.propagate(dt, finalTime, saveHistory);
+            elapsedTime = toc;
+            fprintf('Elapsed time: %.2f [s] \n', elapsedTime);
+            
+            mySystem.plot();
         end
     end
 end
