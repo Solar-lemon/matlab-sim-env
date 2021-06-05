@@ -8,6 +8,12 @@ classdef(Abstract) SequentialSystem < BaseSystem
             obj = obj@BaseSystem();
         end
         
+        function reset(obj)
+            for k = 1:numel(obj.systemList)
+                obj.systemList{k}.reset();
+            end
+        end
+        
         function attachDynSystems(obj, systemList)
             obj.systemList = systemList;
             obj.systemNum  = numel(systemList);
@@ -50,7 +56,22 @@ classdef(Abstract) SequentialSystem < BaseSystem
                 stateFeed = [];
                 timeFeed = [];
             end
+            applyTime(obj, timeFeed);
             out = stateDeriv@BaseSystem(obj, stateFeed, timeFeed);
+        end
+        
+        % override
+        function applyTime(obj, timeFeed)
+            obj.time = timeFeed;
+            for k = 1:numel(obj.systemList)
+                obj.systemList{k}.time = timeFeed;
+            end
+        end
+        
+        function saveHistory(obj)
+            for k = 1:numel(obj.systemList)
+                obj.systemList{k}.saveHistory();
+            end
         end
     end
 end
