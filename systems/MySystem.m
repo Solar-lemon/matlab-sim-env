@@ -1,5 +1,6 @@
 classdef MySystem < SequentialSystem
     properties
+        lqrGain
         linearSystem
     end
     methods
@@ -7,18 +8,22 @@ classdef MySystem < SequentialSystem
             obj = obj@SequentialSystem();
             
             omega = 1;
-            zeta  = 0.5;
+            zeta  = 0.1;
             A = [0, 1;
                 -omega^2, -2*zeta*omega];
             B = [0; omega^2];
+            Q = diag([1, 1]);
+            R = 1;
+            obj.lqrGain = lqr(A, B, Q, R, []);
             obj.linearSystem = DynSystem([0; 1], @(x, u) A*x + B*u);
             obj.attachDynSystems({obj.linearSystem});
         end
         
         % implement
         function forward(obj)
-            u_step = 1;
-            obj.linearSystem.forward(u_step);
+            % u_step = 1;
+            u_lqr = -obj.lqrGain*obj.linearSystem.state;
+            obj.linearSystem.forward(u_lqr);
         end
         
         function [fig, ax] = plot(obj, fig, ax)
