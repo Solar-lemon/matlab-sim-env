@@ -1,6 +1,9 @@
 classdef DynSystem < BaseSystem
     properties
+        initialState
+        inValues
         outputFun
+        history
     end
     methods
         function obj = DynSystem(initialState, derivFun, outputFun, name)
@@ -13,9 +16,21 @@ classdef DynSystem < BaseSystem
             initialState = initialState(:);
             stateVarList = {StateVariable(initialState)};
             obj = obj@BaseSystem(stateVarList, name);
+            obj.initialState = initialState;
+            obj.history = VecStackedData();
             
             attachDerivFun(obj, derivFun);
             attachOutputFun(obj, outputFun);
+        end
+        
+        function reset(obj, initialState)
+            if nargin < 2
+                initialState = obj.initialState;
+            end
+            reset@BaseSystem(obj);
+            applyState(obj, initialState);
+            
+            obj.history.clear();
         end
         
         function out = stateVar(obj)
@@ -53,8 +68,14 @@ classdef DynSystem < BaseSystem
         
         % implement
         function out = forward(obj, varargin)
+            obj.inValues = varargin;
             obj.stateVar.forward(varargin{:});
             out = obj.output;
+        end
+        
+        % implement
+        function saveHistory(obj)
+            obj.history.append(obj.time, obj.state, obj.inValues{:});
         end
     end
     
