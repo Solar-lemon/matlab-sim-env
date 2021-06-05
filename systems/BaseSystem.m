@@ -21,6 +21,10 @@ classdef(Abstract) BaseSystem < handle
             obj.name = name;
         end
         
+        function reset(obj)
+            obj.time = 0;
+        end
+        
         function out = state(obj)
             out = nan(obj.stateNum, 1);
             for k = 1:numel(obj.stateVarList)
@@ -61,6 +65,11 @@ classdef(Abstract) BaseSystem < handle
                 index = obj.stateIndex{k};
                 out(index, 1) = stateVar.flatDeriv;
             end
+        end
+        
+        % to be overriden
+        function saveHistory(obj)
+            % implement this method if needed
         end
     end
     
