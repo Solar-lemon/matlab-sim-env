@@ -6,7 +6,7 @@ classdef StateVariable < Variable
     methods
         function obj = StateVariable(value, derivFun)
             % value: numeric
-            % derivFun: function_handle
+            % derivFun: function_handle or BaseFunction
             obj = obj@Variable(value);
             if nargin > 1
                 attachDerivFun(obj, derivFun);
@@ -18,7 +18,11 @@ classdef StateVariable < Variable
         end
         
         function forward(obj, varargin)
-            obj.deriv = obj.derivFun(obj.value, varargin{:});
+            if isa(obj.derivFun, 'BaseFunction')
+                obj.deriv = obj.derivFun.evaluate(obj.value, varargin{:});
+            else
+                obj.deriv = obj.derivFun(obj.value, varargin{:});
+            end
         end
         
         function out = flatDeriv(obj)
