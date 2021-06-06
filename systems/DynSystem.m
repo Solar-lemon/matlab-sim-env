@@ -38,17 +38,21 @@ classdef DynSystem < BaseSystem
         end
         
         function attachDerivFun(obj, derivFun)
-            % derivFun: function_handle
+            % derivFun: function_handle or BaseFunction
             obj.stateVar.attachDerivFun(derivFun);
         end
         
         function attachOutputFun(obj, outputFun)
-            % outputFun: function_handle
+            % outputFun: function_handle or BaseFunction
             obj.outputFun = outputFun;
         end
         
         function out = output(obj)
-            out = obj.outputFun(obj.state);
+            if isa(obj.outputFun, 'BaseFunction')
+                out = obj.outputFun.evaluate(obj.state);
+            else
+                out = obj.outputFun(obj.state);
+            end
         end
         
         % override

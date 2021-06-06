@@ -15,7 +15,10 @@ classdef MySystem < SequentialSystem
             Q = diag([1, 1]);
             R = 1;
             obj.lqrGain = lqr(A, B, Q, R, []);
-            obj.linearSystem = DynSystem([0; 1], @(x, u) A*x + B*u);
+            % derivative function for a DynSystem can be either defined
+            % using a function_handle or a BaseFunction instance
+            % obj.linearSystem = DynSystem([0; 1], @(x, u) A*x + B*u);
+            obj.linearSystem = DynSystem([0; 1], LinearDynFun(A, B));
             obj.attachDynSystems({obj.linearSystem});
         end
         
