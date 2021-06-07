@@ -3,6 +3,6 @@ classdef(Abstract) BaseFunction < handle
         
     end
     methods(Abstract)
-        out = evaluate(obj, varargin)
+        out = forward(obj, varargin)
     end
 end
