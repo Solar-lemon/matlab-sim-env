@@ -76,10 +76,46 @@ classdef DynSystem < BaseSystem
             obj.stateVar.forward(varargin{:});
             out = obj.output;
         end
-        
+    end
+    
+    methods
         % implement
         function saveHistory(obj)
             obj.history.append(obj.time, obj.state, obj.inValues{:});
+        end
+        
+        function saveSimData(obj, folder, filename)
+            if isempty(obj.history)
+                disp('There is no simulation data to save');
+            end
+            
+            if nargin < 3 || isempty(filename)
+                filename = ['sim_data_', obj.name, '.mat'];
+            end
+            if nargin < 2 || isempty(folder)
+                folder = 'data/';
+            end
+            
+            if ~isfolder(folder)
+                mkdir(folder);
+            end
+            
+            location = [folder, filename];
+            simData = obj.history;
+            save(location, 'simData');
+        end
+        
+        function loadSimData(obj, folder, filename)
+            if nargin < 3 || isempty(filename)
+                filename = ['sim_data_', obj.name, '.mat'];
+            end
+            if nargin < 2 || isempty(folder)
+                folder = 'data/';
+            end
+            
+            location = [folder, filename];
+            load(location, 'simData');
+            obj.history = simData;
         end
     end
     
