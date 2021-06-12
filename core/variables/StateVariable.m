@@ -19,7 +19,7 @@ classdef StateVariable < Variable
         
         function forward(obj, varargin)
             if isa(obj.derivFun, 'BaseFunction')
-                obj.deriv = obj.derivFun.evaluate(obj.value, varargin{:});
+                obj.deriv = obj.derivFun.forward(obj.value, varargin{:});
             else
                 obj.deriv = obj.derivFun(obj.value, varargin{:});
             end

@@ -21,6 +21,10 @@ classdef(Abstract) ArrayData < handle
         function out = numel(obj)
             out = obj.dataNum;
         end
+        
+        function out = isempty(obj)
+            out = (obj.dataNum == 0);
+        end
     end
     methods(Abstract)
         get(obj, index)

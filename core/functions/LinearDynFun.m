@@ -10,7 +10,7 @@ classdef LinearDynFun < BaseFunction
         end
         
         % implement
-        function out = evaluate(obj, x, u)
+        function out = forward(obj, x, u)
             out = obj.A*x + obj.B*u;
         end
     end
@@ -25,7 +25,7 @@ classdef LinearDynFun < BaseFunction
             x = [0; 1];
             u = 1;
             myFun = LinearDynFun(A, B);
-            value = myFun.evaluate(x, u);
+            value = myFun.forward(x, u);
             
             fprintf('x = [0; 1]. u = 1 \n')
             fprintf('A: \n')
