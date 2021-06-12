@@ -78,7 +78,7 @@ classdef(Abstract) SequentialSystem < BaseSystem
             if nargin < 3 || isempty(saveHistory)
                 saveHistory = true;
             end
-            obj.forward();
+            obj.forward(varargin{:});
             if saveHistory
                 obj.saveHistory();
             end

@@ -17,7 +17,7 @@ classdef Simulator < handle
         end
         
         function step(obj, dt, varargin)
-            obj.system.forward();
+            obj.system.forward(varargin{:});
             if obj.saveHistory
                 obj.system.saveHistory();
             end
@@ -26,10 +26,10 @@ classdef Simulator < handle
             t0 = obj.time;
             y0 = obj.system.state;
             
-            k1 = obj.system.stateDeriv();
-            k2 = obj.system.stateDeriv(y0 + dt/2*k1, t0 + dt/2);
-            k3 = obj.system.stateDeriv(y0 + dt/2*k2, t0 + dt/2);
-            k4 = obj.system.stateDeriv(y0 + dt*k3, t0 + dt);
+            k1 = obj.system.stateDeriv([], [], varargin{:});
+            k2 = obj.system.stateDeriv(y0 + dt/2*k1, t0 + dt/2, varargin{:});
+            k3 = obj.system.stateDeriv(y0 + dt/2*k2, t0 + dt/2, varargin{:});
+            k4 = obj.system.stateDeriv(y0 + dt*k3, t0 + dt, varargin{:});
             
             % update time and states
             t = t0 + dt;
