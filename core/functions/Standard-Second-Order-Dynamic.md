@@ -8,7 +8,7 @@ The transfer function for the standard second-order system is given as
 $$
 \frac{y(s)}{u(s)}=\frac{\omega_{n}^{2}}{s^{2} + 2\zeta\omega_{n}s + \omega_{n}^{2}}
 $$
-where $\zeta$ is the damping coefficient and $\omega_{n}$ is the natural frequency. The above function can be re-arranged to give a differential equation as following
+where $\zeta$ is the damping ratio and $\omega_{n}$ is the natural frequency. The above function can be re-arranged to give a differential equation as following
 $$
 \begin{align*}
 s^{2}y(s) + 2\zeta\omega_{n}sy(s) + \omega_{n}^{2}y(s) &= \omega_{n}^{2}u(s) \\
