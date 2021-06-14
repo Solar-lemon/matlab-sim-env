@@ -65,6 +65,23 @@ classdef DynSystem < BaseSystem
             obj.stateVar.value = stateFeed;
         end
         
+        % override
+        function out = stateDeriv(obj, stateFeed, timeFeed, varargin)
+            % Assume that stateFeed and timeFeed are always given
+            % together
+            if nargin < 3
+                stateFeed = [];
+                timeFeed = [];
+            end
+            if ~isempty(stateFeed) && ~isempty(timeFeed)
+                applyState(obj, stateFeed);
+                applyTime(obj, timeFeed);
+            end
+            forward(obj, varargin{:});
+            
+            out = stateVar.flatDeriv;
+        end
+        
         % implement
         function out = forward(obj, varargin)
             obj.inValues = varargin;
