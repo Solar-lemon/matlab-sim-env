@@ -66,8 +66,20 @@ classdef DynSystem < BaseSystem
         end
         
         % override
-        function out = stateDeriv(obj)
-            out = obj.stateVar.flatDeriv;
+        function out = stateDeriv(obj, stateFeed, timeFeed, varargin)
+            % Assume that stateFeed and timeFeed are always given
+            % together
+            if nargin < 3
+                stateFeed = [];
+                timeFeed = [];
+            end
+            if ~isempty(stateFeed) && ~isempty(timeFeed)
+                applyState(obj, stateFeed);
+                applyTime(obj, timeFeed);
+            end
+            forward(obj, varargin{:});
+            
+            out = stateVar.flatDeriv;
         end
         
         % implement
@@ -130,14 +142,14 @@ classdef DynSystem < BaseSystem
             u_step = 1;
             y = linearSystem.forward(u_step);
             
-            x_dot = linearSystem.stateDeriv;
+            x_dot = linearSystem.stateVar.deriv;
             
             fprintf('A = [0, 1; -1, -1], B = [0; 1] \n')
             fprintf('linearSystem = DynSystem([0; 1], @(x, u) A*x + B*u) \n')
             fprintf('linearSystem.forward(u_step) where u_step = 1 \n')
             fprintf('linearSystem.output: \n')
             disp(y)
-            fprintf('linearSystem.stateDeriv: \n')
+            fprintf('linearSystem.stateVar.deriv: \n')
             disp(x_dot);
         end
     end

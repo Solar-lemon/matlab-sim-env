@@ -46,7 +46,7 @@ classdef(Abstract) BaseSystem < handle
             obj.time = timeFeed;
         end
         
-        function out = stateDeriv(obj, stateFeed, timeFeed)
+        function out = stateDeriv(obj, stateFeed, timeFeed, varargin)
             % Assume that stateFeed and timeFeed are always given
             % together
             if nargin < 3
@@ -57,7 +57,7 @@ classdef(Abstract) BaseSystem < handle
                 applyState(obj, stateFeed);
                 applyTime(obj, timeFeed);
             end
-            forward(obj);
+            forward(obj, varargin{:});
             
             out = nan(obj.stateNum, 1);
             for k = 1:numel(obj.stateVarList)
