@@ -79,7 +79,7 @@ classdef DynSystem < BaseSystem
             end
             forward(obj, varargin{:});
             
-            out = stateVar.flatDeriv;
+            out = obj.stateVar.flatDeriv;
         end
         
         % implement
