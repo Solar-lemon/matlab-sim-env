@@ -71,12 +71,14 @@ classdef MySystem < MultipleSystem
             fprintf('Simulating the system... \n')
             
             mySystem = MySystem();
-            saveHistory = true;
+            simulator = Simulator(mySystem);
+            
             dt = 0.01;
             finalTime = 10;
+            saveHistory = true;
             
             tic
-            mySystem.propagate(dt, finalTime, saveHistory);
+            simulator.propagate(dt, finalTime, saveHistory);
             elapsedTime = toc;
             fprintf('Elapsed time: %.2f [s] \n', elapsedTime);
             
