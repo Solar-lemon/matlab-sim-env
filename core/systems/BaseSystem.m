@@ -79,6 +79,8 @@ classdef(Abstract) BaseSystem < handle
             lastIndex = 0;
             for k = 1:obj.stateVarNum
                 obj.stateIndex{k} = lastIndex + 1:lastIndex + numel(stateVarList{k});
+                
+                lastIndex = lastIndex + numel(stateVarList{k});
             end
             obj.stateNum = lastIndex;
         end
