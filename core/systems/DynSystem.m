@@ -86,7 +86,9 @@ classdef DynSystem < BaseSystem
         function out = forward(obj, varargin)
             obj.inValues = varargin;
             obj.stateVar.forward(varargin{:});
-            out = obj.output;
+            if nargout > 0
+                out = obj.output;
+            end
         end
     end
     
@@ -128,6 +130,44 @@ classdef DynSystem < BaseSystem
             location = [folder, filename];
             load(location, 'simData');
             obj.history = simData;
+        end
+        
+        function fig = plot(obj, fig)
+            if obj.stateNum > 4
+                return
+            end
+            if nargin < 2
+                fig = figure();
+            end
+            
+            [timeList, stateList, controlList] = obj.history.get();
+            stateNum = obj.stateNum;
+            inputNum = size(controlList, 1);
+            
+            figure(fig);
+            subplot(2, 1, 1)
+            hold on
+            for k = 1:stateNum
+                plot(timeList, stateList(k, :), 'DisplayName', sprintf('x%d', k))
+            end
+            title('State')
+            xlabel('Time')
+            ylabel('State')
+            grid on
+            box on
+            legend()
+            
+            subplot(2, 1, 2)
+            hold on
+            for k = 1:inputNum
+                plot(timeList, controlList(k, :), 'DisplayName', sprintf('u%d', k))
+            end
+            title('Control input')
+            xlabel('Time')
+            ylabel('Control input')
+            grid on
+            box on
+            legend()
         end
     end
     
