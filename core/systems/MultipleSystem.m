@@ -1,4 +1,4 @@
-classdef(Abstract) MultipleSystem < BaseSystem
+classdef MultipleSystem < BaseSystem
     properties
         systemList
         systemNum
@@ -39,6 +39,9 @@ classdef(Abstract) MultipleSystem < BaseSystem
                         'UniformOutput', false);
                     stateIndex(lastSVI + 1:lastSVI + system.stateVarNum) =...
                         updatedStateIndex;
+                    
+                    lastSVI = lastSVI + system.stateVarNum;
+                    lastSI  = lastSI + system.stateNum;
                 end
             end
             obj.stateVarList = stateVarList;
@@ -71,6 +74,13 @@ classdef(Abstract) MultipleSystem < BaseSystem
         function saveHistory(obj)
             for k = 1:numel(obj.systemList)
                 obj.systemList{k}.saveHistory();
+            end
+        end
+        
+        % to be overriden
+        function forward(obj, varargin)
+            for k = 1:numel(obj.systemList)
+                obj.systemList{k}.forward(varargin{:});
             end
         end
     end
