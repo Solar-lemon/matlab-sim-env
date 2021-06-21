@@ -1,11 +1,11 @@
-classdef MySystem < SequentialSystem
+classdef MySystem < MultipleSystem
     properties
         lqrGain
         linearSystem
     end
     methods
         function obj = MySystem()
-            obj = obj@SequentialSystem();
+            obj = obj@MultipleSystem();
             
             omega = 1;
             zeta  = 0.1;

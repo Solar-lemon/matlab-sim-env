@@ -1,10 +1,10 @@
-classdef(Abstract) SequentialSystem < BaseSystem
+classdef(Abstract) MultipleSystem < BaseSystem
     properties
         systemList
         systemNum
     end
     methods
-        function obj = SequentialSystem()
+        function obj = MultipleSystem()
             obj = obj@BaseSystem();
         end
         
