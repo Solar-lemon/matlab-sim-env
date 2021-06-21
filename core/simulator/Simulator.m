@@ -1,5 +1,6 @@
 classdef Simulator < handle
     properties
+        initialized = false;
         system
         stateNum
     end
@@ -13,7 +14,12 @@ classdef Simulator < handle
             if nargin < 3 || isempty(saveHistory)
                 saveHistory = true;
             end
-            obj.system.forward(varargin{:});
+            
+            if ~obj.initialized
+                obj.system.forward(varargin{:});
+                obj.initialized = true;
+            end
+            
             if saveHistory
                 obj.system.saveHistory();
             end
