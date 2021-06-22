@@ -28,10 +28,12 @@ classdef Simulator < handle
             t0 = obj.system.time;
             y0 = obj.system.state;
             
-            k1 = obj.system.stateDeriv([], [], varargin{:});
-            k2 = obj.system.stateDeriv(y0 + dt/2*k1, t0 + dt/2, varargin{:});
-            k3 = obj.system.stateDeriv(y0 + dt/2*k2, t0 + dt/2, varargin{:});
-            k4 = obj.system.stateDeriv(y0 + dt*k3, t0 + dt, varargin{:});
+            odeFun = @(y, t) obj.system.stateDeriv(y, t, varargin{:});
+            
+            k1 = odeFun([], []);
+            k2 = odeFun(y0 + dt/2*k1, t0 + dt/2);
+            k3 = odeFun(y0 + dt/2*k2, t0 + dt/2);
+            k4 = odeFun(y0 + dt*k3, t0 + dt);
             
             % update time and states
             t = t0 + dt;
@@ -54,20 +56,24 @@ classdef Simulator < handle
             
             t = obj.system.time;
             y = obj.system.state;
+            
+            odeFun = @(y, t) obj.system.stateDeriv(y, t, varargin{:});
             for i = 1:iterNum
                 if saveHistory
                     obj.system.saveHistory();
                 end
                 
-                k1 = obj.system.stateDeriv(y, t, varargin{:});
-                k2 = obj.system.stateDeriv(y + dt/2*k1, t + dt/2, varargin{:});
-                k3 = obj.system.stateDeriv(y + dt/2*k2, t + dt/2, varargin{:});
-                k4 = obj.system.stateDeriv(y + dt*k3, t + dt, varargin{:});
+                k1 = odeFun(y, t);
+                k2 = odeFun(y + dt/2*k1, t + dt/2);
+                k3 = odeFun(y + dt/2*k2, t + dt/2);
+                k4 = odeFun(y + dt*k3, t + dt);
                 
                 % update time and states
                 t = t + dt;
                 y = y + dt*(k1 + 2*k2 + 2*k3 + k4)/6;
             end
+            obj.system.applyTime(t);
+            obj.system.applyState(y);
         end
     end
     
