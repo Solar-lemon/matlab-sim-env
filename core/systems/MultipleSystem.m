@@ -84,4 +84,30 @@ classdef MultipleSystem < BaseSystem
             end
         end
     end
+    
+    methods(Static)
+        function test()
+            clc
+            fprintf("== Test for MultipleSystem class == \n")
+            fprintf("Unrelated systems can be simulated simply using a MultipleSystem object.\n")
+            fprintf("For more complex systems, define a class that inherits MultipleSystem \n")
+            fprintf("and implement a forward method. \n")
+            system1 = DynSystem([0; 0], SecondOrderDyn(0.3, 2));
+            system2 = DynSystem([0; 0], SecondOrderDyn(0.5, 2));
+            system3 = DynSystem([0; 0], SecondOrderDyn(0.8, 2));
+            multipleSystem = MultipleSystem();
+            multipleSystem.attachDynSystems({system1, system2, system3});
+            
+            simulator = Simulator(multipleSystem);
+            
+            tic
+            simulator.propagate(0.01, 10, true, 1);
+            elapsedTime = toc;
+            fprintf('Elapsed time: %.2f [s] \n', elapsedTime);
+            
+            system1.plot();
+            system2.plot();
+            system3.plot();
+        end
+    end
 end
