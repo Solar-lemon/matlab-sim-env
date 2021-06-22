@@ -1,11 +1,11 @@
-classdef MySystem < SequentialSystem
+classdef MySystem < MultipleSystem
     properties
         lqrGain
         linearSystem
     end
     methods
         function obj = MySystem()
-            obj = obj@SequentialSystem();
+            obj = obj@MultipleSystem();
             
             omega = 1;
             zeta  = 0.1;
@@ -71,12 +71,14 @@ classdef MySystem < SequentialSystem
             fprintf('Simulating the system... \n')
             
             mySystem = MySystem();
-            saveHistory = true;
+            simulator = Simulator(mySystem);
+            
             dt = 0.01;
             finalTime = 10;
+            saveHistory = true;
             
             tic
-            mySystem.propagate(dt, finalTime, saveHistory);
+            simulator.propagate(dt, finalTime, saveHistory);
             elapsedTime = toc;
             fprintf('Elapsed time: %.2f [s] \n', elapsedTime);
             

@@ -28,10 +28,10 @@ classdef SecondOrderDyn < LinearDynFun
             zeta = 0.5;
             omega = 1;
             system = DynSystem([0; 0], SecondOrderDyn(zeta, omega));
-            simulator = Simulator(system, true);
+            simulator = Simulator(system);
             
             u_step = 1;
-            simulator.propagate(0.01, 10, u_step);
+            simulator.propagate(0.01, 10, true, u_step);
             
             history = system.history;
             [timeList, stateList, inputList] = history.get();

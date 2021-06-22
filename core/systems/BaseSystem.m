@@ -1,6 +1,6 @@
 classdef(Abstract) BaseSystem < handle
     properties
-        time
+        time = 0
         stateVarList
         stateVarNum
         stateNum
@@ -15,7 +15,6 @@ classdef(Abstract) BaseSystem < handle
             if nargin < 1
                 stateVarList = [];
             end
-            obj.time = 0;
             obj.stateVarList = stateVarList;
             obj.indexing(stateVarList);
             obj.name = name;
@@ -80,6 +79,8 @@ classdef(Abstract) BaseSystem < handle
             lastIndex = 0;
             for k = 1:obj.stateVarNum
                 obj.stateIndex{k} = lastIndex + 1:lastIndex + numel(stateVarList{k});
+                
+                lastIndex = lastIndex + numel(stateVarList{k});
             end
             obj.stateNum = lastIndex;
         end
