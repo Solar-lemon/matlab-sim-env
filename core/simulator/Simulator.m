@@ -44,9 +44,29 @@ classdef Simulator < handle
             if nargin < 4 || isempty(saveHistory)
                 saveHistory = true;
             end
+            
+            if ~obj.initialized
+                obj.system.forward(varargin{:});
+                obj.initialized = true;
+            end
+            
             iterNum = round(time/dt);
+            
+            t = obj.system.time;
+            y = obj.system.state;
             for i = 1:iterNum
-                step(obj, dt, saveHistory, varargin{:});
+                if saveHistory
+                    obj.system.saveHistory();
+                end
+                
+                k1 = obj.system.stateDeriv(y, t, varargin{:});
+                k2 = obj.system.stateDeriv(y + dt/2*k1, t + dt/2, varargin{:});
+                k3 = obj.system.stateDeriv(y + dt/2*k2, t + dt/2, varargin{:});
+                k4 = obj.system.stateDeriv(y + dt*k3, t + dt, varargin{:});
+                
+                % update time and states
+                t = t + dt;
+                y = y + dt*(k1 + 2*k2 + 2*k3 + k4)/6;
             end
         end
     end
