@@ -18,10 +18,9 @@ classdef Simulator < handle
             if ~obj.initialized
                 obj.system.forward(varargin{:});
                 obj.initialized = true;
-            end
-            
-            if saveHistory
-                obj.system.saveHistory();
+                if saveHistory
+                    obj.system.saveHistory();
+                end
             end
             
             % remember initial state values
@@ -40,6 +39,10 @@ classdef Simulator < handle
             y = y0 + dt*(k1 + 2*k2 + 2*k3 + k4)/6;
             obj.system.applyTime(t);
             obj.system.applyState(y);
+            
+            if saveHistory
+                obj.system.saveHistory();
+            end
         end
         
         function propagate(obj, dt, time, saveHistory, varargin)
@@ -47,6 +50,9 @@ classdef Simulator < handle
                 saveHistory = true;
             end
             
+            if saveHistory
+                obj.system.startLogging(dt);
+            end
             if ~obj.initialized
                 obj.system.forward(varargin{:});
                 obj.initialized = true;
@@ -59,14 +65,10 @@ classdef Simulator < handle
             
             odeFun = @(y, t) obj.system.stateDeriv(y, t, varargin{:});
             for i = 1:iterNum
-                if saveHistory
-                    obj.system.saveHistory();
-                end
-                
                 k1 = odeFun(y, t);
                 k2 = odeFun(y + dt/2*k1, t + dt/2);
                 k3 = odeFun(y + dt/2*k2, t + dt/2);
-                k4 = odeFun(y + dt*k3, t + dt);
+                k4 = odeFun(y + (dt - eps)*k3, t + dt - eps);
                 
                 % update time and states
                 t = t + dt;
@@ -74,6 +76,9 @@ classdef Simulator < handle
             end
             obj.system.applyTime(t);
             obj.system.applyState(y);
+            obj.system.saveHistory();
+            
+            obj.system.finishLogging();
         end
     end
     
@@ -87,10 +92,11 @@ classdef Simulator < handle
             simulator = Simulator(mySystem);
             
             dt = 0.01;
-            finalTime = 10;
+            finalTime = 5;
             saveHistory = true;
             
             tic
+            simulator.propagate(dt, finalTime, saveHistory);
             simulator.propagate(dt, finalTime, saveHistory);
             elapsedTime = toc;
             

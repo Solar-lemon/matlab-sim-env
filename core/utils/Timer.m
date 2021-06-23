@@ -32,12 +32,12 @@ classdef Timer < handle
         end
         
         function forward(obj, time)
-            if abs(time - obj.lastEventTime) <= eps
+            if abs(time - obj.lastEventTime) <= 2*eps
                 return
             end
             if obj.isOperating
                 elapsedTime = time - obj.lastEventTime;
-                if elapsedTime >= obj.eventTimeInterval - eps
+                if elapsedTime >= obj.eventTimeInterval - 2*eps
                     obj.isEvent = true;
                     obj.lastEventTime = time;
                 else

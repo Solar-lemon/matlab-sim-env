@@ -58,10 +58,6 @@ classdef(Abstract) BaseSystem < handle
                 applyTime(obj, timeFeed);
             end
             forward(obj, varargin{:});
-            
-            if obj.logTimer.checkEvent()
-                saveHistory(obj);
-            end
             obj.logTimer.forward(obj.time);
             
             out = nan(obj.stateNum, 1);
@@ -70,14 +66,17 @@ classdef(Abstract) BaseSystem < handle
                 index = obj.stateIndex{k};
                 out(index, 1) = stateVar.flatDeriv;
             end
+            
+            if obj.logTimer.checkEvent()
+                saveHistory(obj);
+            end
         end
         
         function startLogging(obj, interval)
             if isempty(obj.logTimer)
                 obj.logTimer = Timer(interval);
-            else
-                obj.logTimer.eventTimeInterval = interval;
             end
+            obj.logTimer.eventTimeInterval = interval;
             obj.logTimer.turnOn(true);
             obj.logTimer.forward(obj.time);
         end
