@@ -1,9 +1,6 @@
-classdef DynSystem < BaseSystem
+classdef DynSystem < TimeVaryingDynSystem
     properties
-        initialState
-        inValues
-        outputFun
-        history
+        
     end
     methods
         function obj = DynSystem(initialState, derivFun, outputFun, name)
@@ -13,41 +10,13 @@ classdef DynSystem < BaseSystem
             if nargin < 3 || isempty(outputFun)
                 outputFun = @(x) x;
             end
-            initialState = initialState(:);
-            stateVarList = {StateVariable(initialState)};
-            obj = obj@BaseSystem(stateVarList, name);
-            obj.initialState = initialState;
-            obj.history = VecStackedData();
-            
-            attachDerivFun(obj, derivFun);
-            attachOutputFun(obj, outputFun);
+            obj = obj@TimeVaryingDynSystem(initialState, derivFun, outputFun, name);
         end
         
-        function reset(obj, initialState)
-            if nargin < 2
-                initialState = obj.initialState;
-            end
-            reset@BaseSystem(obj);
-            applyState(obj, initialState);
-            
-            obj.history.clear();
-        end
-        
-        function out = stateVar(obj)
-            out = obj.stateVarList{1};
-        end
-        
-        function attachDerivFun(obj, derivFun)
-            % derivFun: function_handle or BaseFunction
-            obj.stateVar.attachDerivFun(derivFun);
-        end
-        
-        function attachOutputFun(obj, outputFun)
-            % outputFun: function_handle or BaseFunction
-            obj.outputFun = outputFun;
-        end
-        
+        % override
         function out = output(obj)
+            % outputFun: function_handle or BaseFunction
+            % outputFun(state)
             if isa(obj.outputFun, 'BaseFunction')
                 out = obj.outputFun.evaluate(obj.state);
             else
@@ -56,34 +25,9 @@ classdef DynSystem < BaseSystem
         end
         
         % override
-        function out = state(obj)
-            out = obj.stateVar.value;
-        end
-        
-        % override
-        function applyState(obj, stateFeed)
-            obj.stateVar.value = stateFeed;
-        end
-        
-        % override
-        function out = stateDeriv(obj, stateFeed, timeFeed, varargin)
-            % Assume that stateFeed and timeFeed are always given
-            % together
-            if nargin < 3
-                stateFeed = [];
-                timeFeed = [];
-            end
-            if ~isempty(stateFeed) && ~isempty(timeFeed)
-                applyState(obj, stateFeed);
-                applyTime(obj, timeFeed);
-            end
-            forward(obj, varargin{:});
-            
-            out = obj.stateVar.flatDeriv;
-        end
-        
-        % implement
         function out = forward(obj, varargin)
+            % derivFun: function_handle or BaseFunction
+            % derivFun(state, input1, ..., inputM)
             obj.inValues = varargin;
             obj.stateVar.forward(varargin{:});
             if nargout > 0
