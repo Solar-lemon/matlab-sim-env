@@ -9,6 +9,7 @@ classdef MultipleSystem < BaseSystem
         end
         
         function reset(obj)
+            obj.time = 0;
             for k = 1:numel(obj.systemList)
                 obj.systemList{k}.reset();
             end
