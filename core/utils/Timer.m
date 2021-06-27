@@ -1,9 +1,9 @@
 classdef Timer < handle
     properties
-        isOperating = false
         eventTimeInterval
+        isOperating = false
         lastEventTime
-        isEvent = true
+        isEvent = false
     end
     methods
         function obj = Timer(eventTimeInterval)
@@ -15,29 +15,30 @@ classdef Timer < handle
             obj.lastEventTime = 0;
         end
         
-        function turnOn(obj, withInitialEvent)
-            if nargin < 2 || isempty(withInitialEvent)
+        function turnOn(obj, time, withInitialEvent)
+            if nargin < 3 || isempty(withInitialEvent)
                 withInitialEvent = false;
             end
             assert(~isnan(obj.eventTimeInterval), "Set the eventTimeInterval first before turning on the timer.")
             
             obj.isOperating = true;
-            if withInitialEvent
-                obj.lastEventTime = -inf;
-            end
+            obj.lastEventTime = time;
+            obj.isEvent = withInitialEvent;
         end
         
         function turnOff(obj)
             obj.isOperating = false;
+            obj.lastEventTime = [];
+            obj.isEvent = [];
         end
         
         function forward(obj, time)
-            if abs(time - obj.lastEventTime) <= 2*eps
+            if abs(time - obj.lastEventTime) <= 10*eps
                 return
             end
             if obj.isOperating
                 elapsedTime = time - obj.lastEventTime;
-                if elapsedTime >= obj.eventTimeInterval - 2*eps
+                if elapsedTime >= obj.eventTimeInterval - eps
                     obj.isEvent = true;
                     obj.lastEventTime = time;
                 else
@@ -58,7 +59,6 @@ classdef Timer < handle
             eventTimeInterval = 1;
             
             timer = Timer(eventTimeInterval);
-            timer.turnOn();
             dt = 0.4;
             
             fprintf('Initial time: 0.0[s] \n')
@@ -66,6 +66,7 @@ classdef Timer < handle
             fprintf('Sampling time interval: %.1f[s] \n', dt)
             
             time = 0;
+            timer.turnOn(time, false);
             for i = 1:5
                 timer.forward(time);
                 isEvent = timer.checkEvent();
