@@ -5,7 +5,7 @@ classdef(Abstract) BaseSystem < handle
         stateVarNum
         stateNum
         stateIndex
-        logTimer = []
+        logTimer
         name
     end
     methods
@@ -58,7 +58,9 @@ classdef(Abstract) BaseSystem < handle
                 applyTime(obj, timeFeed);
             end
             forward(obj, varargin{:});
-            obj.logTimer.forward(obj.time);
+            if ~isempty(obj.logTimer)
+                obj.logTimer.forward(obj.time);
+            end
             
             out = nan(obj.stateNum, 1);
             for k = 1:numel(obj.stateVarList)
@@ -67,7 +69,7 @@ classdef(Abstract) BaseSystem < handle
                 out(index, 1) = stateVar.flatDeriv;
             end
             
-            if obj.logTimer.checkEvent()
+            if ~isempty(obj.logTimer) && obj.logTimer.checkEvent()
                 saveHistory(obj);
             end
         end
@@ -77,12 +79,13 @@ classdef(Abstract) BaseSystem < handle
                 obj.logTimer = Timer(interval);
             end
             obj.logTimer.eventTimeInterval = interval;
-            obj.logTimer.turnOn(true);
-            obj.logTimer.forward(obj.time);
+            obj.logTimer.turnOn(obj.time, true);
         end
         
         function finishLogging(obj)
-            obj.logTimer.turnOff();
+            if ~isempty(obj.logTimer)
+                obj.logTimer.turnOff();
+            end
         end
         
         % to be overriden
