@@ -34,7 +34,7 @@ classdef Simulator < handle
             k1 = odeFun([], []);
             k2 = odeFun(y0 + dt/2*k1, t0 + dt/2);
             k3 = odeFun(y0 + dt/2*k2, t0 + dt/2);
-            k4 = odeFun(y0 + (dt - 2*eps)*k3, t0 + dt - 2*eps);
+            k4 = odeFun(y0 + (dt - 10*eps(t0))*k3, t0 + dt - 10*eps(t0));
             
             % update time and states
             t = t0 + dt;
@@ -66,7 +66,7 @@ classdef Simulator < handle
                 k1 = odeFun(y, t);
                 k2 = odeFun(y + dt/2*k1, t + dt/2);
                 k3 = odeFun(y + dt/2*k2, t + dt/2);
-                k4 = odeFun(y + (dt - 10*eps)*k3, t + dt - 10*eps);
+                k4 = odeFun(y + (dt - 10*eps(t))*k3, t + dt - 10*eps(t));
                 
                 % update time and states
                 t = t + dt;
