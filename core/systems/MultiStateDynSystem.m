@@ -52,6 +52,7 @@ classdef MultiStateDynSystem < BaseSystem
             obj.outputFun = outputFun;
         end
         
+        % override
         function out = output(obj)
             if isa(obj.outputFun, 'BaseFunction')
                 out = obj.outputFun.evaluate(obj.state);
