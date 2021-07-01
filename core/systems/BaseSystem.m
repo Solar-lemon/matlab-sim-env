@@ -74,6 +74,11 @@ classdef(Abstract) BaseSystem < handle
             end
         end
         
+        % to be overridden
+        function out = output(obj)
+            % implement this method if needed
+        end
+        
         function startLogging(obj, interval)
             if isempty(obj.logTimer)
                 obj.logTimer = Timer(interval);
