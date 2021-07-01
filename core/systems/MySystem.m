@@ -1,88 +1,29 @@
 classdef MySystem < MultipleSystem
     properties
-        lqrGain
-        linearSystem
+        % system objects here
+        dynSystem1
+        dynSystem2
+        discSystem1
     end
     methods
         function obj = MySystem()
             obj = obj@MultipleSystem();
+            % system definitions here
+            obj.dynSystem1 = Something;
+            obj.dynSystem2 = Something;
+            obj.discSystem1 = Something;
             
-            omega = 1;
-            zeta  = 0.1;
-            A = [0, 1;
-                -omega^2, -2*zeta*omega];
-            B = [0; omega^2];
-            Q = diag([1, 1]);
-            R = 1;
-            obj.lqrGain = lqr(A, B, Q, R, []);
-            % derivative function for a DynSystem can be either defined
-            % using a function_handle or a BaseFunction instance
-            % obj.linearSystem = DynSystem([0; 1], @(x, u) A*x + B*u);
-            obj.linearSystem = DynSystem([0; 1], LinearDynFun(A, B));
-            obj.attachDynSystems({obj.linearSystem});
+            % do not forget to attach dynamic systems and discrete systems
+            obj.attachDynSystems({obj.dynSystem1, obj.dynSystem2});
+            obj.attachDiscSystems({obj.discSystem1});
         end
         
         % implement
-        function forward(obj)
-            % u_step = 1;
-            u_lqr = -obj.lqrGain*obj.linearSystem.state;
-            obj.linearSystem.forward(u_lqr);
-        end
-        
-        function fig = plot(obj, fig)
-            if nargin < 2
-                fig = figure();
-            end
-            
-            history = obj.linearSystem.history;
-            [timeList, stateList, controlList] = history.get();
-            
-            figure(fig);
-            subplot(2, 1, 1)
-            hold on
-            plot(timeList, stateList(1, :), 'DisplayName', 'x1')
-            plot(timeList, stateList(2, :), 'DisplayName', 'x2')
-            title('State')
-            xlabel('Time')
-            ylabel('State')
-            grid on
-            box on
-            legend()
-            
-            subplot(2, 1, 2)
-            hold on
-            plot(timeList, controlList, 'DisplayName', 'u')
-            title('Control input')
-            xlabel('Time')
-            ylabel('Control input')
-            grid on
-            box on
-            legend()
-        end
-    end
-    
-    methods(Static)
-        function test()
-            clear
-            clc
-            close all
-            
-            fprintf('== Test for an example system class == \n')
-            fprintf('Simulating the system... \n')
-            
-            mySystem = MySystem();
-            simulator = Simulator(mySystem);
-            
-            dt = 0.01;
-            finalTime = 10;
-            saveHistory = true;
-            
-            tic
-            simulator.propagate(dt, finalTime, saveHistory);
-            elapsedTime = toc;
-            fprintf('Elapsed time: %.2f [s] \n', elapsedTime);
-            
-            mySystem.plot();
+        function y = forward(obj)
+            u = fun(obj.time);
+            y = obj.discSystem1.forward(u);
+            y = obj.dynSystem1.forward(y);
+            y = obj.dynSystem2.forward(y);
         end
     end
 end

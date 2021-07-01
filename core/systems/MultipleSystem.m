@@ -2,6 +2,8 @@ classdef MultipleSystem < BaseSystem
     properties
         systemList
         systemNum
+        discSystemList
+        discSystemNum
     end
     methods
         function obj = MultipleSystem()
@@ -12,6 +14,9 @@ classdef MultipleSystem < BaseSystem
             obj.time = 0;
             for k = 1:numel(obj.systemList)
                 obj.systemList{k}.reset();
+            end
+            for k = 1:numel(obj.discSystemList)
+                obj.discSystemList{k}.reset();
             end
         end
         
@@ -51,6 +56,11 @@ classdef MultipleSystem < BaseSystem
             obj.stateNum     = lastSI;
         end
         
+        function attachDiscSystems(obj, discSystemList)
+            obj.discSystemList = discSystemList;
+            obj.discSystemNum = numel(discSystemList);
+        end
+        
         % override
         function out = stateDeriv(obj, stateFeed, timeFeed, varargin)
             assert(~isempty(obj.systemList), 'Attach dynamic systems first')
@@ -69,6 +79,9 @@ classdef MultipleSystem < BaseSystem
             obj.time = timeFeed;
             for k = 1:numel(obj.systemList)
                 obj.systemList{k}.applyTime(timeFeed);
+            end
+            for k = 1:numel(obj.discSystemList)
+                obj.discSystemList{k}.applyTime(timeFeed);
             end
         end
         
