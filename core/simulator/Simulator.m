@@ -31,7 +31,7 @@ classdef Simulator < handle
             
             odeFun = @(y, t) obj.system.stateDeriv(y, t, varargin{:});
             
-            k1 = odeFun([], []);
+            k1 = odeFun(y0, t0);
             k2 = odeFun(y0 + dt/2*k1, t0 + dt/2);
             k3 = odeFun(y0 + dt/2*k2, t0 + dt/2);
             k4 = odeFun(y0 + (dt - 10*eps(t0))*k3, t0 + dt - 10*eps(t0));
@@ -88,9 +88,9 @@ classdef Simulator < handle
             fprintf('Test for propagate method \n')
             fprintf('Simulating the system... \n')
             
-            mySystem = MySystem(); % Refer to MySystem class
-            initialState = mySystem.state;
-            simulator = Simulator(mySystem);
+            system = ExampleSystem(); % Refer to MySystem class
+            initialState = system.state;
+            simulator = Simulator(system);
             
             dt = 0.01;
             finalTime = 5;
@@ -105,18 +105,18 @@ classdef Simulator < handle
             disp(initialState)
             fprintf('Elapsed time: %.2f [s] \n', elapsedTime);
             fprintf('State of the system after 10[s]: \n\n')
-            disp(mySystem.state)
+            disp(system.state)
             
-            mySystem.plot();
+            system.linearSystem.plot();
             
             fprintf('Test for step method \n')
-            mySystem.reset();
-            simulator.startLogging(0.1);
-            for i = 1:100
+            system.reset();
+            simulator.startLogging(0.01);
+            for i = 1:1000
                 simulator.step(0.01);
             end
             simulator.finishLogging();
-            mySystem.plot();
+            system.linearSystem.plot();
         end
     end
 end

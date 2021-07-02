@@ -17,7 +17,7 @@ classdef TimeVaryingDynSystem < BaseSystem
             stateVarList = {StateVariable(initialState)};
             obj = obj@BaseSystem(stateVarList, name);
             obj.initialState = initialState;
-            obj.history = VecStackedData();
+            obj.history = MatStackedData();
             
             attachDerivFun(obj, derivFun);
             attachOutputFun(obj, outputFun);

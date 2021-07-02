@@ -23,7 +23,7 @@ classdef MultiStateDynSystem < BaseSystem
             end
             obj = obj@BaseSystem(subStateVarList, name);
             obj.initialState = initialState;
-            obj.history = VecStackedData();
+            obj.history = MatStackedData();
             
             attachDerivFun(obj, derivFun);
             attachOutputFun(obj, outputFun);
