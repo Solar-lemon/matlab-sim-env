@@ -69,10 +69,16 @@ classdef MultiStateDynSystem < BaseSystem
             for k = 1:obj.stateVarNum
                 stateValueList{k} = obj.stateVarList{k}.value;
             end
-            derivList = obj.derivFun(stateValueList{:}, varargin{:});
+            
+            if isa(obj.derivFun, 'BaseFunction')
+                derivList = obj.derivFun.forward(stateValueList{:}, varargin{:});
+            else
+                derivList = obj.derivFun(stateValueList{:}, varargin{:});
+            end
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.deriv = derivList{k};
             end
+            
             if nargout > 0
                 out = obj.output;
             end
