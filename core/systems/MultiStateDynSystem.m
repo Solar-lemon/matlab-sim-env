@@ -15,6 +15,9 @@ classdef MultiStateDynSystem < BaseSystem
             if nargin < 3 || isempty(outputFun)
                 outputFun = @(varargin) varargin{:};
             end
+            if nargin < 2
+                derivFun = [];
+            end
             
             subStateVarNum = numel(initialState);
             subStateVarList = cell(1, subStateVarNum);
@@ -25,6 +28,9 @@ classdef MultiStateDynSystem < BaseSystem
             obj.initialState = initialState;
             obj.history = MatStackedData();
             
+            if isempty(derivFun)
+                derivFun = @obj.derivative;
+            end
             attachDerivFun(obj, derivFun);
             attachOutputFun(obj, outputFun);
         end
@@ -81,6 +87,16 @@ classdef MultiStateDynSystem < BaseSystem
             
             if nargout > 0
                 out = obj.output;
+            end
+        end
+        
+        % to be overridden
+        function out = derivative(obj, varargin)
+            % implement this method if needed
+            fprintf("Attach a derivFun or implement the derivative method! \n")
+            out = cell(size(obj.initialState));
+            for k = 1:numel(out)
+                out{k} = zeros(size(obj.initialState{k}));
             end
         end
     end

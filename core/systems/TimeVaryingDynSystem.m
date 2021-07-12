@@ -13,12 +13,18 @@ classdef TimeVaryingDynSystem < BaseSystem
             if nargin < 3 || isempty(outputFun)
                 outputFun = @(x, t) x;
             end
+            if nargin < 2
+                derivFun = [];
+            end
             initialState = initialState(:);
             stateVarList = {StateVariable(initialState)};
             obj = obj@BaseSystem(stateVarList, name);
             obj.initialState = initialState;
             obj.history = MatStackedData();
             
+            if isempty(derivFun)
+                derivFun = @obj.derivative;
+            end
             attachDerivFun(obj, derivFun);
             attachOutputFun(obj, outputFun);
         end
@@ -97,6 +103,13 @@ classdef TimeVaryingDynSystem < BaseSystem
             if nargout > 0
                 out = obj.output;
             end
+        end
+        
+        % to be overridden
+        function out = derivative(obj, varargin)
+            % implement this method if needed
+            fprintf("Attach a derivFun or implement the derivative method! \n")
+            out = zeros(size(obj.initialState));
         end
     end
     

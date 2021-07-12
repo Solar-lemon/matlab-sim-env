@@ -10,6 +10,9 @@ classdef DynSystem < TimeVaryingDynSystem
             if nargin < 3 || isempty(outputFun)
                 outputFun = @(x) x;
             end
+            if nargin < 2
+                derivFun = [];
+            end
             obj = obj@TimeVaryingDynSystem(initialState, derivFun, outputFun, name);
         end
         
