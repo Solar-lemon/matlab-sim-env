@@ -1,0 +1,3 @@
+[submodule "lie-algebra"]
+	path = lie-algebra
+	url = https://github.com/Solar-lemon/lie-algebra.git
