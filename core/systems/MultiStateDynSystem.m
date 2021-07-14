@@ -61,9 +61,9 @@ classdef MultiStateDynSystem < BaseSystem
         % override
         function out = output(obj)
             if isa(obj.outputFun, 'BaseFunction')
-                out = obj.outputFun.evaluate(obj.state);
+                out = obj.outputFun.evaluate(obj.stateValueList{:});
             else
-                out = obj.outputFun(obj.state);
+                out = obj.outputFun(obj.stateValueList{:});
             end
         end
         
@@ -71,15 +71,10 @@ classdef MultiStateDynSystem < BaseSystem
         function out = forward(obj, varargin)
             obj.inValues = varargin;
             
-            stateValueList = cell(1, obj.stateVarNum);
-            for k = 1:obj.stateVarNum
-                stateValueList{k} = obj.stateVarList{k}.value;
-            end
-            
             if isa(obj.derivFun, 'BaseFunction')
-                derivList = obj.derivFun.forward(stateValueList{:}, varargin{:});
+                derivList = obj.derivFun.forward(obj.stateValueList{:}, varargin{:});
             else
-                derivList = obj.derivFun(stateValueList{:}, varargin{:});
+                derivList = obj.derivFun(obj.stateValueList{:}, varargin{:});
             end
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.deriv = derivList{k};

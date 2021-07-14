@@ -27,18 +27,23 @@ classdef(Abstract) BaseSystem < handle
         
         function out = state(obj)
             out = nan(obj.stateNum, 1);
-            for k = 1:numel(obj.stateVarList)
-                stateVar = obj.stateVarList{k};
+            for k = 1:obj.stateVarNum
                 index = obj.stateIndex{k};
-                out(index, 1) = stateVar.flatValue;
+                out(index, 1) = obj.stateVarList{k}.flatValue;
+            end
+        end
+        
+        function out = stateValueList(obj)
+            out = cell(1, obj.stateVarNum);
+            for k = 1:obj.stateVarNum
+                out{k} = obj.stateVarList{k}.value;
             end
         end
         
         function applyState(obj, stateFeed)
             for k = 1:numel(obj.stateVarList)
-                stateVar = obj.stateVarList{k};
                 index = obj.stateIndex{k};
-                stateVar.setFlatValue(stateFeed(index, 1));
+                obj.stateVarList{k}.setFlatValue(stateFeed(index, 1));
             end
         end
         
