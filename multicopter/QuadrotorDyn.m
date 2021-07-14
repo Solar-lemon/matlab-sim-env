@@ -31,16 +31,37 @@ classdef QuadrotorDyn < MultiStateDynSystem
             out = {p_dot, v_dot, R_dot, omega_dot};
         end
         
+        % override
+        function out = forward(obj, u)
+            R = obj.stateVarList{3}.value;
+            isOrthogonal = Orientations.checkOrthogonality(R);
+            if ~isOrthogonal
+                obj.stateVarList{3}.value = Orientations.correctOrthogonality(R);
+            end
+            
+            if nargout > 0
+                out = forward@MultiStateDynSystem(obj, u);
+            else
+                forward@MultiStateDynSystem(obj, u);
+            end
+        end
+        
         function figs = plot(obj, figs)
             if nargin < 2
-                figs = cell(5, 1);
-                for k = 1:5
+                figs = cell(6, 1);
+                for k = 1:6
                     figs{k} = figure();
                 end
             end
             
             [timeList, posList, velList, ...
                 rotationList, angVelList, controlList] = obj.history.get();
+            dataNum = size(rotationList, 3);
+            eulerAngleList = nan(3, dataNum);
+            for i = 1:dataNum
+                eulerAngleList(:, i) = ...
+                    Orientations.rotationToEulerAngles(rotationList(:, :, i).');
+            end
             
             figure(figs{1});
             sgtitle('Position')
@@ -70,7 +91,6 @@ classdef QuadrotorDyn < MultiStateDynSystem
             
             figure(figs{3});
             sgtitle('Rotation matrix')
-            hold on
             for j = 1:3
                 subplot(3, 1, j)
                 hold on
@@ -87,6 +107,20 @@ classdef QuadrotorDyn < MultiStateDynSystem
             end
             
             figure(figs{4});
+            sgtitle('Euler angles')
+            ylabelList = {'phi [deg]', 'theta [deg]', 'psi [deg]'};
+            for k = 1:3
+                subplot(3, 1, k)
+                hold on
+                plot(timeList, rad2deg(eulerAngleList(k, :)))
+                xlabel('Time [s]')
+                ylabel(ylabelList{k})
+                ylim([-180, 180])
+                grid on
+                box on
+            end
+            
+            figure(figs{5});
             sgtitle('Angular velocity')
             ylabelList = {'omega_x [deg/s]', 'omega_y [deg/s]', 'omega_z [deg/s]'};
             for k = 1:3
@@ -99,7 +133,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
                 box on
             end
             
-            figure(figs{5});
+            figure(figs{6});
             sgtitle('Control input')
             ylabelList = {'f [N]', 'tau_x [N*m]', 'tau_y [N*m]', 'tau_z [N*m]'};
             for k = 1:4
