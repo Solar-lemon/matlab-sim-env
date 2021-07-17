@@ -133,7 +133,6 @@ classdef QuadrotorDyn < MultiStateDynSystem
                 plot(timeList, rad2deg(eulerAngleList(k, :)))
                 xlabel('Time [s]')
                 ylabel(ylabelList{k})
-                ylim([-180, 180])
                 grid on
                 box on
             end
