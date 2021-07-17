@@ -48,8 +48,8 @@ classdef QuadrotorDyn < MultiStateDynSystem
         
         function figs = plot(obj, figs)
             if nargin < 2
-                figs = cell(6, 1);
-                for k = 1:6
+                figs = cell(7, 1);
+                for k = 1:7
                     figs{k} = figure();
                 end
             end
@@ -57,8 +57,12 @@ classdef QuadrotorDyn < MultiStateDynSystem
             [timeList, posList, velList, ...
                 rotationList, angVelList, controlList] = obj.history.get();
             dataNum = size(rotationList, 3);
+            
+            quatList = nan(4, dataNum);
             eulerAngleList = nan(3, dataNum);
             for i = 1:dataNum
+                quatList(:, i) = ...
+                    Orientations.rotationToQuat(rotationList(:, :, i).');
                 eulerAngleList(:, i) = ...
                     Orientations.rotationToEulerAngles(rotationList(:, :, i).');
             end
@@ -107,6 +111,20 @@ classdef QuadrotorDyn < MultiStateDynSystem
             end
             
             figure(figs{4});
+            sgtitle('Quaternion')
+            hold on
+            for k = 1:4
+                plot(timeList, quatList(k, :),...
+                    'DisplayName', sprintf('q_%d', k))
+            end
+            xlabel('Time [s]')
+            ylabel('Value')
+            ylim([-1.2, 1.2])
+            grid on
+            box on
+            legend()
+            
+            figure(figs{5});
             sgtitle('Euler angles')
             ylabelList = {'phi [deg]', 'theta [deg]', 'psi [deg]'};
             for k = 1:3
@@ -120,7 +138,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
                 box on
             end
             
-            figure(figs{5});
+            figure(figs{6});
             sgtitle('Angular velocity')
             ylabelList = {'omega_x [deg/s]', 'omega_y [deg/s]', 'omega_z [deg/s]'};
             for k = 1:3
@@ -133,7 +151,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
                 box on
             end
             
-            figure(figs{6});
+            figure(figs{7});
             sgtitle('Control input')
             ylabelList = {'f [N]', 'tau_x [N*m]', 'tau_y [N*m]', 'tau_z [N*m]'};
             for k = 1:4
