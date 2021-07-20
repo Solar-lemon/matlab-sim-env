@@ -3,6 +3,7 @@ classdef Simulator < handle
         initialized = false;
         system
         stateNum
+        inValues
     end
     methods
         function obj = Simulator(system)
@@ -15,11 +16,12 @@ classdef Simulator < handle
         end
         
         function finishLogging(obj)
+            obj.system.forward(obj.inValues{:});
             obj.system.finishLogging();
-            obj.system.saveHistory();
         end
         
         function step(obj, dt, varargin)
+            obj.inValues = varargin;
             if ~obj.initialized
                 obj.system.forward(varargin{:});
                 obj.initialized = true;
@@ -34,7 +36,7 @@ classdef Simulator < handle
             k1 = odeFun(y0, t0);
             k2 = odeFun(y0 + dt/2*k1, t0 + dt/2);
             k3 = odeFun(y0 + dt/2*k2, t0 + dt/2);
-            k4 = odeFun(y0 + (dt - 10*eps(t0))*k3, t0 + dt - 10*eps(t0));
+            k4 = odeFun(y0 + (dt - 10*eps(t0 + dt/2))*k3, t0 + dt - 10*eps(t0 + dt/2));
             
             % update time and states
             t = t0 + dt;
@@ -48,9 +50,7 @@ classdef Simulator < handle
                 saveHistory = false;
             end
             
-            if saveHistory
-                obj.startLogging(dt);
-            end
+            obj.inValues = varargin;
             if ~obj.initialized
                 obj.system.forward(varargin{:});
                 obj.initialized = true;
@@ -58,15 +58,17 @@ classdef Simulator < handle
             
             iterNum = round(time/dt);
             
+            if saveHistory
+                obj.startLogging(dt);
+            end
             t = obj.system.time;
             y = obj.system.state;
-            
-            odeFun = @(y, t) obj.system.stateDeriv(y, t, varargin{:});
+            odeFun = @(y, t) obj.system.stateDeriv(y, t, varargin{:});           
             for i = 1:iterNum
                 k1 = odeFun(y, t);
                 k2 = odeFun(y + dt/2*k1, t + dt/2);
                 k3 = odeFun(y + dt/2*k2, t + dt/2);
-                k4 = odeFun(y + (dt - 10*eps(t))*k3, t + dt - 10*eps(t));
+                k4 = odeFun(y + (dt - 10*eps(t + dt/2))*k3, t + dt - 10*eps(t + dt/2));
                 
                 % update time and states
                 t = t + dt;

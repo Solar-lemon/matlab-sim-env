@@ -5,13 +5,14 @@ classdef(Abstract) BaseSystem < handle
         stateVarNum
         stateNum
         stateIndex
-        logTimer
+        logger
         name = 'BaseSystem'
         flag = 0
     end
     properties(Dependent)
         state
         stateValueList
+        history
     end
     methods
         function obj = BaseSystem(stateVarList)
@@ -20,13 +21,12 @@ classdef(Abstract) BaseSystem < handle
             end
             obj.stateVarList = stateVarList;
             obj.indexing(stateVarList);
+            obj.logger = Logger();
         end
         
         function reset(obj)
             obj.time = 0;
-            if ~isempty(obj.logTimer)
-                obj.logTimer.turnOn(obj.time, true);
-            end
+            obj.logger.reset();
         end
         
         function applyState(obj, stateFeed)
@@ -38,6 +38,7 @@ classdef(Abstract) BaseSystem < handle
         
         function applyTime(obj, timeFeed)
             obj.time = timeFeed;
+            obj.logger.applyTime(timeFeed);
         end
         
         function out = stateDeriv(obj, stateFeed, timeFeed, varargin)
@@ -46,12 +47,6 @@ classdef(Abstract) BaseSystem < handle
             applyState(obj, stateFeed);
             applyTime(obj, timeFeed);
             forward(obj, varargin{:});
-            if ~isempty(obj.logTimer)
-                obj.logTimer.forward(obj.time);
-                if obj.logTimer.checkEvent()
-                    saveHistory(obj);
-                end
-            end
             
             out = nan(obj.stateNum, 1);
             for k = 1:obj.stateVarNum
@@ -62,17 +57,15 @@ classdef(Abstract) BaseSystem < handle
         end
         
         function startLogging(obj, logTimeInterval)
-            if isempty(obj.logTimer)
-                obj.logTimer = Timer(logTimeInterval);
-            end
-            obj.logTimer.eventTimeInterval = logTimeInterval;
-            obj.logTimer.turnOn(obj.time, true);
+            obj.logger.turnOn(logTimeInterval);
         end
         
         function finishLogging(obj)
-            if ~isempty(obj.logTimer)
-                obj.logTimer.turnOff();
-            end
+            obj.logger.turnOff();
+        end
+        
+        function out = historyByName(obj, varargin)
+            out = obj.logger.valueListByNames(varargin{:});
         end
         
         % to be implemented
@@ -89,11 +82,6 @@ classdef(Abstract) BaseSystem < handle
                 flag = obj.flag;
             end
         end
-        
-        % to be implemented
-        function saveHistory(obj)
-            % implement this method if needed
-        end
     end
     
     % set and get methods
@@ -107,6 +95,12 @@ classdef(Abstract) BaseSystem < handle
             for k = 1:obj.stateVarNum
                 out{k} = obj.stateVarList{k}.value;
             end
+        end
+        
+        function out = get.history(obj)
+            assert(obj.logger.dataNum > 0,...
+                "There is no simulation data to save \n")
+            out = obj.logger.valueList;
         end
     end
     

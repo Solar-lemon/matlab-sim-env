@@ -1,8 +1,6 @@
 classdef TimeVaryingDynSystem < BaseSystem
     properties
         initialState
-        inValues
-        history
         outputFun
     end
     properties(Dependent)
@@ -21,7 +19,6 @@ classdef TimeVaryingDynSystem < BaseSystem
             obj = obj@BaseSystem(stateVarList);
             obj.name = 'TimeVaryingDynSystem';
             obj.initialState = initialState;
-            obj.history = MatStackedData();
             
             if isempty(derivFun)
                 derivFun = @obj.derivative;
@@ -37,8 +34,6 @@ classdef TimeVaryingDynSystem < BaseSystem
             end
             reset@BaseSystem(obj);
             applyState(obj, initialState);
-            
-            obj.history.clear();
         end
         
         function attachDerivFun(obj, derivFun)
@@ -65,12 +60,6 @@ classdef TimeVaryingDynSystem < BaseSystem
             applyState(obj, stateFeed);
             applyTime(obj, timeFeed);
             forward(obj, varargin{:});
-            if ~isempty(obj.logTimer)
-                obj.logTimer.forward(obj.time);
-                if obj.logTimer.checkEvent()
-                    saveHistory(obj);
-                end
-            end
             
             out = obj.stateVar.flatDeriv;
         end
@@ -86,8 +75,9 @@ classdef TimeVaryingDynSystem < BaseSystem
         function out = forward(obj, varargin)
             % derivFun: function_handle or BaseFunction
             % derivFun(state, time, input1, ..., inputM)
-            obj.inValues = varargin;
             obj.stateVar.forward(obj.time, varargin{:});
+            obj.logger.forward(obj.state, varargin{:});
+            
             if nargout > 0
                 out = obj.output;
             end
@@ -120,13 +110,8 @@ classdef TimeVaryingDynSystem < BaseSystem
     end
     
     methods
-        % implement
-        function saveHistory(obj)
-            obj.history.append(obj.time, obj.state, obj.inValues{:});
-        end
-        
         function saveSimData(obj, folder, filename)
-            if isempty(obj.history)
+            if isempty(obj.logger)
                 fprintf("There is no simulation data to save \n");
                 return
             end
@@ -143,7 +128,7 @@ classdef TimeVaryingDynSystem < BaseSystem
             end
             
             location = [folder, filename];
-            simData = obj.history;
+            simData = obj.logger.valueList;
             save(location, 'simData');
         end
         
@@ -157,7 +142,9 @@ classdef TimeVaryingDynSystem < BaseSystem
             
             location = [folder, filename];
             load(location, 'simData');
-            obj.history = simData;
+            
+            obj.logger = Logger();
+            obj.logger.load(simData);
         end
         
         function fig = plot(obj, fig)
@@ -168,7 +155,7 @@ classdef TimeVaryingDynSystem < BaseSystem
                 fig = figure();
             end
             
-            [timeList, stateList, controlList] = obj.history.get();
+            [timeList, stateList, controlList] = obj.history{:};
             stateNum = obj.stateNum;
             inputNum = size(controlList, 1);
             

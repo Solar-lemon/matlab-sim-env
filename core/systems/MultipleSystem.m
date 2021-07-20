@@ -13,7 +13,7 @@ classdef MultipleSystem < BaseSystem
         
         % override
         function reset(obj)
-            obj.time = 0;
+            reset@BaseSystem(obj);
             for k = 1:obj.systemNum
                 obj.systemList{k}.reset();
             end
@@ -65,7 +65,7 @@ classdef MultipleSystem < BaseSystem
         
         % override
         function applyTime(obj, timeFeed)
-            obj.time = timeFeed;
+            applyTime@BaseSystem(obj, timeFeed);
             for k = 1:numel(obj.systemList)
                 obj.systemList{k}.applyTime(timeFeed);
             end
@@ -80,6 +80,22 @@ classdef MultipleSystem < BaseSystem
             
             applyTime(obj, timeFeed);
             out = stateDeriv@BaseSystem(obj, stateFeed, timeFeed, varargin{:});
+        end
+        
+        % override
+        function startLogging(obj, logTimeInterval)
+            startLogging@BaseSystem(obj, logTimeInterval);
+            for k = 1:obj.systemNum
+                obj.systemList{k}.startLogging(logTimeInterval);
+            end
+        end
+        
+        % override
+        function finishLogging(obj)
+            finishLogging@BaseSystem(obj);
+            for k = 1:obj.systemNum
+                obj.systemList{k}.finishLogging();
+            end
         end
         
         % to be implemented
@@ -106,12 +122,12 @@ classdef MultipleSystem < BaseSystem
             end
         end
         
-        % implement
-        function saveHistory(obj)
-            for k = 1:numel(obj.systemList)
-                obj.systemList{k}.saveHistory();
-            end
-        end
+%         % implement
+%         function saveHistory(obj)
+%             for k = 1:numel(obj.systemList)
+%                 obj.systemList{k}.saveHistory();
+%             end
+%         end
     end
     
     methods(Static)
