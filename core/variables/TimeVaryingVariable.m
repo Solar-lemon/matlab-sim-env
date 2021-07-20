@@ -1,15 +1,17 @@
 classdef TimeVaryingVariable < Variable
     properties
+        useBaseFunction
         shapingFun
     end
     methods
         function obj = TimeVaryingVariable(shapingFun)
             obj = obj@Variable(shapingFun(0));
+            obj.useBaseFunction = isa(shapingFun, 'BaseFunction');
             obj.shapingFun = shapingFun;
         end
         
         function forward(obj, time)
-            if isa(obj.shapingFun, 'BaseFunction')
+            if obj.useBaseFunction
                 obj.value = obj.shapingFun.forward(time);
             else
                 obj.value = obj.shapingFun(time);
