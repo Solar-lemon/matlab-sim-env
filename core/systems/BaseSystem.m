@@ -7,6 +7,7 @@ classdef(Abstract) BaseSystem < handle
         stateIndex
         logTimer
         name
+        flag = 0
     end
     methods
         function obj = BaseSystem(stateVarList, name)
@@ -95,6 +96,16 @@ classdef(Abstract) BaseSystem < handle
         function finishLogging(obj)
             if ~isempty(obj.logTimer)
                 obj.logTimer.turnOff();
+            end
+        end
+        
+        % to be overriden
+        function [toStop, flag] = checkStopCondition(obj)
+            % implement this method if needed
+            toStop = false;
+            
+            if nargout > 1
+                flag = obj.flag;
             end
         end
         

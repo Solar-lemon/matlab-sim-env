@@ -71,6 +71,11 @@ classdef Simulator < handle
                 % update time and states
                 t = t + dt;
                 y = y + dt*(k1 + 2*k2 + 2*k3 + k4)/6;
+                
+                toStop = obj.system.checkStopCondition();
+                if toStop
+                    break
+                end
             end
             obj.system.applyTime(t);
             obj.system.applyState(y);

@@ -85,6 +85,23 @@ classdef MultipleSystem < BaseSystem
             end
         end
         
+        % implement
+        function [toStop, flag] = checkStopCondition(obj)
+            toStopList = false(obj.systemNum, 1);
+            for k = 1:obj.systemNum
+                toStopList(k) = obj.systemList{k}.checkStopCondition();
+            end
+            
+            toStop = any(toStopList);
+            if toStop
+                obj.flag = find(toStopList);
+            end
+            
+            if nargout > 1
+                flag = obj.flag;
+            end
+        end
+        
         function saveHistory(obj)
             for k = 1:numel(obj.systemList)
                 obj.systemList{k}.saveHistory();
