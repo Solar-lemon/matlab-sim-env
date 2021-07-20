@@ -4,20 +4,24 @@ classdef TimeVaryingVariable < Variable
     end
     methods
         function obj = TimeVaryingVariable(shapingFun)
-            if nargin < 1
-                shapingFun = [];
-            end
             obj = obj@Variable(shapingFun(0));
             obj.shapingFun = shapingFun;
         end
         
         function forward(obj, time)
-            obj.value = obj.shapingFun(time);
+            if isa(obj.shapingFun, 'BaseFunction')
+                obj.value = obj.shapingFun.forward(time);
+            else
+                obj.value = obj.shapingFun(time);
+            end
         end
     end
     
     methods(Static)
         function test()
+            clc
+            close all
+            
             shapingFun = @(t) sin(0.05*pi*t);
             u = TimeVaryingVariable(shapingFun);
             time = 0;
