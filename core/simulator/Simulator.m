@@ -49,7 +49,7 @@ classdef Simulator < handle
             end
             
             if saveHistory
-                obj.system.startLogging(dt);
+                obj.startLogging(dt);
             end
             if ~obj.initialized
                 obj.system.forward(varargin{:});
@@ -80,7 +80,7 @@ classdef Simulator < handle
             obj.system.applyTime(t);
             obj.system.applyState(y);
             
-            obj.system.finishLogging();
+            obj.finishLogging();
         end
     end
     
