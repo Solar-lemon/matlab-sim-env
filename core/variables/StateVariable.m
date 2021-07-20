@@ -3,6 +3,9 @@ classdef StateVariable < Variable
         derivFun
         deriv
     end
+    properties
+        flatDeriv
+    end
     methods
         function obj = StateVariable(value, derivFun)
             % value: numeric
@@ -24,14 +27,19 @@ classdef StateVariable < Variable
                 obj.deriv = obj.derivFun(obj.value, varargin{:});
             end
         end
-        
-        function out = flatDeriv(obj)
+    end
+    % Set and get methods
+    methods
+        function out = get.flatDeriv(obj)
             out = reshape(obj.deriv, [], 1);
         end
     end
     
     methods(Static)
         function test()
+            clc
+            close all
+            
             fprintf('== Test for StateVariable == \n')
             A = [-1, 1;
                 0, -2];
