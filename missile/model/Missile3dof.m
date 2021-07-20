@@ -7,16 +7,20 @@ classdef Missile3dof < ManeuvVehicle3dof
             obj = obj@ManeuvVehicle3dof(initialState);
         end
         
-        function [toStop, stopFlag] = checkStopCondition(obj)
+        % implement
+        function [toStop, flag] = checkStopCondition(obj)
             toStop = false;
-            stopFlag = 0;
             if obj.isFallenDown
                 toStop = true;
-                stopFlag = 1;
+                obj.flag = 1;
             end
             if obj.isCollided
                 toStop = true;
-                stopFlag = 2;
+                obj.flag = 2;
+            end
+            
+            if nargout > 1
+                flag = obj.flag;
             end
         end
         

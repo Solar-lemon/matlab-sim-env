@@ -4,6 +4,7 @@ classdef PurePNG3dimEngagement < MultipleSystem
         target
         kinematics
         purePng
+        prevRange = inf
     end
     methods
         function obj = PurePNG3dimEngagement(missileState)
@@ -22,11 +23,35 @@ classdef PurePNG3dimEngagement < MultipleSystem
         
         % implement
         function forward(obj)
+            R_VL = obj.missile.RLocalToVelocity;
             v_M = obj.missile.vel;
             omega = obj.kinematics.losRate;
             
-            [a_l, a_n] = obj.purePng.forward(v_M, omega);
+            [a_l, a_n] = obj.purePng.forward(R_VL, v_M, omega);
             obj.missile.forward([0; a_l; a_n]);
+        end
+        
+        % implement
+        function toStop = checkStopCondition(obj)
+            toStop = obj.missile.checkStopCondition();
+            toStop = toStop || obj.rangeIsIncreasing;
+            updateRange(obj);
+        end
+        
+        function out = rangeIsIncreasing(obj)
+            range = obj.kinematics.range;
+            out = (range > obj.prevRange);
+        end
+        
+        function updateRange(obj)
+            obj.prevRange = obj.kinematics.range;
+        end
+        
+        function out = missDistance(obj)
+            [~, stateList, ~] = obj.missile.history.get();
+            missilePosList = stateList(1:3, :);
+            targetPos = obj.target.pos;
+            out = min(vecnorm(missilePosList - targetPos, 2, 1));
         end
         
         function figs = plot(obj)
