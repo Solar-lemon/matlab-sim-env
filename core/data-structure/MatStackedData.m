@@ -1,4 +1,4 @@
-classdef MatStackedData < StackedData
+classdef(ConstructOnLoad) MatStackedData < StackedData
     properties
         
     end

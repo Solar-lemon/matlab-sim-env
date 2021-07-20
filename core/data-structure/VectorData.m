@@ -1,4 +1,4 @@
-classdef VectorData < ArrayData
+classdef(ConstructOnLoad) VectorData < ArrayData
     properties
         dim
     end
