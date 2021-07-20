@@ -1,9 +1,10 @@
 classdef StateVariable < Variable
     properties
+        useBaseFunction
         derivFun
         deriv
     end
-    properties
+    properties(Dependent)
         flatDeriv
     end
     methods
@@ -17,11 +18,12 @@ classdef StateVariable < Variable
         end
         
         function attachDerivFun(obj, derivFun)
+            obj.useBaseFunction = isa(derivFun, 'BaseFunction');
             obj.derivFun = derivFun;
         end
         
         function forward(obj, varargin)
-            if isa(obj.derivFun, 'BaseFunction')
+            if obj.useBaseFunction
                 obj.deriv = obj.derivFun.forward(obj.value, varargin{:});
             else
                 obj.deriv = obj.derivFun(obj.value, varargin{:});

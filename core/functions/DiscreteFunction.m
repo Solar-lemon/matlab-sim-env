@@ -9,11 +9,7 @@ classdef DiscreteFunction < BaseFunction
     methods
         function obj = DiscreteFunction(fun, eventTimeInterval)
             % fun: function_handle or BaseFunction
-            if isa(fun, 'BaseFunction')
-                obj.useBaseFunction = true;
-            else
-                obj.useBaseFunction = false;
-            end
+            obj.useBaseFunction = isa(fun, 'BaseFunction');
             obj.fun = fun;
             obj.timer = Timer(eventTimeInterval);
             obj.timer.turnOn(obj.time, true);
@@ -28,6 +24,7 @@ classdef DiscreteFunction < BaseFunction
             obj.time = timeFeed;
         end
         
+        % implement
         function out = forward(obj, varargin)
             obj.timer.forward(obj.time);
             if obj.timer.checkEvent()
