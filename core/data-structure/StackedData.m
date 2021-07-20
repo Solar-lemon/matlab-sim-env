@@ -1,4 +1,4 @@
-classdef StackedData < ArrayData
+classdef(ConstructOnLoad) StackedData < ArrayData
     properties
         
     end

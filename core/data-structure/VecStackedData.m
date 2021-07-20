@@ -1,4 +1,4 @@
-classdef VecStackedData < StackedData
+classdef(ConstructOnLoad) VecStackedData < StackedData
     properties
         
     end

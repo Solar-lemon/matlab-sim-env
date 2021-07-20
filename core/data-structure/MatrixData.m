@@ -1,4 +1,4 @@
-classdef MatrixData < ArrayData
+classdef(ConstructOnLoad) MatrixData < ArrayData
     properties
         shape
         accessIndex
