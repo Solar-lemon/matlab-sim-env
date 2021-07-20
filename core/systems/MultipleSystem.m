@@ -8,14 +8,16 @@ classdef MultipleSystem < BaseSystem
     methods
         function obj = MultipleSystem()
             obj = obj@BaseSystem();
+            obj.name = 'MultipleSystem';
         end
         
+        % override
         function reset(obj)
             obj.time = 0;
-            for k = 1:numel(obj.systemList)
+            for k = 1:obj.systemNum
                 obj.systemList{k}.reset();
             end
-            for k = 1:numel(obj.discSystemList)
+            for k = 1:obj.discSystemNum
                 obj.discSystemList{k}.reset();
             end
         end
@@ -62,19 +64,6 @@ classdef MultipleSystem < BaseSystem
         end
         
         % override
-        function out = stateDeriv(obj, stateFeed, timeFeed, varargin)
-            assert(~isempty(obj.systemList), 'Attach dynamic systems first')
-            if nargin < 3
-                stateFeed = [];
-                timeFeed = [];
-            end
-            if ~isempty(timeFeed)
-                applyTime(obj, timeFeed);
-            end
-            out = stateDeriv@BaseSystem(obj, stateFeed, timeFeed, varargin{:});
-        end
-        
-        % override
         function applyTime(obj, timeFeed)
             obj.time = timeFeed;
             for k = 1:numel(obj.systemList)
@@ -82,6 +71,21 @@ classdef MultipleSystem < BaseSystem
             end
             for k = 1:numel(obj.discSystemList)
                 obj.discSystemList{k}.applyTime(timeFeed);
+            end
+        end
+        
+        % override
+        function out = stateDeriv(obj, stateFeed, timeFeed, varargin)
+            assert(~isempty(obj.systemList), 'Attach dynamic systems first')
+            
+            applyTime(obj, timeFeed);
+            out = stateDeriv@BaseSystem(obj, stateFeed, timeFeed, varargin{:});
+        end
+        
+        % to be implemented
+        function forward(obj, varargin)
+            for k = 1:numel(obj.systemList)
+                obj.systemList{k}.forward(varargin{:});
             end
         end
         
@@ -102,16 +106,10 @@ classdef MultipleSystem < BaseSystem
             end
         end
         
+        % implement
         function saveHistory(obj)
             for k = 1:numel(obj.systemList)
                 obj.systemList{k}.saveHistory();
-            end
-        end
-        
-        % to be overriden
-        function forward(obj, varargin)
-            for k = 1:numel(obj.systemList)
-                obj.systemList{k}.forward(varargin{:});
             end
         end
     end
