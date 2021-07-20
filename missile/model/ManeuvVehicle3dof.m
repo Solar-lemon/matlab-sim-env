@@ -12,6 +12,7 @@ classdef ManeuvVehicle3dof < DynSystem
     properties(Dependent)
         pos
         vel
+        RLocalToVelocity
     end
     
     methods
@@ -62,6 +63,14 @@ classdef ManeuvVehicle3dof < DynSystem
                 V*cos(gamma)*cos(chi);
                 V*cos(gamma)*sin(chi);
                 -V*sin(gamma)];
+        end
+        
+        function R_VL = get.RLocalToVelocity(obj)
+            state = obj.state;
+            gamma = state(5);
+            chi = state(6);
+            
+            R_VL = Orientations.eulerAnglesToRotation([chi; gamma; 0]);
         end
         
         function out = gravAccel(obj)
