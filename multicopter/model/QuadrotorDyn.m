@@ -32,18 +32,16 @@ classdef QuadrotorDyn < MultiStateDynSystem
         end
         
         % override
-        function out = forward(obj, u)
+        function applyState(obj, stateFeed)
+            % rotation matrix should be orthogonal
+            applyState@MultiStateDynSystem(obj, stateFeed);
             R = obj.stateVarList{3}.value;
             isOrthogonal = Orientations.checkOrthogonality(R);
             if ~isOrthogonal
-                obj.stateVarList{3}.value = Orientations.correctOrthogonality(R);
+                obj.stateVarList{3}.value = ...
+                    Orientations.correctOrthogonality(R);
             end
             
-            if nargout > 0
-                out = forward@MultiStateDynSystem(obj, u);
-            else
-                forward@MultiStateDynSystem(obj, u);
-            end
         end
         
         function figs = plot(obj, figs)
