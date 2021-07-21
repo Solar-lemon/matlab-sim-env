@@ -105,6 +105,21 @@ classdef MultipleSystem < BaseSystem
             end
         end
         
+        % override
+        function out = stateDeriv(obj, stateFeed, timeFeed, varargin)
+            assert(~isempty(obj.systemList), 'Attach dynamic systems first')
+            
+            applyTime(obj, timeFeed);
+            out = stateDeriv@BaseSystem(obj, stateFeed, timeFeed, varargin{:});
+        end
+        
+        % to be implemented
+        function forward(obj, varargin)
+            for k = 1:numel(obj.systemList)
+                obj.systemList{k}.forward(varargin{:});
+            end
+        end
+        
         % implement
         function [toStop, flag] = checkStopCondition(obj)
             toStopList = false(obj.systemNum, 1);
@@ -121,13 +136,6 @@ classdef MultipleSystem < BaseSystem
                 flag = obj.flag;
             end
         end
-        
-%         % implement
-%         function saveHistory(obj)
-%             for k = 1:numel(obj.systemList)
-%                 obj.systemList{k}.saveHistory();
-%             end
-%         end
     end
     
     methods(Static)

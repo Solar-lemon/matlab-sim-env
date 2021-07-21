@@ -51,6 +51,7 @@ classdef Simulator < handle
             end
             
             obj.inValues = varargin;
+            
             if ~obj.initialized
                 obj.system.forward(varargin{:});
                 obj.initialized = true;

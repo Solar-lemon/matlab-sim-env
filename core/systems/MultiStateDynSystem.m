@@ -81,7 +81,6 @@ classdef MultiStateDynSystem < BaseSystem
             end
         end
         
-        % implement
         function out = output(obj)
             if isa(obj.outputFun, 'BaseFunction')
                 out = obj.outputFun.forward(obj.stateValueList{:});
