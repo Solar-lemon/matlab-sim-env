@@ -49,8 +49,7 @@ classdef ManeuvVehicle3dof < DynSystem
         end
         
         function out = get.pos(obj)
-            state = obj.state;
-            out = state(1:3);
+            out = obj.state(1:3);
         end
         
         function out = get.vel(obj)

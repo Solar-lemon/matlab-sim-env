@@ -16,9 +16,10 @@ classdef PurePNG3dimEngagement < MultipleSystem
             obj.missile = Missile3dof(missileState);
             obj.target = StationaryVehicle3dof([0; 0; 0]);
             obj.kinematics = EngKinematics(obj.missile, obj.target);
-            obj.purePng = PurePNG3dim(3);
+            obj.purePng = DiscreteFunction(PurePNG3dim(3), 1/40); % 40 Hz
             
             obj.attachDynSystems({obj.missile});
+            obj.attachDiscSystems({obj.purePng});
         end
         
         % implement
@@ -28,8 +29,8 @@ classdef PurePNG3dimEngagement < MultipleSystem
             omega = obj.kinematics.losRate;
             r = obj.kinematics.range;
             
-            [a_l, a_n] = obj.purePng.forward(R_VL, v_M, omega);
-            obj.missile.forward([0; a_l; a_n]);
+            a_M = obj.purePng.forward(R_VL, v_M, omega);
+            obj.missile.forward(a_M);
             
             obj.logger.forward(omega, r);
             obj.logger.forwardNames('losRate', 'range');
