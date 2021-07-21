@@ -74,11 +74,6 @@ classdef(Abstract) BaseSystem < handle
         end
         
         % to be implemented
-        function out = output(obj)
-            % implement this method if needed
-        end
-        
-        % to be implemented
         function [toStop, flag] = checkStopCondition(obj)
             % implement this method if needed
             toStop = false;
@@ -106,20 +101,6 @@ classdef(Abstract) BaseSystem < handle
             assert(obj.logger.dataNum > 0,...
                 "There is no simulation data to save \n")
             out = obj.logger.valueList;
-        end
-    end
-    
-    % set and get methods
-    methods
-        function out = get.state(obj)
-            out = stateFlatValue(obj);
-        end
-        
-        function out = get.stateValueList(obj)
-            out = cell(1, obj.stateVarNum);
-            for k = 1:obj.stateVarNum
-                out{k} = obj.stateVarList{k}.value;
-            end
         end
     end
     
