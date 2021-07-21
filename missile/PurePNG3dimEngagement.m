@@ -16,9 +16,10 @@ classdef PurePNG3dimEngagement < MultipleSystem
             obj.missile = Missile3dof(missileState);
             obj.target = StationaryVehicle3dof([0; 0; 0]);
             obj.kinematics = EngKinematics(obj.missile, obj.target);
-            obj.purePng = PurePNG3dim(3);
+            obj.purePng = DiscreteFunction(PurePNG3dim(3), 1/40); % 40 Hz
             
             obj.attachDynSystems({obj.missile});
+            obj.attachDiscSystems({obj.purePng});
         end
         
         % implement
@@ -26,9 +27,13 @@ classdef PurePNG3dimEngagement < MultipleSystem
             R_VL = obj.missile.RLocalToVelocity;
             v_M = obj.missile.vel;
             omega = obj.kinematics.losRate;
+            r = obj.kinematics.range;
             
-            [a_l, a_n] = obj.purePng.forward(R_VL, v_M, omega);
-            obj.missile.forward([0; a_l; a_n]);
+            a_M = obj.purePng.forward(R_VL, v_M, omega);
+            obj.missile.forward(a_M);
+            
+            obj.logger.forward(omega, r);
+            obj.logger.forwardNames('losRate', 'range');
         end
         
         % implement
@@ -48,21 +53,36 @@ classdef PurePNG3dimEngagement < MultipleSystem
         end
         
         function out = missDistance(obj)
-            [~, stateList, ~] = obj.missile.history.get();
-            missilePosList = stateList(1:3, :);
-            targetPos = obj.target.pos;
-            out = min(vecnorm(missilePosList - targetPos, 2, 1));
+            rangeList = obj.historyByName('range');
+            out = min(rangeList);
         end
         
         function figs = plot(obj)
-            figs = cell(1, 1);
+            figs = cell(2, 1);
+            
+            obj.missile.plot();
             
             figs{1} = figure();
             title('3-dim Flight Path')
             obj.missile.plotPath(figs{1});
             obj.target.plotPos(figs{1});
             
-            obj.missile.plot();
+            temp = obj.historyByName('time', 'losRate');
+            [timeList, losRateList] = temp{:};
+            losRateList = rad2deg(losRateList);
+            
+            figs{2} = figure();
+            title('LOS rate')
+            labelList = {'omega_x', 'omega_y', 'omega_z'};
+            for k = 1:3
+                subplot(3, 1, k)
+                plot(timeList, losRateList(k, :), 'DisplayName', labelList{k})
+                xlabel('Time [s]')
+                ylabel('LOS rate [deg/s]')
+                grid on
+                box on
+            end
+            legend()
         end
     end
 end

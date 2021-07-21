@@ -8,7 +8,7 @@ classdef PurePNG3dim < BaseFunction
         end
         
         % implement
-        function [a_l, a_n] = forward(obj, R_VL, v_M, omega)
+        function a_M = forward(obj, R_VL, v_M, omega)
             % v_M: velocity of the missile expressed in the local frame
             % , 3x1 vector
             % omega: LOS rate expressed in the local frame, 3x1 vector
@@ -19,6 +19,7 @@ classdef PurePNG3dim < BaseFunction
             
             a_l = accel_V(2);
             a_n = accel_V(3);
+            a_M = [0; a_l; a_n];
         end
     end
 end
