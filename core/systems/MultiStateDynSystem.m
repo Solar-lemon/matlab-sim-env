@@ -3,17 +3,12 @@ classdef MultiStateDynSystem < BaseSystem
         initialState
         derivFun
         outputFun
-        inValues
-        history
     end
     methods
-        function obj = MultiStateDynSystem(initialState, derivFun, outputFun, name)
+        function obj = MultiStateDynSystem(initialState, derivFun, outputFun)
             % initialState: cell array {state1, state2, ...}
-            if nargin < 4 || isempty(name)
-                name = 'MultiStateDynSystem';
-            end
             if nargin < 3 || isempty(outputFun)
-                outputFun = @(varargin) varargin{:};
+                outputFun = @(varargin) varargin;
             end
             if nargin < 2
                 derivFun = [];
@@ -24,9 +19,9 @@ classdef MultiStateDynSystem < BaseSystem
             for k = 1:subStateVarNum
                 subStateVarList{k} = StateVariable(initialState{k});
             end
-            obj = obj@BaseSystem(subStateVarList, name);
+            obj = obj@BaseSystem(subStateVarList);
+            obj.name = 'MultiStateDynSystem';
             obj.initialState = initialState;
-            obj.history = MatStackedData();
             
             if isempty(derivFun)
                 derivFun = @obj.derivative;
@@ -35,6 +30,7 @@ classdef MultiStateDynSystem < BaseSystem
             attachOutputFun(obj, outputFun);
         end
         
+        % override
         function reset(obj, initialState)
             if nargin < 2
                 initialState = obj.initialState;
@@ -43,7 +39,6 @@ classdef MultiStateDynSystem < BaseSystem
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.value = initialState{k};
             end
-            obj.history.clear();
         end
         
         function attachDerivFun(obj, derivFun)
@@ -54,22 +49,23 @@ classdef MultiStateDynSystem < BaseSystem
         
         function attachOutputFun(obj, outputFun)
             % outputFun: function_handle or BaseFunction
-            % varargout = outputFun(varargin)
+            % outputList = outputFun(varargin)
             obj.outputFun = outputFun;
         end
         
-        % override
-        function out = output(obj)
-            if isa(obj.outputFun, 'BaseFunction')
-                out = obj.outputFun.evaluate(obj.stateValueList{:});
-            else
-                out = obj.outputFun(obj.stateValueList{:});
+        % to be implemented
+        function out = derivative(obj, varargin)
+            % implement this method if needed
+            fprintf("Attach a derivFun or implement the derivative method! \n")
+            out = cell(size(obj.initialState));
+            for k = 1:numel(out)
+                out{k} = zeros(size(obj.initialState{k}));
             end
         end
         
         % implement
         function out = forward(obj, varargin)
-            obj.inValues = varargin;
+            obj.logger.forward(obj.stateValueList{:}, varargin{:});
             
             if isa(obj.derivFun, 'BaseFunction')
                 derivList = obj.derivFun.forward(obj.stateValueList{:}, varargin{:});
@@ -85,25 +81,12 @@ classdef MultiStateDynSystem < BaseSystem
             end
         end
         
-        % to be overridden
-        function out = derivative(obj, varargin)
-            % implement this method if needed
-            fprintf("Attach a derivFun or implement the derivative method! \n")
-            out = cell(size(obj.initialState));
-            for k = 1:numel(out)
-                out{k} = zeros(size(obj.initialState{k}));
+        function out = output(obj)
+            if isa(obj.outputFun, 'BaseFunction')
+                out = obj.outputFun.forward(obj.stateValueList{:});
+            else
+                out = obj.outputFun(obj.stateValueList{:});
             end
-        end
-    end
-    
-    methods
-        % implement
-        function saveHistory(obj)
-            stateValueList = cell(1, obj.stateVarNum);
-            for k = 1:obj.stateVarNum
-                stateValueList{k} = obj.stateVarList{k}.value;
-            end
-            obj.history.append(obj.time, stateValueList{:}, obj.inValues{:});
         end
     end
     
@@ -119,8 +102,13 @@ classdef MultiStateDynSystem < BaseSystem
             
             dt = 0.01;
             finalTime = 10;
+            
+            tic
             Simulator(system).propagate(dt, finalTime, true, accel);
-            [timeList, posList, velList] = system.history.get();
+            elapsedTime = toc;
+            
+            fprintf('ElapsedTime: %.2f [s] \n', elapsedTime)
+            [timeList, posList, velList] = system.history{:};
             
             figure();
             subplot(2, 1, 1);

@@ -1,6 +1,6 @@
-classdef MatStackedData < StackedData
-    properties
-        
+classdef(ConstructOnLoad) MatStackedData < StackedData
+    properties(Dependent)
+        valueList
     end
     methods
         function obj = MatStackedData(initSpaceSize, name)
@@ -73,6 +73,17 @@ classdef MatStackedData < StackedData
             multiple = (numel(index) > 1);
             newObj = MatStackedData();
             newObj.append(subDataValue{:}, multiple);
+        end
+    end
+    
+    % set and get methods
+    methods
+        function out = get.valueList(obj)
+            stackedNum = size(obj.dataValue, 1);
+            out = cell(stackedNum, 1);
+            for k = 1:stackedNum
+                out{k} = obj.dataValue{k}.get();
+            end
         end
     end
     

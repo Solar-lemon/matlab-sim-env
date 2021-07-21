@@ -1,7 +1,11 @@
 classdef StateVariable < Variable
     properties
+        useBaseFunction
         derivFun
         deriv
+    end
+    properties(Dependent)
+        flatDeriv
     end
     methods
         function obj = StateVariable(value, derivFun)
@@ -14,24 +18,30 @@ classdef StateVariable < Variable
         end
         
         function attachDerivFun(obj, derivFun)
+            obj.useBaseFunction = isa(derivFun, 'BaseFunction');
             obj.derivFun = derivFun;
         end
         
         function forward(obj, varargin)
-            if isa(obj.derivFun, 'BaseFunction')
+            if obj.useBaseFunction
                 obj.deriv = obj.derivFun.forward(obj.value, varargin{:});
             else
                 obj.deriv = obj.derivFun(obj.value, varargin{:});
             end
         end
-        
-        function out = flatDeriv(obj)
+    end
+    % Set and get methods
+    methods
+        function out = get.flatDeriv(obj)
             out = reshape(obj.deriv, [], 1);
         end
     end
     
     methods(Static)
         function test()
+            clc
+            close all
+            
             fprintf('== Test for StateVariable == \n')
             A = [-1, 1;
                 0, -2];

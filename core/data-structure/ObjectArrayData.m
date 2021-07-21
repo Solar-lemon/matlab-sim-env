@@ -1,4 +1,4 @@
-classdef ObjectArrayData < ArrayData
+classdef(ConstructOnLoad) ObjectArrayData < ArrayData
     properties
         
     end

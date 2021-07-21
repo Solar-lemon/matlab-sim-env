@@ -5,101 +5,75 @@ classdef(Abstract) BaseSystem < handle
         stateVarNum
         stateNum
         stateIndex
-        logTimer
-        name
+        logger
+        name = 'BaseSystem'
         flag = 0
     end
+    properties(Dependent)
+        state
+        stateValueList
+        history
+    end
     methods
-        function obj = BaseSystem(stateVarList, name)
-            if nargin < 2
-                name = 'BaseSystem';
-            end
+        function obj = BaseSystem(stateVarList)
             if nargin < 1
                 stateVarList = [];
             end
             obj.stateVarList = stateVarList;
             obj.indexing(stateVarList);
-            obj.name = name;
+            obj.logger = Logger();
         end
         
         function reset(obj)
             obj.time = 0;
-        end
-        
-        function out = state(obj)
-            out = nan(obj.stateNum, 1);
-            for k = 1:obj.stateVarNum
-                index = obj.stateIndex{k};
-                out(index, 1) = obj.stateVarList{k}.flatValue;
-            end
-        end
-        
-        function out = stateValueList(obj)
-            out = cell(1, obj.stateVarNum);
-            for k = 1:obj.stateVarNum
-                out{k} = obj.stateVarList{k}.value;
-            end
+            obj.logger.reset();
         end
         
         function applyState(obj, stateFeed)
-            for k = 1:numel(obj.stateVarList)
+            for k = 1:obj.stateVarNum
                 index = obj.stateIndex{k};
-                obj.stateVarList{k}.setFlatValue(stateFeed(index, 1));
+                obj.stateVarList{k}.flatValue = stateFeed(index, 1);
             end
         end
         
         function applyTime(obj, timeFeed)
             obj.time = timeFeed;
+            obj.logger.applyTime(timeFeed);
         end
         
         function out = stateDeriv(obj, stateFeed, timeFeed, varargin)
             % Assume that stateFeed and timeFeed are always given
             % together
-            if nargin < 3
-                stateFeed = [];
-                timeFeed = [];
-            end
-            if ~isempty(stateFeed) && ~isempty(timeFeed)
-                applyState(obj, stateFeed);
-                applyTime(obj, timeFeed);
-            end
+            applyState(obj, stateFeed);
+            applyTime(obj, timeFeed);
             forward(obj, varargin{:});
-            if ~isempty(obj.logTimer)
-                obj.logTimer.forward(obj.time);
-            end
             
             out = nan(obj.stateNum, 1);
-            for k = 1:numel(obj.stateVarList)
+            for k = 1:obj.stateVarNum
                 stateVar = obj.stateVarList{k};
                 index = obj.stateIndex{k};
                 out(index, 1) = stateVar.flatDeriv;
             end
-            
-            if ~isempty(obj.logTimer) && obj.logTimer.checkEvent()
-                saveHistory(obj);
-            end
         end
         
-        % to be overridden
+        function startLogging(obj, logTimeInterval)
+            obj.logger.turnOn(logTimeInterval);
+        end
+        
+        function finishLogging(obj)
+            obj.logger.turnOff();
+        end
+        
+        function out = historyByName(obj, varargin)
+            out = obj.logger.valueListByNames(varargin{:});
+        end
+        
+        % to be implemented
         function out = output(obj)
             % implement this method if needed
         end
         
-        function startLogging(obj, interval)
-            if isempty(obj.logTimer)
-                obj.logTimer = Timer(interval);
-            end
-            obj.logTimer.eventTimeInterval = interval;
-            obj.logTimer.turnOn(obj.time, true);
-        end
-        
-        function finishLogging(obj)
-            if ~isempty(obj.logTimer)
-                obj.logTimer.turnOff();
-            end
-        end
-        
-        % to be overriden
+        % to be implemented
         function [toStop, flag] = checkStopCondition(obj)
             % implement this method if needed
             toStop = false;
@@ -108,10 +82,25 @@ classdef(Abstract) BaseSystem < handle
                 flag = obj.flag;
             end
         end
+    end
+    
+    % set and get methods
+    methods
+        function out = get.state(obj)
+            out = stateFlatValue(obj);
+        end
         
-        % to be overriden
-        function saveHistory(obj)
-            % implement this method if needed
+        function out = get.stateValueList(obj)
+            out = cell(1, obj.stateVarNum);
+            for k = 1:obj.stateVarNum
+                out{k} = obj.stateVarList{k}.value;
+            end
+        end
+        
+        function out = get.history(obj)
+            assert(obj.logger.dataNum > 0,...
+                "There is no simulation data to save \n")
+            out = obj.logger.valueList;
         end
     end
     
@@ -122,10 +111,17 @@ classdef(Abstract) BaseSystem < handle
             lastIndex = 0;
             for k = 1:obj.stateVarNum
                 obj.stateIndex{k} = lastIndex + 1:lastIndex + numel(stateVarList{k});
-                
                 lastIndex = lastIndex + numel(stateVarList{k});
             end
             obj.stateNum = lastIndex;
+        end
+        
+        function out = stateFlatValue(obj)
+            out = nan(obj.stateNum, 1);
+            for k = 1:obj.stateVarNum
+                index = obj.stateIndex{k};
+                out(index, 1) = obj.stateVarList{k}.flatValue;
+            end
         end
     end
     
