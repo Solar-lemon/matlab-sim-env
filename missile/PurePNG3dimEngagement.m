@@ -48,7 +48,7 @@ classdef PurePNG3dimEngagement < MultipleSystem
         end
         
         function out = missDistance(obj)
-            [~, stateList, ~] = obj.missile.history.get();
+            stateList = obj.missile.history{2};
             missilePosList = stateList(1:3, :);
             targetPos = obj.target.pos;
             out = min(vecnorm(missilePosList - targetPos, 2, 1));
