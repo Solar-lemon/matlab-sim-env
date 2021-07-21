@@ -18,8 +18,8 @@ classdef DynSystem < TimeVaryingDynSystem
         function out = forward(obj, varargin)
             % derivFun: function_handle or BaseFunction
             % derivFun(state, input1, ..., inputM)
-            obj.inValues = varargin;
             obj.stateVar.forward(varargin{:});
+            obj.logger.forward(obj.state, varargin{:});
             if nargout > 0
                 out = obj.output;
             end

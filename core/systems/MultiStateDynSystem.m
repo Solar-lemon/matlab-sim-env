@@ -1,8 +1,6 @@
 classdef MultiStateDynSystem < BaseSystem
     properties
         initialState
-        inValues
-        history
         derivFun
         outputFun
     end
@@ -24,7 +22,6 @@ classdef MultiStateDynSystem < BaseSystem
             obj = obj@BaseSystem(subStateVarList);
             obj.name = 'MultiStateDynSystem';
             obj.initialState = initialState;
-            obj.history = MatStackedData();
             
             if isempty(derivFun)
                 derivFun = @obj.derivative;
@@ -42,7 +39,6 @@ classdef MultiStateDynSystem < BaseSystem
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.value = initialState{k};
             end
-            obj.history.clear();
         end
         
         function attachDerivFun(obj, derivFun)
@@ -69,7 +65,7 @@ classdef MultiStateDynSystem < BaseSystem
         
         % implement
         function out = forward(obj, varargin)
-            obj.inValues = varargin;
+            obj.logger.forward(obj.stateValueList{:}, varargin{:});
             
             if isa(obj.derivFun, 'BaseFunction')
                 derivList = obj.derivFun.forward(obj.stateValueList{:}, varargin{:});
@@ -85,20 +81,12 @@ classdef MultiStateDynSystem < BaseSystem
             end
         end
         
-        % implement
         function out = output(obj)
             if isa(obj.outputFun, 'BaseFunction')
                 out = obj.outputFun.forward(obj.stateValueList{:});
             else
                 out = obj.outputFun(obj.stateValueList{:});
             end
-        end
-    end
-    
-    methods
-        % implement
-        function saveHistory(obj)
-            obj.history.append(obj.time, obj.stateValueList{:}, obj.inValues{:});
         end
     end
     
@@ -120,7 +108,7 @@ classdef MultiStateDynSystem < BaseSystem
             elapsedTime = toc;
             
             fprintf('ElapsedTime: %.2f [s] \n', elapsedTime)
-            [timeList, posList, velList] = system.history.get();
+            [timeList, posList, velList] = system.history{:};
             
             figure();
             subplot(2, 1, 1);
