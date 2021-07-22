@@ -4,15 +4,13 @@ classdef(ConstructOnLoad) MatrixData < ArrayData
         accessIndex
     end
     methods
-        function obj = MatrixData(initSpaceSize, name)
-            if nargin < 2 || isempty(name)
-                name = "matrixData";
-            end
+        function obj = MatrixData(initSpaceSize)
             if nargin < 2
                 initSpaceSize = [];
             end
             
-            obj = obj@ArrayData(initSpaceSize, name);
+            obj = obj@ArrayData(initSpaceSize);
+            obj.name = "matrixData";
         end
         
         % implement
@@ -52,10 +50,8 @@ classdef(ConstructOnLoad) MatrixData < ArrayData
             if nargin < 2 || isempty(index)
                 index = 1:obj.dataNum;
             end
-            
-            if any(index > obj.dataNum) || any(index < 1)
-                error("The index is out of the range")
-            end
+            assert(all(index >= 1) & all(index <= obj.dataNum),...
+                "The index is out of the range")
             out = obj.dataValue(obj.accessIndex{:}, index);
         end
         
@@ -64,9 +60,8 @@ classdef(ConstructOnLoad) MatrixData < ArrayData
             if nargin < 2 || isempty(index)
                 index = 1:obj.dataNum;
             end
-            if any(index > obj.dataNum) || any(index < 1)
-                error("The index is out of the range")
-            end
+            assert(all(index >= 1) & all(index <= obj.dataNum),...
+                "The index is out of the range")
             
             dataValue = obj.get(index);
             multiple = (numel(index) > 1);
@@ -135,14 +130,12 @@ classdef(ConstructOnLoad) MatrixData < ArrayData
     end
     
     methods(Static)
-        function obj = initializeWithValue(dataValue, multiple, name)
-            if nargin < 3 || isempty(name)
-                name = "matrixData";
-            end
+        function obj = initializeWithValue(dataValue, multiple)
             if nargin < 2 || isempty(multiple)
                 multiple = true;
             end
-            obj = MatrixData([], name);
+            obj = MatrixData();
+            obj.name = "matrixData";
             obj.append(dataValue, multiple);
         end
         

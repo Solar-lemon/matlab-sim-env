@@ -8,7 +8,7 @@ classdef MultipleSystem < BaseSystem
     methods
         function obj = MultipleSystem()
             obj = obj@BaseSystem();
-            obj.name = 'MultipleSystem';
+            obj.name = 'multipleSystem';
         end
         
         % override

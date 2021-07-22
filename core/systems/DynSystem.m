@@ -11,7 +11,7 @@ classdef DynSystem < TimeVaryingDynSystem
                 derivFun = [];
             end
             obj = obj@TimeVaryingDynSystem(initialState, derivFun, outputFun);
-            obj.name = 'DynSystem';
+            obj.name = 'dynSystem';
         end
         
         % override

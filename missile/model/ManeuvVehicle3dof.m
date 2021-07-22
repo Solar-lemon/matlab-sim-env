@@ -107,6 +107,8 @@ classdef ManeuvVehicle3dof < DynSystem
             end
             xlabel('Time [s]')
             ylabel('Position [km]')
+            grid on
+            box on
             legend()
             
             subplot(4, 1, 2)
@@ -114,6 +116,8 @@ classdef ManeuvVehicle3dof < DynSystem
             plot(timeList, velList, 'DisplayName', 'V')
             xlabel('Time [s]')
             ylabel('Speed [m/s]')
+            grid on
+            box on
             legend()
             
             subplot(4, 1, 3)
@@ -124,6 +128,8 @@ classdef ManeuvVehicle3dof < DynSystem
             end
             xlabel('Time [s]')
             ylabel('Flight path angle [deg]')
+            grid on
+            box on
             legend()
             
             subplot(4, 1, 4)
@@ -134,6 +140,8 @@ classdef ManeuvVehicle3dof < DynSystem
             end
             xlabel('Time [s]')
             ylabel('Acceleration [m/s^2]')
+            grid on
+            box on
             legend()
         end
         

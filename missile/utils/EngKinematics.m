@@ -46,14 +46,18 @@ classdef EngKinematics < handle
         end
         
         function omega = get.losRate(obj)
-            if size(obj.relVel) == 2
-                los = [obj.losVector; 0];
-                v_r = [obj.relVel; 0];
+            p_r = obj.vehicle2.pos(:) - obj.vehicle1.pos(:);
+            v_r = obj.vehicle2.vel(:) - obj.vehicle1.vel(:);
+            los = p_r/norm(p_r);
+            
+            if size(v_r) == 2
+                los = [los; 0];
+                v_r = [v_r; 0];
                 omega = cross(los, v_r);
                 omega = omega(3);
                 return
             end
-            omega = cross(obj.losVector, obj.relVel) / obj.range;
+            omega = cross(los,v_r)/norm(p_r);
         end
         
         function V_c = get.closingSpeed(obj)

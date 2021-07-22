@@ -2,18 +2,18 @@ classdef Logger < handle
     properties
         time = 0
         timer
-        history
-        nameIsInitialized = false
-        varNameList
+        data
+        varNamesAreInitialized = false
     end
     properties(Dependent)
+        logTimeInterval
         dataNum
-        valueList
+        matValues
     end
     
     methods
         function obj = Logger()
-            obj.history = MatStackedData();
+            obj.data = MatStackedData();
         end
         
         function reset(obj)
@@ -21,8 +21,8 @@ classdef Logger < handle
             if ~isempty(obj.timer)
                 obj.timer.turnOff();
             end
-            obj.history.clear();
-            obj.nameIsInitialized = false;
+            obj.data.clear();
+            obj.varNamesAreInitialized = false;
         end
         
         function turnOn(obj, logTimeInterval)
@@ -38,7 +38,7 @@ classdef Logger < handle
         end
         
         function out = isempty(obj)
-            out = (obj.dataNum == 0);
+            out = isempty(obj.data);
         end
         
         function applyTime(obj, timeFeed)
@@ -49,44 +49,61 @@ classdef Logger < handle
             if ~isempty(obj.timer)
                 obj.timer.forward(obj.time);
                 if obj.timer.checkEvent()
-                    obj.history.append(obj.time, varargin{:});
+                    obj.data.append(obj.time, varargin{:});
                 end
             end
         end
         
-        function forwardNames(obj, varargin)
+        function forwardVarNames(obj, varargin)
             names = [{'time'}, varargin(:)'];
-            if ~obj.nameIsInitialized
-                index = 1:numel(names);
-                obj.varNameList = containers.Map(...
-                    names, num2cell(index));
-                obj.nameIsInitialized = true;
+            if ~obj.varNamesAreInitialized
+                obj.data.setVarNames(names{:});
+                obj.varNamesAreInitialized = true;
             end
         end
         
-        function out = valueListByNames(obj, varargin)
-            assert(~isempty(obj.varNameList),...
-                "Define variable names first.")
-            indices = cell2mat(obj.varNameList.values(varargin));
-            out = obj.valueList(indices);
-            if numel(indices) == 1
-                out = out{:};
-            end
+        function out = matValuesByVarNames(obj, varargin)
+            % out = matValueForName1 for a single name
+            % out = {matValueForName1, ... matValueForNameN} for multiple
+            % names
+            out = obj.data.matValuesByVarNames(varargin{:});
         end
         
-        function load(obj, valueList)
-            obj.history.append(valueList{:});
+        function save(obj, filePath)
+            if isempty(obj.data)
+                fprintf("There is no data to save \n");
+                return
+            end
+            if nargin < 2 || isempty(filePath)
+                filePath = 'data/logData/logger.mat';
+            end
+            obj.data.save(filePath);
+        end
+        
+        function load(obj, filePath)
+            if nargin < 2 || isempty(filePath)
+                filePath = 'data/logData/logger.mat';
+            end
+            obj.data.load(filePath);
         end
     end
     
     % set and get methods
     methods
         function out = get.dataNum(obj)
-            out = obj.history.dataNum;
+            out = obj.data.dataNum;
         end
         
-        function out = get.valueList(obj)
-            out = obj.history.valueList;
+        function out = get.matValues(obj)
+            out = obj.data.matValues;
+        end
+        
+        function out = get.logTimeInterval(obj)
+            if isempty(obj.timer)
+                out = [];
+            else
+                out = obj.timer.eventTimeInterval;
+            end
         end
     end
     
@@ -97,8 +114,9 @@ classdef Logger < handle
             
             fprintf("== Test for Logger == \n")
             dt = 0.01;
+            logTimeInterval = 0.1;
             logger = Logger();
-            logger.turnOn(dt);
+            logger.turnOn(logTimeInterval);
             
             time = 0;
             pos = [0; 0];
@@ -106,12 +124,12 @@ classdef Logger < handle
             for i = 1:100
                 logger.applyTime(time);
                 logger.forward(pos, vel);
-                logger.forwardNames('pos', 'vel');
+                logger.forwardVarNames('pos', 'vel');
                 
                 pos = pos + vel*dt;
                 time = time + dt;
             end
-            [timeList, posList, velList] = logger.valueList{:};
+            [timeList, posList, velList] = logger.matValues{:};
             fprintf("size(timeList): (%d, %d) \n", ...
                 size(timeList, 1), size(timeList, 2))
             fprintf("size(posList): (%d, %d) \n", ...
@@ -119,13 +137,13 @@ classdef Logger < handle
             fprintf("size(velList): (%d, %d) \n \n", ...
                 size(velList, 1), size(velList, 2))
             
-            fprintf("== Using valueListByNames(varargin) == \n")
-            posList = logger.valueListByNames('pos');
-            velList = logger.valueListByNames('vel');
-            fprintf("posList = logger.valueListByNames('pos') \n")
+            fprintf("== Using matValuesByNames(varargin) == \n")
+            posList = logger.matValuesByVarNames('pos');
+            velList = logger.matValuesByVarNames('vel');
+            fprintf("posList = logger.matValuesByNames('pos') \n")
             fprintf("size(posList): (%d, %d) \n", ...
                 size(posList, 1), size(posList, 2))
-            fprintf("velList = logger.valueListByNames('vel') \n")
+            fprintf("velList = logger.matValuesByNames('vel') \n")
             fprintf("size(velList): (%d, %d) \n", ...
                 size(velList, 1), size(velList, 2))
         end

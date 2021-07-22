@@ -20,7 +20,7 @@ classdef MultiStateDynSystem < BaseSystem
                 subStateVarList{k} = StateVariable(initialState{k});
             end
             obj = obj@BaseSystem(subStateVarList);
-            obj.name = 'MultiStateDynSystem';
+            obj.name = 'multiStateDynSystem';
             obj.initialState = initialState;
             
             if isempty(derivFun)

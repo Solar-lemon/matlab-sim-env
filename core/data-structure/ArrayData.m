@@ -6,16 +6,13 @@ classdef(Abstract) ArrayData < handle
         name
     end
     methods
-        function obj = ArrayData(initSpaceSize, name)
-            if nargin < 2 || isempty(name)
-                name = "arrayData";
-            end
+        function obj = ArrayData(initSpaceSize)
             if nargin < 1 || isempty(initSpaceSize)
                 initSpaceSize = 100;
             end
             obj.initSpaceSize = initSpaceSize;
             obj.dataNum = 0;
-            obj.name = name;
+            obj.name = "arrayData";
         end
         
         function out = numel(obj)

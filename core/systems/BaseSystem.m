@@ -6,7 +6,7 @@ classdef(Abstract) BaseSystem < handle
         stateNum
         stateIndex
         logger
-        name = 'BaseSystem'
+        name = 'baseSystem'
         flag = 0
     end
     properties(Dependent)
@@ -64,8 +64,8 @@ classdef(Abstract) BaseSystem < handle
             obj.logger.turnOff();
         end
         
-        function out = historyByName(obj, varargin)
-            out = obj.logger.valueListByNames(varargin{:});
+        function out = historyByVarNames(obj, varargin)
+            out = obj.logger.matValuesByVarNames(varargin{:});
         end
         
         % to be implemented
@@ -81,6 +81,28 @@ classdef(Abstract) BaseSystem < handle
             if nargout > 1
                 flag = obj.flag;
             end
+        end
+    end
+    
+    methods
+        function save(obj, filePath)
+            if nargin < 2 || ismepty(filePath)
+                filePath = ['data/logData/', obj.name, '.mat'];
+            end
+            obj.logger.save(filePath);
+            
+            file = matfile(filePath, 'Writable', true);
+            file.state = obj.state;
+        end
+        
+        function load(obj, filePath)
+            if nargin < 2 || ismepty(filePath)
+                filePath = ['data/logData/', obj.name, '.mat'];
+            end
+            obj.logger.load(filePath);
+            
+            file = matfile(filePath);
+            obj.applyState(file.state);
         end
     end
     
@@ -100,7 +122,7 @@ classdef(Abstract) BaseSystem < handle
         function out = get.history(obj)
             assert(obj.logger.dataNum > 0,...
                 "There is no simulation data to save \n")
-            out = obj.logger.valueList;
+            out = obj.logger.matValues;
         end
     end
     

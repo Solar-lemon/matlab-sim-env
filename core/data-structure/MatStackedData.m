@@ -1,39 +1,40 @@
 classdef(ConstructOnLoad) MatStackedData < StackedData
     properties(Dependent)
-        valueList
+        matValues
     end
     methods
-        function obj = MatStackedData(initSpaceSize, name)
+        function obj = MatStackedData(initSpaceSize)
             % obj.dataValue: {MatrixData; MatrixData; ...}
-            if nargin < 2 || isempty(name)
-                name = "matStackedData";
-            end
             if nargin < 1
                 initSpaceSize = [];
             end
-            obj = obj@StackedData(initSpaceSize, name);
+            obj = obj@StackedData(initSpaceSize);
+            obj.name = "matStackedData";
         end
         
         % override
         function append(obj, varargin)
             % varargin = {value1, ..., valueK, multiple} or
             % varargin = {value1, ..., valueK}
-            if isa(varargin{end}, 'logical')
-                stackedNum = numel(varargin) - 1;
-                multiple = varargin{end};
-            else
-                stackedNum = numel(varargin);
-                multiple = false;
-            end
-            
             if isempty(obj.dataValue)
-                obj.dataValue = cell(stackedNum, 1);
-                for k = 1:stackedNum
+                if isa(varargin{end}, 'logical')
+                    obj.stackedNum = numel(varargin) - 1;
+                else
+                    obj.stackedNum = numel(varargin);
+                end
+                obj.dataValue = cell(obj.stackedNum, 1);
+                for k = 1:obj.stackedNum
                     obj.dataValue{k} = MatrixData();
                 end
             end
             
-            for k = 1:stackedNum
+            if isa(varargin{end}, 'logical')
+                multiple = varargin{end};
+            else
+                multiple = false;
+            end
+            
+            for k = 1:obj.stackedNum
                 data = varargin{k};
                 obj.dataValue{k}.append(data, multiple);
                 obj.dataNum = max(obj.dataNum, obj.dataValue{k}.dataNum);
@@ -45,9 +46,8 @@ classdef(ConstructOnLoad) MatStackedData < StackedData
             if nargin < 2 || isempty(index)
                 index = 1:obj.dataNum;
             end
-            if any(index > obj.dataNum) || any(index < 1)
-                error("The index is out of the range")
-            end
+            assert(all(index >= 1) & all(index <= obj.dataNum),...
+                "The index is out of the range")
             
             varargout = cell(1, nargout);
             for k = 1:nargout
@@ -60,13 +60,11 @@ classdef(ConstructOnLoad) MatStackedData < StackedData
             if nargin < 2 || isempty(index)
                 index = 1:obj.dataNum;
             end
-            if any(index > obj.dataNum) || any(index < 1)
-                error("The index is out of the range")
-            end
+            assert(all(index >= 1) & all(index <= obj.dataNum),...
+                "The index is out of the range")
             
-            stackedNum = size(obj.dataValue, 1);
             subDataValue = cell(size(obj.dataValue));
-            for k = 1:stackedNum
+            for k = 1:obj.stackedNum
                 subDataValue{k} = obj.dataValue{k}.get(index);
             end
             
@@ -74,14 +72,54 @@ classdef(ConstructOnLoad) MatStackedData < StackedData
             newObj = MatStackedData();
             newObj.append(subDataValue{:}, multiple);
         end
+        
+        function out = matValuesByVarNames(obj, varargin)
+            % out = matValueForName1 for a single name
+            % out = {matValueForName1, ... matValueForNameN} for multiple
+            % names
+            assert(~isempty(obj.varNames),...
+                "Define variable names first.")
+            varInd = cell2mat(obj.varNames.values(varargin));
+            out = obj.matValues(varInd);
+            if numel(varInd) == 1
+                out = out{:};
+            end
+        end
+        
+        function save(obj, filePath)
+            if isempty(obj)
+                fprintf("There is no data to save \n");
+                return
+            end
+            filePath = convertCharsToStrings(filePath);
+            strArray = split(filePath, "/");
+            folder = join(strArray(1:end - 1), "/");
+            if ~isfolder(folder)
+                mkdir(folder)
+            end
+            
+            dataToSave.dataNum = obj.dataNum;
+            dataToSave.matValues = obj.matValues;
+            dataToSave.varNames = obj.varNames;
+            save(filePath, '-struct', 'dataToSave');
+        end
+        
+        function load(obj, filePath)
+            loadedData = load(filePath);
+            obj.clear();
+            
+            multiple = (loadedData.dataNum > 1);
+            obj.append(loadedData.matValues{:}, multiple);
+            obj.varNames = loadedData.varNames;
+        end
     end
     
     % set and get methods
     methods
-        function out = get.valueList(obj)
-            stackedNum = size(obj.dataValue, 1);
-            out = cell(stackedNum, 1);
-            for k = 1:stackedNum
+        function out = get.matValues(obj)
+            assert(obj.dataNum > 0, "No data is present.")
+            out = cell(obj.stackedNum, 1);
+            for k = 1:obj.stackedNum
                 out{k} = obj.dataValue{k}.get();
             end
         end
