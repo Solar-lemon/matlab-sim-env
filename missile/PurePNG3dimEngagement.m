@@ -32,8 +32,10 @@ classdef PurePNG3dimEngagement < MultipleSystem
             a_M = obj.purePng.forward(R_VL, v_M, omega);
             obj.missile.forward(a_M);
             
-            obj.logger.forward(omega, r);
-            obj.logger.forwardVarNames('losRate', 'range');
+            if obj.logger.toLog()
+                obj.logger.forward(omega, r);
+                obj.logger.forwardVarNames('losRate', 'range');
+            end
         end
         
         % implement
