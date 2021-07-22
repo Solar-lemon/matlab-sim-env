@@ -33,7 +33,7 @@ classdef PurePNG3dimEngagement < MultipleSystem
             obj.missile.forward(a_M);
             
             obj.logger.forward(omega, r);
-            obj.logger.forwardNames('losRate', 'range');
+            obj.logger.forwardVarNames('losRate', 'range');
         end
         
         % implement
@@ -53,7 +53,7 @@ classdef PurePNG3dimEngagement < MultipleSystem
         end
         
         function out = missDistance(obj)
-            rangeList = obj.historyByName('range');
+            rangeList = obj.historyByVarNames('range');
             out = min(rangeList);
         end
         
@@ -67,7 +67,7 @@ classdef PurePNG3dimEngagement < MultipleSystem
             obj.missile.plotPath(figs{1});
             obj.target.plotPos(figs{1});
             
-            temp = obj.historyByName('time', 'losRate');
+            temp = obj.historyByVarNames('time', 'losRate');
             [timeList, losRateList] = temp{:};
             losRateList = rad2deg(losRateList);
             
