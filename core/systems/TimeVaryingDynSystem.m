@@ -17,7 +17,7 @@ classdef TimeVaryingDynSystem < BaseSystem
             end
             stateVarList = {StateVariable(initialState(:))};
             obj = obj@BaseSystem(stateVarList);
-            obj.name = 'TimeVaryingDynSystem';
+            obj.name = 'timeVaryingDynSystem';
             obj.initialState = initialState;
             
             if isempty(derivFun)
@@ -110,43 +110,6 @@ classdef TimeVaryingDynSystem < BaseSystem
     end
     
     methods
-        function saveSimData(obj, folder, filename)
-            if isempty(obj.logger)
-                fprintf("There is no simulation data to save \n");
-                return
-            end
-            
-            if nargin < 3 || isempty(filename)
-                filename = ['sim_data_', obj.name, '.mat'];
-            end
-            if nargin < 2 || isempty(folder)
-                folder = 'data/';
-            end
-            
-            if ~isfolder(folder)
-                mkdir(folder);
-            end
-            
-            location = [folder, filename];
-            simData = obj.logger.valueList;
-            save(location, 'simData');
-        end
-        
-        function loadSimData(obj, folder, filename)
-            if nargin < 3 || isempty(filename)
-                filename = ['sim_data_', obj.name, '.mat'];
-            end
-            if nargin < 2 || isempty(folder)
-                folder = 'data/';
-            end
-            
-            location = [folder, filename];
-            load(location, 'simData');
-            
-            obj.logger = Logger();
-            obj.logger.load(simData);
-        end
-        
         function fig = plot(obj, fig)
             if obj.stateNum > 4
                 return

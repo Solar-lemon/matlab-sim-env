@@ -1,6 +1,7 @@
 classdef(ConstructOnLoad) StackedData < ArrayData
     properties
         stackedNum
+        varNames
     end
     methods
         function obj = StackedData(initSpaceSize)
@@ -64,12 +65,32 @@ classdef(ConstructOnLoad) StackedData < ArrayData
         
         % implement
         function clear(obj)
+            obj.dataNum = 0;
             for k = 1:obj.stackedNum
                 if ~isempty(obj.dataValue{k})
                     obj.dataValue{k}.clear();
                 end
             end
-            obj.dataNum = 0;
+        end
+        
+        function setVarNames(obj, varargin)
+            % varargin = {varName1, varName2, ..., varNameN}
+            varInd = 1:numel(varargin);
+            obj.varNames = containers.Map(...
+                varargin, num2cell(varInd));
+        end
+        
+        function out = dataValuesByVarNames(obj, varargin)
+            % out = dataValueForName1 for a single name
+            % out = {dataValueForName1, ... dataValueForNameN} for multiple
+            % names
+            assert(~isempty(obj.varNames),...
+                "Define variable names first.")
+            varInd = cell2mat(obj.varNames.values(varargin));
+            out = obj.dataValue(varInd);
+            if numel(varInd) == 1
+                out = out{:};
+            end
         end
     end
 end

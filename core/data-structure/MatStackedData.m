@@ -72,6 +72,46 @@ classdef(ConstructOnLoad) MatStackedData < StackedData
             newObj = MatStackedData();
             newObj.append(subDataValue{:}, multiple);
         end
+        
+        function out = matValuesByVarNames(obj, varargin)
+            % out = matValueForName1 for a single name
+            % out = {matValueForName1, ... matValueForNameN} for multiple
+            % names
+            assert(~isempty(obj.varNames),...
+                "Define variable names first.")
+            varInd = cell2mat(obj.varNames.values(varargin));
+            out = obj.matValues(varInd);
+            if numel(varInd) == 1
+                out = out{:};
+            end
+        end
+        
+        function save(obj, filePath)
+            if isempty(obj)
+                fprintf("There is no data to save \n");
+                return
+            end
+            filePath = convertCharsToStrings(filePath);
+            strArray = split(filePath, "/");
+            folder = join(strArray(1:end - 1), "/");
+            if ~isfolder(folder)
+                mkdir(folder)
+            end
+            
+            dataToSave.dataNum = obj.dataNum;
+            dataToSave.matValues = obj.matValues;
+            dataToSave.varNames = obj.varNames;
+            save(filePath, '-struct', 'dataToSave');
+        end
+        
+        function load(obj, filePath)
+            loadedData = load(filePath);
+            obj.clear();
+            
+            multiple = (loadedData.dataNum > 1);
+            obj.append(loadedData.matValues{:}, multiple);
+            obj.varNames = loadedData.varNames;
+        end
     end
     
     % set and get methods
