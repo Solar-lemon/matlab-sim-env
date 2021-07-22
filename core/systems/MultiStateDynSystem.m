@@ -65,7 +65,9 @@ classdef MultiStateDynSystem < BaseSystem
         
         % implement
         function out = forward(obj, varargin)
-            obj.logger.forward(obj.stateValueList{:}, varargin{:});
+            if obj.logger.toLog()
+                obj.logger.forward(obj.stateValueList{:}, varargin{:});
+            end
             
             if isa(obj.derivFun, 'BaseFunction')
                 derivList = obj.derivFun.forward(obj.stateValueList{:}, varargin{:});

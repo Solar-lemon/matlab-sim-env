@@ -28,8 +28,7 @@ classdef FirstOrderDyn < LinearDynFun
             u_step = 1;
             simulator.propagate(0.01, 10, true, u_step);
             
-            history = system.history;
-            [timeList, stateList, inputList] = history.get();
+            [timeList, stateList, inputList] = system.history{:};
             figure();
             hold on
             plot(timeList, inputList, '-', 'DisplayName', 'Reference')

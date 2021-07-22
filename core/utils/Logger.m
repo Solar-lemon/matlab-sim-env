@@ -43,6 +43,15 @@ classdef Logger < handle
         
         function applyTime(obj, timeFeed)
             obj.time = timeFeed;
+            obj.timer.forward(timeFeed);
+        end
+        
+        function out = toLog(obj)
+            if ~isempty(obj.timer)
+                out = obj.timer.checkEvent();
+            else
+                out = false;
+            end
         end
         
         function forward(obj, varargin)
@@ -123,8 +132,10 @@ classdef Logger < handle
             vel = [1; 0];
             for i = 1:100
                 logger.applyTime(time);
-                logger.forward(pos, vel);
-                logger.forwardVarNames('pos', 'vel');
+                if logger.toLog()
+                    logger.forward(pos, vel);
+                    logger.forwardVarNames('pos', 'vel');
+                end
                 
                 pos = pos + vel*dt;
                 time = time + dt;
