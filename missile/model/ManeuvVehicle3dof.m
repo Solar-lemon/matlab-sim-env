@@ -18,6 +18,13 @@ classdef ManeuvVehicle3dof < DynSystem
     methods
         function obj = ManeuvVehicle3dof(initialState)
             obj = obj@DynSystem(initialState);
+            
+            function stateFeed = angleCorrectionFun(stateFeed)
+                % gamma should be in [-pi, pi] rad
+                % chi should be in [-pi, pi] rad
+                stateFeed(5:6) = ManeuvVehicle3dof.wrapToPi(stateFeed(5:6));
+            end
+            obj.stateVar.attachCorrectionFun(@angleCorrectionFun);
         end
         
         % override
@@ -38,14 +45,6 @@ classdef ManeuvVehicle3dof < DynSystem
             chi_dot = a_y/(V*cos(gamma));
             
             out = [p_n_dot; p_e_dot; p_d_dot; V_dot; gamma_dot; chi_dot];
-        end
-        
-        % override
-        function applyState(obj, stateFeed)
-            % gamma should be in [-pi, pi] rad
-            % chi should be in [-pi, pi] rad
-            stateFeed(5:6) = ManeuvVehicle3dof.wrapToPi(stateFeed(5:6));
-            applyState@DynSystem(obj, stateFeed);
         end
         
         function out = get.pos(obj)
