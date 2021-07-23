@@ -32,7 +32,7 @@ classdef(Abstract) BaseSystem < handle
         function applyState(obj, stateFeed)
             for k = 1:obj.stateVarNum
                 index = obj.stateIndex{k};
-                obj.stateVarList{k}.flatValue = stateFeed(index, 1);
+                obj.stateVarList{k}.setFlatValue(stateFeed(index, 1));
             end
         end
         

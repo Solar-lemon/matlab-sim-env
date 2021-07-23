@@ -50,7 +50,7 @@ classdef TimeVaryingDynSystem < BaseSystem
         
         % override
         function applyState(obj, stateFeed)
-            obj.stateVar.flatValue = stateFeed;
+            obj.stateVar.setFlatValue(stateFeed);
         end
         
         % override

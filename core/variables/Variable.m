@@ -1,7 +1,8 @@
 classdef Variable < handle
     properties
-        shape
         value
+        shape
+        correctionFun
     end
     properties(Dependent)
         flatValue
@@ -9,24 +10,41 @@ classdef Variable < handle
     
     methods
         function obj = Variable(value)
-            obj.shape = size(value);
             obj.value = value;
+            obj.shape = size(value);
         end
         
+        % implement
         function out = numel(obj)
             out = prod(obj.shape);
+        end
+        
+        function attachCorrectionFun(obj, correctionFun)
+            % correctionFun is a function_handle
+            obj.correctionFun = correctionFun;
         end
     end
     % Set and get methods
     methods
+        function setValue(obj, value)
+            if ~isempty(obj.correctionFun)
+                value = obj.correctionFun(value);
+            end
+            obj.value = value;
+        end
+        
+        function setFlatValue(obj, flatValue)
+            assert(numel(flatValue) == numel(obj),...
+                "The number of elements does not match.")
+            setValue(obj, reshape(flatValue, obj.shape));
+        end
+        
         function out = get.flatValue(obj)
             out = reshape(obj.value, [], 1);
         end
         
         function set.flatValue(obj, flatValue)
-            assert(numel(flatValue) == numel(obj),...
-                "The number of elements does not match.")
-            obj.value = reshape(flatValue, obj.shape);
+            setFlatValue(obj, flatValue);
         end
     end
     methods(Static)

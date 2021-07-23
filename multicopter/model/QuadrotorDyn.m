@@ -11,6 +11,15 @@ classdef QuadrotorDyn < MultiStateDynSystem
             obj = obj@MultiStateDynSystem(initialState);
             obj.m = m;
             obj.J = J;
+            
+            function R = rotationCorrectionFun(R)
+                % rotation matrix should be orthogonal
+                isOrthogonal = Orientations.checkOrthogonality(R);
+                if ~isOrthogonal
+                    R = Orientations.correctOrthogonality(R);
+                end
+            end
+            obj.stateVarList{3}.attachCorrectionFun(@rotationCorrectionFun);
         end
         
         % override
@@ -29,19 +38,6 @@ classdef QuadrotorDyn < MultiStateDynSystem
             omega_dot = obj.J\(-cross(omega, obj.J*omega) + tau);
             
             out = {p_dot, v_dot, R_dot, omega_dot};
-        end
-        
-        % override
-        function applyState(obj, stateFeed)
-            % rotation matrix should be orthogonal
-            applyState@MultiStateDynSystem(obj, stateFeed);
-            R = obj.stateVarList{3}.value;
-            isOrthogonal = Orientations.checkOrthogonality(R);
-            if ~isOrthogonal
-                obj.stateVarList{3}.value = ...
-                    Orientations.correctOrthogonality(R);
-            end
-            
         end
         
         function figs = plot(obj, figs)
