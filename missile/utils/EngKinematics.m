@@ -50,14 +50,14 @@ classdef EngKinematics < handle
             v_r = obj.vehicle2.vel(:) - obj.vehicle1.vel(:);
             los = p_r/norm(p_r);
             
-            if size(v_r) == 2
+            if numel(v_r) == 2
                 los = [los; 0];
                 v_r = [v_r; 0];
-                omega = cross(los, v_r);
+                omega = cross(los, v_r)/norm(p_r);
                 omega = omega(3);
                 return
             end
-            omega = cross(los,v_r)/norm(p_r);
+            omega = cross(los, v_r)/norm(p_r);
         end
         
         function V_c = get.closingSpeed(obj)
