@@ -1,3 +1,6 @@
 [submodule "lie-algebra"]
 	path = lie-algebra
 	url = https://github.com/Solar-lemon/lie-algebra.git
+[submodule "matlab-deriv-operation"]
+	path = matlab-deriv-operation
+	url = https://github.com/Solar-lemon/matlab-deriv-operation.git
