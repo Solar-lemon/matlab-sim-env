@@ -1,11 +1,20 @@
 classdef GeoAttTracking < MultipleSystem
+    properties(Constant)
+        STAB_MODE = 0
+        TRACK_MODE = 1
+    end
     properties
         quadrotor
         attControl
+        testMode
     end
     methods
-        function obj = GeoAttTracking()
+        function obj = GeoAttTracking(testMode)
+            if nargin < 1
+                testMode = GeoAttTracking.STAB_MODE;
+            end
             obj = obj@MultipleSystem();
+            obj.testMode = testMode;
             
             % quadrotor model
             m = 4.34;
@@ -13,10 +22,15 @@ classdef GeoAttTracking < MultipleSystem
             
             pos = [0; 0; 0];
             vel = [0; 0; 0];
-            R_iv = [...
-                1, 0, 0;
-                0, -0.9995, -0.0314;
-                0, 0.0314, -0.9995];
+            switch testMode
+                case GeoAttTracking.STAB_MODE
+                    R_iv = [...
+                        1, 0, 0;
+                        0, -0.9995, -0.0314;
+                        0, 0.0314, -0.9995];
+                case GeoAttTracking.TRACK_MODE
+                    R_iv = eye(3);
+            end
             omega = [0; 0; 0];
             initialState = {pos, vel, R_iv, omega};
             
@@ -32,8 +46,21 @@ classdef GeoAttTracking < MultipleSystem
         
         % implement
         function forward(obj)
-            R_d = eye(3);
-            omega_d = zeros(3, 1);
+            switch obj.testMode
+                case GeoAttTracking.STAB_MODE
+                    R_d = eye(3);
+                    omega_d = zeros(3, 1);
+                case GeoAttTracking.TRACK_MODE
+                    tVar = IndepVariable(obj.time, 1);
+                    phi = 0.1*sin(2*pi*tVar/5);
+                    theta = 0.1*sin(2*pi*tVar/10);
+                    psi = 0.1*tVar;
+                    
+                    R_dVar = Orientations.eulerAnglesToRotation(phi, theta, psi).';
+                    R_d = R_dVar.deriv(0);
+                    R_d_dot = R_dVar.deriv(1);
+                    omega_d = So3Algebra(R_d.'*R_d_dot).vector;
+            end
             
             quadState = obj.quadrotor.stateValueList;
             R = quadState{3};
