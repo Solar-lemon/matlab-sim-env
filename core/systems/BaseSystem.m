@@ -44,9 +44,9 @@ classdef(Abstract) BaseSystem < handle
         function out = stateDeriv(obj, stateFeed, timeFeed, varargin)
             % Assume that stateFeed and timeFeed are always given
             % together
-            applyState(obj, stateFeed);
-            applyTime(obj, timeFeed);
-            forward(obj, varargin{:});
+            obj.applyState(stateFeed);
+            obj.applyTime(timeFeed);
+            obj.forwardWrapper(varargin);
             
             out = nan(obj.stateNum, 1);
             for k = 1:obj.stateVarNum
@@ -54,6 +54,23 @@ classdef(Abstract) BaseSystem < handle
                 index = obj.stateIndex{k};
                 out(index, 1) = stateVar.flatDeriv;
             end
+        end
+        
+        function forwardWrapper(obj, inValues)
+            inputsToForward = cell(size(inValues));
+            for i = 1:numel(inValues)
+                if isa(inValues{i}, 'numeric')
+                    inputsToForward{i} = inValues{i};
+                elseif isa(inValues{i}, 'function_handle')
+                    inputsToForward{i} = inValues{i}(obj.time);
+                elseif isa(inValues{i}, 'BaseFunction')
+                    if isa(inValues{i}, 'DiscreteFunction')
+                        inValues{i}.applyTime(obj.time);
+                    end
+                    inputsToForward{i} = inValues{i}.forward(obj.time);
+                end
+            end
+            obj.forward(inputsToForward{:});
         end
         
         function startLogging(obj, logTimeInterval)

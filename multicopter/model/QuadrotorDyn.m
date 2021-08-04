@@ -41,6 +41,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
         end
         
         function figs = plot(obj, figs)
+            set(0,'DefaultFigureWindowStyle','docked')
             if nargin < 2
                 figs = cell(7, 1);
                 for k = 1:7
@@ -62,6 +63,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
             end
             
             figure(figs{1});
+            figs{1}.Name = 'Position';
             sgtitle('Position')
             ylabelList = {'x [m]', 'y [m]', 'z [m]'};
             for k = 1:3
@@ -75,6 +77,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
             end
             
             figure(figs{2});
+            figs{2}.Name = 'Velocity';
             sgtitle('Velocity')
             ylabelList = {'v_x [m/s]', 'v_y [m/s]', 'v_z [m/s]'};
             for k = 1:3
@@ -88,6 +91,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
             end
             
             figure(figs{3});
+            figs{3}.Name = 'Rotation matrix';
             sgtitle('Rotation matrix')
             for j = 1:3
                 subplot(3, 1, j)
@@ -105,6 +109,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
             end
             
             figure(figs{4});
+            figs{4}.Name = 'Quaternion';
             sgtitle('Quaternion')
             hold on
             for k = 1:4
@@ -119,6 +124,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
             legend()
             
             figure(figs{5});
+            figs{5}.Name = 'Euler angles';
             sgtitle('Euler angles')
             ylabelList = {'phi [deg]', 'theta [deg]', 'psi [deg]'};
             for k = 1:3
@@ -132,6 +138,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
             end
             
             figure(figs{6});
+            figs{6}.Name = 'Angular velocity';
             sgtitle('Angular velocity')
             ylabelList = {'omega_x [deg/s]', 'omega_y [deg/s]', 'omega_z [deg/s]'};
             for k = 1:3
@@ -145,6 +152,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
             end
             
             figure(figs{7});
+            figs{7}.Name = 'Control input';
             sgtitle('Control input')
             ylabelList = {'f [N]', 'tau_x [N*m]', 'tau_y [N*m]', 'tau_z [N*m]'};
             for k = 1:4
@@ -156,6 +164,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
                 grid on
                 box on
             end
+            set(0,'DefaultFigureWindowStyle','normal')
         end
     end
     

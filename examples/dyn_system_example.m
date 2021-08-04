@@ -1,7 +1,11 @@
 clear
 clc
 close all
+
 addpath(genpath('../core'))
+addpath(genpath('../common'))
+set(0,'DefaultFigureWindowStyle','docked')
+
 fprintf('== Test for SecondOrderDynSystem == \n')
 
 zeta = 0.5;
@@ -55,4 +59,20 @@ fig3 = figure();
 sgtitle('class inheritance')
 system3.plot(fig3);
 
+% Time varying input test
+fprintf("Time varying input test \n")
+u_varying = @(t) sin(2*pi*t/10);
+tic
+system4 = SecondOrderDynSystem([0; 0], zeta, omega);
+Simulator(system4).propagate(dt, finalTime, true, u_varying);
+elapsedTime = toc;
+
+fprintf("Elapsed time: %.2f [s] \n\n", elapsedTime);
+
+fig4 = figure();
+sgtitle('time varying input')
+system4.plot(fig4);
+
 rmpath(genpath('../core'))
+rmpath(genpath('../common'))
+set(0,'DefaultFigureWindowStyle','normal')
