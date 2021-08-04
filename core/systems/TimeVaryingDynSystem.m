@@ -57,9 +57,9 @@ classdef TimeVaryingDynSystem < BaseSystem
         function out = stateDeriv(obj, stateFeed, timeFeed, varargin)
             % Assume that stateFeed and timeFeed are always given
             % together
-            applyState(obj, stateFeed);
-            applyTime(obj, timeFeed);
-            forward(obj, varargin{:});
+            obj.applyState(stateFeed);
+            obj.applyTime(timeFeed);
+            obj.forwardWrapper(varargin);
             
             out = obj.stateVar.flatDeriv;
         end
