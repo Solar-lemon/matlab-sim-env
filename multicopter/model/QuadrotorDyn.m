@@ -1,16 +1,17 @@
 classdef QuadrotorDyn < MultiStateDynSystem
     properties
-        % m: mass [kg], J: inertia [kg*m^2], g: gravity [m/s^2]
+        % m: mass [kg], J: inertia [kg*m^2], gravAccel: gravity [m/s^2]
         m
         J
-        g = 9.805
         e3 = [0; 0; 1];
+        gravAccel
     end
     methods
         function obj = QuadrotorDyn(initialState, m, J)
             obj = obj@MultiStateDynSystem(initialState);
             obj.m = m;
             obj.J = J;
+            obj.gravAccel = FlatEarthEnv.gravAccel*obj.e3;
             
             function R = rotationCorrectionFun(R)
                 % rotation matrix should be orthogonal
@@ -33,7 +34,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
             tau = u(2:4);
             
             p_dot = v;
-            v_dot = obj.g*obj.e3 - 1/obj.m*(f*R*obj.e3);
+            v_dot = obj.gravAccel - 1/obj.m*(f*R*obj.e3);
             R_dot = R*QuadrotorDyn.hat(omega);
             omega_dot = obj.J\(-cross(omega, obj.J*omega) + tau);
             

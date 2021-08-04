@@ -80,3 +80,52 @@ $$
 J\dot{e}_{\Omega}=-k_{R}e_{R} - k_{\Omega}e_{\Omega}; \quad J\dot{e}_{\Omega} + k_{R}e_{R} + k_{\Omega}e_{\Omega} = 0
 $$
 
+
+
+#### Position Tracking Control
+
+Equations of motion for the position dynamics are
+$$
+\begin{align*}
+\dot{x} &= v \\
+\dot{v} &= ge_{3} - \frac{1}{m}fRe_{3} = ge_{3} - \frac{1}{m}F
+\end{align*}
+$$
+where the z-axis of the frame is along the direction of the gravity. The position error and velocity error are defined as
+$$
+e_{x} = x - x_{d},\quad e_{v} = v - v_{d}
+$$
+Let us define the right-hand side of the second equation as $u$. That is,
+$$
+u = ge_{3} - \frac{1}{m}fRe_{3} = ge_{3} - \frac{1}{m}F
+$$
+The desired value of $u$ is designed as
+$$
+u_{d}=-k_xe_x - k_ve_v + \ddot{x}_{d}
+$$
+Then, the desired value of $F=fRe_{3}$ can be determined from the relation
+$$
+\begin{align*}
+ge_{3} - \frac{1}{m}F_{d} &= -k_{x}e_{x} - k_{v}e_{v} + \ddot{x}_{d} \\
+\therefore F_{d} &= m \left(k_{x}e_{x} + k_{v}e_{v} + ge_{3} - \ddot{x}_{d} \right) 
+\end{align*}
+$$
+The total thrust is determined as
+$$
+f = F_{d} \cdot z_{B} = F_{d} \cdot (Re_{3})
+$$
+where $z_{B}$ denotes the unit vector along the z-axis of the body frame. The desired orientation is determined as
+$$
+\begin{align*}
+x_{C, d} &= \begin{bmatrix}
+\cos\psi_{d} \\
+\sin\psi_{d} \\
+0
+\end{bmatrix} \\
+z_{B, d} &= \frac{F_{d}}{\Vert F_{d} \Vert} \\
+y_{B, d} &= \frac{z_{B, d} \times x_{C, d}}{\Vert z_{B, d} \times x_{C, d} \Vert} \\
+x_{B, d} &= y_{B, d} \times z_{B, d} \\
+R_{d} &= \begin{bmatrix} x_{B, d} & y_{B, d} & z_{B, d} \end{bmatrix}
+\end{align*}
+$$
+where $\psi_{d}$ is the desired heading angle (yaw angle) and $x_{B, d}, y_{B, d}, z_{B, d}$ denote unit vectors along the axes of the body frame.

@@ -4,17 +4,15 @@ classdef PosQuatControl < BaseFunction
     properties
         m
         K
-        grav
+        e3 = [0; 0; 1];
         n = [0; 0; -1];
+        gravAccel
     end
     methods
-        function obj = PosQuatControl(m, K, grav)
-            if nargin < 3
-                grav = 9.805*[0; 0; 1];
-            end
+        function obj = PosQuatControl(m, K)
             obj.m = m;
             obj.K = K;
-            obj.grav = grav;
+            obj.gravAccel = FlatEarthEnv.gravAccel*obj.e3;
         end
         
         % implement
@@ -23,7 +21,7 @@ classdef PosQuatControl < BaseFunction
             x_d = [p_d; v_d];
             u = -obj.K*(x - x_d);
             
-            u_pd = u - obj.grav;
+            u_pd = u - obj.gravAccel;
             f = obj.m*norm(u_pd);
             
             r_d = [...

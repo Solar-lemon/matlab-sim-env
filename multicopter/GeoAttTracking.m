@@ -47,28 +47,22 @@ classdef GeoAttTracking < MultipleSystem
         end
         
         % implement
-        function forward(obj, R_d)
+        function forward(obj, var_R_d)
             switch obj.testMode
                 case GeoAttTracking.STAB_MODE
-                    % R_d and omega_d are fixed.
-                    R_d = eye(3);
-                    omega_d = zeros(3, 1);
+                    % var_R_d are constant.
+                    var_R_d = DerivVariable(eye(3));
                 case GeoAttTracking.TRACK_MODE
-                    % R_d is an object of DerivVariable.
-                    R_d_0 = R_d.deriv(0);
-                    R_d_1 = R_d.deriv(1);
-                    
-                    R_d = R_d_0;
-                    omega_d = So3Algebra(R_d_0.'*R_d_1).vector;
+                    % var_R_d is an object of DerivVariable.
             end
             
             quadState = obj.quadrotor.stateValueList;
             R = quadState{3};
             omega = quadState{4};
             
-            Psi = GeoAttTrackingControl.attitudeError(R, R_d);
-            f = obj.quadrotor.m*obj.quadrotor.g;
-            tau = obj.attControl.forward(R, omega, R_d, omega_d);
+            Psi = GeoAttTrackingControl.attitudeError(R, var_R_d.deriv(0));
+            f = obj.quadrotor.m*FlatEarthEnv.gravAccel;
+            tau = obj.attControl.forward(R, omega, var_R_d);
             
             obj.quadrotor.forward([f; tau]);
             if obj.logger.toLog()
