@@ -21,8 +21,8 @@ classdef GeoPosTracking < MultipleSystem
             obj.quadrotor = QuadrotorDyn(initialState, m, J);
             
             % position controller
-            k_x = 16*m;
-            k_v = 5.6*m;
+            k_x = 16;
+            k_v = 5.6;
             obj.posControl = DiscreteFunction(...
                 GeoPosTrackingControl(m, k_x, k_v), 1/100); % 100 [Hz]
             
@@ -43,8 +43,8 @@ classdef GeoPosTracking < MultipleSystem
             [p, v, R, omega] = obj.quadrotor.stateValueList{:};
             out = obj.posControl.forward(...
                 p, v, R, var_x_d, var_psi_d);
-            [f, R_d, omega_d] = out{:};
-            tau = obj.attControl.forward(R, omega, R_d, omega_d);
+            [f, var_R_d] = out{:};
+            tau = obj.attControl.forward(R, omega, var_R_d);
             
             obj.quadrotor.forward([f; tau]);
         end
