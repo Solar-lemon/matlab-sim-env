@@ -13,8 +13,10 @@ dt = 0.01;
 finalTime = 5;
 simulation = GeoAttTracking(testMode);
 
+trajFun = DiscreteFunction(@trajectory, 1/100); % 100 [Hz]
+
 tic
-Simulator(simulation).propagate(dt, finalTime, true);
+Simulator(simulation).propagate(dt, finalTime, true, trajFun);
 elapsedTime = toc;
 
 simulation.quadrotor.plot();
@@ -25,3 +27,13 @@ rmpath(genpath('../core'))
 rmpath(genpath('../lie-algebra'))
 rmpath(genpath('../matlab-deriv-operation'))
 rmpath(genpath('./'))
+
+function R_d = trajectory(time)
+t = IndepVariable(time, 1);
+phi = 0.1*sin(2*pi*t/5);
+theta = 0.1*sin(2*pi*t/10);
+psi = 0.1*t;
+
+R_d = Orientations.eulerAnglesToRotation(phi, theta, psi).';
+end
+                    

@@ -39,27 +39,27 @@ classdef GeoAttTracking < MultipleSystem
             % attitude controller
             k_R = 8.81;
             k_omega = 2.54;
-            obj.attControl = GeoAttTrackingControl(J, k_R, k_omega);
+            obj.attControl = DiscreteFunction(...
+                GeoAttTrackingControl(J, k_R, k_omega), 1/100); % 100 [Hz]
             
             obj.attachDynSystems({obj.quadrotor});
+            obj.attachDiscSystems({obj.attControl});
         end
         
         % implement
-        function forward(obj)
+        function forward(obj, R_d)
             switch obj.testMode
                 case GeoAttTracking.STAB_MODE
+                    % R_d and omega_d are fixed.
                     R_d = eye(3);
                     omega_d = zeros(3, 1);
                 case GeoAttTracking.TRACK_MODE
-                    tVar = IndepVariable(obj.time, 1);
-                    phi = 0.1*sin(2*pi*tVar/5);
-                    theta = 0.1*sin(2*pi*tVar/10);
-                    psi = 0.1*tVar;
+                    % R_d is an object of DerivVariable.
+                    R_d_0 = R_d.deriv(0);
+                    R_d_1 = R_d.deriv(1);
                     
-                    R_dVar = Orientations.eulerAnglesToRotation(phi, theta, psi).';
-                    R_d = R_dVar.deriv(0);
-                    R_d_dot = R_dVar.deriv(1);
-                    omega_d = So3Algebra(R_d.'*R_d_dot).vector;
+                    R_d = R_d_0;
+                    omega_d = So3Algebra(R_d_0.'*R_d_1).vector;
             end
             
             quadState = obj.quadrotor.stateValueList;
@@ -78,6 +78,7 @@ classdef GeoAttTracking < MultipleSystem
         end
         
         function fig = plot(obj, fig)
+            set(0,'DefaultFigureWindowStyle','docked')
             if nargin < 2
                 fig = figure();
             end
@@ -85,6 +86,7 @@ classdef GeoAttTracking < MultipleSystem
             [timeList, attErrorList] = obj.history{:};
             
             figure(fig);
+            fig.Name = 'Attitude Error Function';
             hold on
             plot(timeList, attErrorList);
             title('Attitude Error Function')
@@ -93,6 +95,8 @@ classdef GeoAttTracking < MultipleSystem
             ylim([-0.5, 2])
             grid on
             box on
+            
+            set(0,'DefaultFigureWindowStyle','normal')
         end
     end
 end
