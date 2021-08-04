@@ -1,4 +1,5 @@
 addpath(genpath('../core'))
+addpath(genpath('../common'))
 addpath(genpath('../lie-algebra'))
 addpath(genpath('./'))
 
@@ -23,5 +24,6 @@ fprintf("Elapsed time: %.2f [s] \n", elapsedTime)
 fprintf("Miss distance: %.4f [m] \n", missDistance)
 
 rmpath(genpath('../core'))
+rmpath(genpath('../common'))
 rmpath(genpath('../lie-algebra'))
 rmpath(genpath('./'))
