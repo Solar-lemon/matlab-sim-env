@@ -1,6 +1,5 @@
 classdef Simulator < handle
     properties
-        initialized = false;
         system
         stateNum
         inValues
@@ -21,27 +20,16 @@ classdef Simulator < handle
         end
         
         function step(obj, dt, varargin)
-            if ~obj.initialized
-                obj.system.forwardWrapper(varargin);
-                obj.initialized = true;
-            end
-            
-            % remember initial state values
             t0 = obj.system.time;
-            y0 = obj.system.state;
             
-            odeFun = @(y, t) obj.system.stateDeriv(y, t, varargin{:});
-            
-            k1 = odeFun(y0, t0);
-            k2 = odeFun(y0 + dt/2*k1, t0 + dt/2);
-            k3 = odeFun(y0 + dt/2*k2, t0 + dt/2);
-            k4 = odeFun(y0 + (dt - 10*eps(t0 + dt/2))*k3, t0 + dt - 10*eps(t0 + dt/2));
-            
-            % update time and states
-            t = t0 + dt;
-            y = y0 + dt*(k1 + 2*k2 + 2*k3 + k4)/6;
-            obj.system.applyTime(t);
-            obj.system.applyState(y);
+            obj.system.forwardWrapper(varargin);
+            obj.system.rk4Update1(t0, dt);
+            obj.system.forwardWrapper(varargin);
+            obj.system.rk4Update2(t0, dt);
+            obj.system.forwardWrapper(varargin);
+            obj.system.rk4Update3(t0, dt);
+            obj.system.forwardWrapper(varargin);
+            obj.system.rk4Update4(t0, dt);
             
             obj.inValues = varargin;
         end
@@ -51,36 +39,27 @@ classdef Simulator < handle
                 saveHistory = false;
             end
             
-            if ~obj.initialized
-                obj.system.forwardWrapper(varargin);
-                obj.initialized = true;
-            end
-            
             iterNum = round(time/dt);
-            
             if saveHistory
                 obj.startLogging(dt);
             end
-            t = obj.system.time;
-            y = obj.system.state;
-            odeFun = @(y, t) obj.system.stateDeriv(y, t, varargin{:});           
             for i = 1:iterNum
-                k1 = odeFun(y, t);
-                k2 = odeFun(y + dt/2*k1, t + dt/2);
-                k3 = odeFun(y + dt/2*k2, t + dt/2);
-                k4 = odeFun(y + (dt - 10*eps(t + dt/2))*k3, t + dt - 10*eps(t + dt/2));
+                t0 = obj.system.time;
                 
-                % update time and states
-                t = t + dt;
-                y = y + dt*(k1 + 2*k2 + 2*k3 + k4)/6;
+                obj.system.forwardWrapper(varargin);
+                obj.system.rk4Update1(t0, dt);
+                obj.system.forwardWrapper(varargin);
+                obj.system.rk4Update2(t0, dt);
+                obj.system.forwardWrapper(varargin);
+                obj.system.rk4Update3(t0, dt);
+                obj.system.forwardWrapper(varargin);
+                obj.system.rk4Update4(t0, dt);
                 
                 toStop = obj.system.checkStopCondition();
                 if toStop
                     break
                 end
             end
-            obj.system.applyTime(t);
-            obj.system.applyState(y);
             
             obj.inValues = varargin;
             obj.finishLogging();
