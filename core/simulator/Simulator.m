@@ -16,14 +16,13 @@ classdef Simulator < handle
         end
         
         function finishLogging(obj)
-            obj.system.forward(obj.inValues{:});
+            obj.system.forwardWrapper(obj.inValues);
             obj.system.finishLogging();
         end
         
         function step(obj, dt, varargin)
-            obj.inValues = varargin;
             if ~obj.initialized
-                obj.system.forward(varargin{:});
+                obj.system.forwardWrapper(varargin);
                 obj.initialized = true;
             end
             
@@ -43,6 +42,8 @@ classdef Simulator < handle
             y = y0 + dt*(k1 + 2*k2 + 2*k3 + k4)/6;
             obj.system.applyTime(t);
             obj.system.applyState(y);
+            
+            obj.inValues = varargin;
         end
         
         function propagate(obj, dt, time, saveHistory, varargin)
@@ -50,10 +51,8 @@ classdef Simulator < handle
                 saveHistory = false;
             end
             
-            obj.inValues = varargin;
-            
             if ~obj.initialized
-                obj.system.forward(varargin{:});
+                obj.system.forwardWrapper(varargin);
                 obj.initialized = true;
             end
             
@@ -83,6 +82,7 @@ classdef Simulator < handle
             obj.system.applyTime(t);
             obj.system.applyState(y);
             
+            obj.inValues = varargin;
             obj.finishLogging();
         end
     end
