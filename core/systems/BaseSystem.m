@@ -41,13 +41,7 @@ classdef(Abstract) BaseSystem < handle
             obj.logger.applyTime(timeFeed);
         end
         
-        function out = stateDeriv(obj, stateFeed, timeFeed, varargin)
-            % Assume that stateFeed and timeFeed are always given
-            % together
-            obj.applyState(stateFeed);
-            obj.applyTime(timeFeed);
-            obj.forwardWrapper(varargin);
-            
+        function out = flatDeriv(obj)
             out = nan(obj.stateNum, 1);
             for k = 1:obj.stateVarNum
                 stateVar = obj.stateVarList{k};
@@ -71,6 +65,34 @@ classdef(Abstract) BaseSystem < handle
                 end
             end
             obj.forward(inputsToForward{:});
+        end
+        
+        function rk4Update1(obj, t0, dt)
+            for k = 1:obj.stateVarNum
+                obj.stateVarList{k}.rk4Update1(dt);
+            end
+            obj.applyTime(t0 + dt/2);
+        end
+        
+        function rk4Update2(obj, t0, dt)
+            for k = 1:obj.stateVarNum
+                obj.stateVarList{k}.rk4Update2(dt);
+            end
+            obj.applyTime(t0 + dt/2);
+        end
+        
+        function rk4Update3(obj, t0, dt)
+            for k = 1:obj.stateVarNum
+                obj.stateVarList{k}.rk4Update3(dt);
+            end
+            obj.applyTime(t0 + dt - 10*eps(t0 + dt/2));
+        end
+        
+        function rk4Update4(obj, t0, dt)
+            for k = 1:obj.stateVarNum
+                obj.stateVarList{k}.rk4Update4(dt);
+            end
+            obj.applyTime(t0 + dt);
         end
         
         function startLogging(obj, logTimeInterval)
