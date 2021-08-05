@@ -67,28 +67,32 @@ classdef(Abstract) BaseSystem < handle
             obj.forward(inputsToForward{:});
         end
         
-        function rk4Update1(obj, t0, dt)
+        function rk4Update1(obj, t0, dt, inValues)
+            obj.forwardWrapper(inValues);
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update1(dt);
             end
             obj.applyTime(t0 + dt/2);
         end
         
-        function rk4Update2(obj, t0, dt)
+        function rk4Update2(obj, t0, dt, inValues)
+            obj.forwardWrapper(inValues);
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update2(dt);
             end
             obj.applyTime(t0 + dt/2);
         end
         
-        function rk4Update3(obj, t0, dt)
+        function rk4Update3(obj, t0, dt, inValues)
+            obj.forwardWrapper(inValues);
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update3(dt);
             end
             obj.applyTime(t0 + dt - 10*eps(t0 + dt/2));
         end
         
-        function rk4Update4(obj, t0, dt)
+        function rk4Update4(obj, t0, dt, inValues)
+            obj.forwardWrapper(inValues);
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update4(dt);
             end

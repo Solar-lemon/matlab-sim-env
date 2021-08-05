@@ -22,14 +22,10 @@ classdef Simulator < handle
         function step(obj, dt, varargin)
             t0 = obj.system.time;
             
-            obj.system.forwardWrapper(varargin);
-            obj.system.rk4Update1(t0, dt);
-            obj.system.forwardWrapper(varargin);
-            obj.system.rk4Update2(t0, dt);
-            obj.system.forwardWrapper(varargin);
-            obj.system.rk4Update3(t0, dt);
-            obj.system.forwardWrapper(varargin);
-            obj.system.rk4Update4(t0, dt);
+            obj.system.rk4Update1(t0, dt, varargin);
+            obj.system.rk4Update2(t0, dt, varargin);
+            obj.system.rk4Update3(t0, dt, varargin);
+            obj.system.rk4Update4(t0, dt, varargin);
             
             obj.inValues = varargin;
         end
@@ -46,14 +42,10 @@ classdef Simulator < handle
             for i = 1:iterNum
                 t0 = obj.system.time;
                 
-                obj.system.forwardWrapper(varargin);
-                obj.system.rk4Update1(t0, dt);
-                obj.system.forwardWrapper(varargin);
-                obj.system.rk4Update2(t0, dt);
-                obj.system.forwardWrapper(varargin);
-                obj.system.rk4Update3(t0, dt);
-                obj.system.forwardWrapper(varargin);
-                obj.system.rk4Update4(t0, dt);
+                obj.system.rk4Update1(t0, dt, varargin);
+                obj.system.rk4Update2(t0, dt, varargin);
+                obj.system.rk4Update3(t0, dt, varargin);
+                obj.system.rk4Update4(t0, dt, varargin);
                 
                 toStop = obj.system.checkStopCondition();
                 if toStop
