@@ -40,7 +40,7 @@ classdef AttQuatStabilization < MultipleSystem
             omega = quadState{4};
             q = Orientations.rotationToQuat(R_iv.');
             
-            f = obj.quadrotor.m*obj.quadrotor.g;
+            f = obj.quadrotor.m*FlatEarthEnv.gravAccel;
             tau = obj.attControl.forward(q, omega, q_d, omega_d);
             
             obj.quadrotor.forward([f; tau]);

@@ -1,4 +1,5 @@
 addpath(genpath('../core'))
+addpath(genpath('../common'))
 addpath(genpath('../lie-algebra'))
 addpath(genpath('./'))
 
@@ -14,5 +15,6 @@ Simulator(system).propagate(dt, finalTime, true);
 system.quadrotor.plot();
 
 rmpath(genpath('../core'))
+rmpath(genpath('../common'))
 rmpath(genpath('../lie-algebra'))
 rmpath(genpath('./'))

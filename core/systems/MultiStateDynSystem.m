@@ -37,7 +37,7 @@ classdef MultiStateDynSystem < BaseSystem
             end
             reset@BaseSystem(obj);
             for k = 1:obj.stateVarNum
-                obj.stateVarList{k}.value = initialState{k};
+                obj.stateVarList{k}.setValue(initialState{k});
             end
         end
         

@@ -75,14 +75,6 @@ classdef MultipleSystem < BaseSystem
         end
         
         % override
-        function out = stateDeriv(obj, stateFeed, timeFeed, varargin)
-            assert(~isempty(obj.systemList), 'Attach dynamic systems first')
-            
-            applyTime(obj, timeFeed);
-            out = stateDeriv@BaseSystem(obj, stateFeed, timeFeed, varargin{:});
-        end
-        
-        % override
         function startLogging(obj, logTimeInterval)
             startLogging@BaseSystem(obj, logTimeInterval);
             for k = 1:obj.systemNum
@@ -100,8 +92,10 @@ classdef MultipleSystem < BaseSystem
         
         % to be implemented
         function forward(obj, varargin)
+            assert(~isempty(obj.systemList),...
+                "Attach dynamic systems first")
             for k = 1:numel(obj.systemList)
-                obj.systemList{k}.forward(varargin{:});
+                obj.systemList{k}.forwardWrapper(varargin);
             end
         end
         
