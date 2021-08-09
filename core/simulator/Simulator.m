@@ -1,31 +1,38 @@
 classdef Simulator < handle
     properties
-        system
-        stateNum
+        model
         inValues
     end
     methods
-        function obj = Simulator(system)
-            obj.system = system;
-            obj.stateNum = system.stateNum;
+        function obj = Simulator(model)
+            % model: an object of BaseSystem class or its subclass
+            if nargin < 1
+                model = [];
+            end
+            obj.model = model;
         end
         
         function startLogging(obj, interval)
-            obj.system.startLogging(interval);
+            obj.model.startLogging(interval);
         end
         
         function finishLogging(obj)
-            obj.system.forwardWrapper(obj.inValues);
-            obj.system.finishLogging();
+            obj.model.forwardWrapper(obj.inValues);
+            obj.model.finishLogging();
         end
         
         function step(obj, dt, varargin)
-            t0 = obj.system.time;
+            toStop = obj.model.checkStopCondition();
+            if toStop
+                return
+            end
             
-            obj.system.rk4Update1(t0, dt, varargin);
-            obj.system.rk4Update2(t0, dt, varargin);
-            obj.system.rk4Update3(t0, dt, varargin);
-            obj.system.rk4Update4(t0, dt, varargin);
+            t0 = obj.model.time;
+            
+            obj.model.rk4Update1(t0, dt, varargin);
+            obj.model.rk4Update2(t0, dt, varargin);
+            obj.model.rk4Update3(t0, dt, varargin);
+            obj.model.rk4Update4(t0, dt, varargin);
             
             obj.inValues = varargin;
         end
@@ -40,17 +47,17 @@ classdef Simulator < handle
                 obj.startLogging(dt);
             end
             for i = 1:iterNum
-                t0 = obj.system.time;
-                
-                obj.system.rk4Update1(t0, dt, varargin);
-                obj.system.rk4Update2(t0, dt, varargin);
-                obj.system.rk4Update3(t0, dt, varargin);
-                obj.system.rk4Update4(t0, dt, varargin);
-                
-                toStop = obj.system.checkStopCondition();
+                toStop = obj.model.checkStopCondition();
                 if toStop
                     break
                 end
+                
+                t0 = obj.model.time;
+                
+                obj.model.rk4Update1(t0, dt, varargin);
+                obj.model.rk4Update2(t0, dt, varargin);
+                obj.model.rk4Update3(t0, dt, varargin);
+                obj.model.rk4Update4(t0, dt, varargin);
             end
             
             obj.inValues = varargin;
@@ -67,9 +74,9 @@ classdef Simulator < handle
             fprintf('Test for propagate method \n')
             fprintf('Simulating the system... \n')
             
-            system = ExampleSystem(); % Refer to MySystem class
-            initialState = system.state;
-            simulator = Simulator(system);
+            model = ExampleSystem(); % Refer to ExampleSystem class
+            initialState = model.state;
+            simulator = Simulator(model);
             
             dt = 0.01;
             finalTime = 5;
@@ -84,18 +91,18 @@ classdef Simulator < handle
             disp(initialState)
             fprintf('Elapsed time: %.2f [s] \n', elapsedTime);
             fprintf('State of the system after 10[s]: \n\n')
-            disp(system.state)
+            disp(model.state)
             
-            system.linearSystem.plot();
+            model.linearSystem.plot();
             
             fprintf('Test for step method \n')
-            system.reset();
+            model.reset();
             simulator.startLogging(0.01);
             for i = 1:1000
                 simulator.step(0.01);
             end
             simulator.finishLogging();
-            system.linearSystem.plot();
+            model.linearSystem.plot();
         end
     end
 end
