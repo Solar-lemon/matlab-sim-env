@@ -1,6 +1,6 @@
 classdef Missile3dof < ManeuvVehicle3dof
     properties
-       
+       fovLimit = inf;
     end
     methods
         function obj = Missile3dof(initialState)

@@ -43,13 +43,22 @@ classdef PurePNG3dimEngagement < MultipleSystem
         % implement
         function toStop = checkStopCondition(obj)
             toStop = obj.missile.checkStopCondition();
-            toStop = toStop || obj.rangeIsIncreasing;
+            toStop = toStop...
+                || obj.rangeIsIncreasing()...
+                || obj.isOutOfView();
             updateRange(obj);
         end
         
         function out = rangeIsIncreasing(obj)
             range = obj.kinematics.range;
             out = (range > obj.prevRange);
+        end
+        
+        function out = isOutOfView(obj)
+            % when the target has gone out of the field-of-view
+            losVector = obj.kinematics.losVector;
+            sigma = obj.missile.lookAngle(losVector);
+            out = (sigma > obj.missile.fovLimit);
         end
         
         function updateRange(obj)
