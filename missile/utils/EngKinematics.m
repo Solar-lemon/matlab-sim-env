@@ -32,7 +32,12 @@ classdef EngKinematics < handle
         end
         
         function out = get.losVector(obj)
-            out = obj.relPos / norm(obj.relPos);
+            relPos_ = obj.relPos;
+            if norm(relPos_) < 0.1
+                out = zeros(size(relPos_));
+                return
+            end
+            out = relPos_ / norm(relPos_);
         end
         
         function out = get.losAngle(obj)

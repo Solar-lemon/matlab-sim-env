@@ -12,6 +12,7 @@ classdef ManeuvVehicle3dof < DynSystem
     properties(Dependent)
         pos
         vel
+        velVector
         RLocalToVelocity
     end
     
@@ -61,6 +62,17 @@ classdef ManeuvVehicle3dof < DynSystem
                 V*cos(gamma)*cos(chi);
                 V*cos(gamma)*sin(chi);
                 -V*sin(gamma)];
+        end
+        
+        function out = get.velVector(obj)
+            state = obj.state;
+            gamma = state(5);
+            chi = state(6);
+            
+            out = [...
+                cos(gamma)*cos(chi);
+                cos(gamma)*sin(chi);
+                -sin(gamma)];
         end
         
         function R_VL = get.RLocalToVelocity(obj)
