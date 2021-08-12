@@ -1,10 +1,10 @@
-classdef SecondOrderDyn < LinearDynFun
+classdef SecondOrderDynFun < LinearDynFun
     properties
         zeta
         omega
     end
     methods
-        function obj = SecondOrderDyn(zeta, omega)
+        function obj = SecondOrderDynFun(zeta, omega)
             A = [...
                 0, 1;
                 -omega^2, -2*zeta*omega];
@@ -24,10 +24,10 @@ classdef SecondOrderDyn < LinearDynFun
     
     methods(Static)
         function test()
-            fprintf('== Test for SecondOrderDyn == \n')
+            fprintf('== Test for SecondOrderDynFun == \n')
             zeta = 0.5;
             omega = 1;
-            system = DynSystem([0; 0], SecondOrderDyn(zeta, omega));
+            system = DynSystem([0; 0], SecondOrderDynFun(zeta, omega));
             simulator = Simulator(system);
             
             u_step = 1;
