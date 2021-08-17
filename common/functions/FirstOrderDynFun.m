@@ -1,9 +1,9 @@
-classdef FirstOrderDyn < LinearDynFun
+classdef FirstOrderDynFun < LinearDynFun
     properties
         tau
     end
     methods
-        function obj = FirstOrderDyn(tau)
+        function obj = FirstOrderDynFun(tau)
             A = -1/tau;
             B = 1/tau;
             obj = obj@LinearDynFun(A, B);
@@ -20,9 +20,9 @@ classdef FirstOrderDyn < LinearDynFun
     
     methods(Static)
         function test()
-            fprintf('== Test for FirstOrderDyn == \n')
+            fprintf('== Test for FirstOrderDynFun == \n')
             tau = 1;
-            system = DynSystem(0, FirstOrderDyn(tau));
+            system = DynSystem(0, FirstOrderDynFun(tau));
             simulator = Simulator(system);
             
             u_step = 1;
