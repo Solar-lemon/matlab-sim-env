@@ -10,6 +10,7 @@ classdef PlanarManeuvVehicle3dof < DynSystem
     properties(Dependent)
         pos
         vel
+        speed
     end
     
     methods
@@ -134,6 +135,10 @@ classdef PlanarManeuvVehicle3dof < DynSystem
             out = [...
                 V*cos(gamma);
                 V*sin(gamma)];
+        end
+        
+        function out = get.speed(obj)
+            out = obj.state(3);
         end
     end
     methods(Static)
