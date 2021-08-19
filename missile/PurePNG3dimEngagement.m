@@ -7,18 +7,20 @@ classdef PurePNG3dimEngagement < MultipleSystem
         prevRange = inf
     end
     methods
-        function obj = PurePNG3dimEngagement(missileState)
+        function obj = PurePNG3dimEngagement(missile, target)
             if nargin < 1
-                missileState = [-5E3; -1E3; -5E3; 300; deg2rad(-5); 0];
+                missile = Missile3dof(...
+                    [-5E3; -1E3; -5E3; 300; deg2rad(-5); 0]);
+                target = StationaryVehicle3dof([0; 0; 0]);
             end
             obj = obj@MultipleSystem();
             
-            obj.missile = Missile3dof(missileState);
-            obj.target = StationaryVehicle3dof([0; 0; 0]);
+            obj.missile = missile;
+            obj.target = target;
             obj.kinematics = EngKinematics(obj.missile, obj.target);
             obj.purePng = DiscreteFunction(PurePNG3dim(3), 1/40); % 40 Hz
             
-            obj.attachDynSystems({obj.missile});
+            obj.attachDynSystems({obj.missile, obj.target});
             obj.attachDiscSystems({obj.purePng});
         end
         
@@ -33,6 +35,7 @@ classdef PurePNG3dimEngagement < MultipleSystem
             
             a_M = obj.purePng.forward(R_VL, v_M, omega);
             obj.missile.forward(a_M);
+            obj.target.forward();
             
             if obj.logger.toLog()
                 obj.logger.forward(sigma, omega, r);
@@ -81,7 +84,7 @@ classdef PurePNG3dimEngagement < MultipleSystem
             hold on
             title('3-dim Flight Path')
             obj.missile.plotPath(figs{1});
-            obj.target.plotPos(figs{1});
+            obj.target.plotPath(figs{1});
             
             temp = obj.historyByVarNames('time', 'lookAngle', 'losRate');
             [timeList, sigmaList, losRateList] = temp{:};
@@ -92,7 +95,8 @@ classdef PurePNG3dimEngagement < MultipleSystem
             figs{2}.Name = "Look angle";
             hold on
             title("Look angle")
-            plot(timeList(1:end - 1), sigmaList(1:end - 1), 'DisplayName', 'sigma')
+            plot(timeList(1:end - 1), sigmaList(1:end - 1),...
+                'DisplayName', 'sigma')
             xlabel('Time [s]')
             ylabel('Look angle [deg]')
             grid on

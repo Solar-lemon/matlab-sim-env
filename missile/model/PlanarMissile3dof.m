@@ -1,6 +1,6 @@
 classdef PlanarMissile3dof < PlanarManeuvVehicle3dof
     properties
-        
+        fovLimit = inf;
     end
     methods
         function obj = PlanarMissile3dof(initialState)
@@ -33,6 +33,11 @@ classdef PlanarMissile3dof < PlanarManeuvVehicle3dof
         function out = isCollided(obj)
             % when the altitude is less than -0.5 m
             out = (obj.state(2) < -0.5);
+        end
+        
+        function sigma = lookAngle(obj, losAngle)
+            % sigma = gamma - lambda
+            sigma = obj.state(4) - losAngle;
         end
     end
 end
