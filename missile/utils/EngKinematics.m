@@ -42,6 +42,11 @@ classdef EngKinematics < handle
         
         function out = get.losAngle(obj)
             los = obj.losVector;
+            
+            if numel(los) == 2
+                out = atan2(los(2), los(1));
+                return
+            end
             losN = los(1);
             losE = los(2);
             losD = los(3);
