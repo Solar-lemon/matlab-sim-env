@@ -1,23 +1,19 @@
-classdef PlanarStationaryVehicle3dof < handle
+classdef PlanarStationaryVehicle3dof < BaseFunction
     properties
         pos
-    end
-    properties(Dependent)
-        vel
+        vel = zeros(2, 1);
     end
     
     methods
         function obj = PlanarStationaryVehicle3dof(pos)
             obj.pos = pos;
         end
-    end
-    % set and get methods
-    methods
-        function out = get.vel(obj)
-            out = zeros(2, 1);
+        
+        function forward(obj)
+            % Do nothing
         end
         
-        function fig = plotPos(obj, fig)
+        function fig = plotPath(obj, fig)
             if nargin < 2
                 fig = figure();
             end

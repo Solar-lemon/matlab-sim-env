@@ -12,14 +12,19 @@ fprintf("Simulating... \n")
 
 dt = 0.01;
 finalTime = 30;
-system = PurePNG2dimEngagement();
+missile = PlanarMissile3dof(...
+    [-5E3; 3E3; 300; deg2rad(-30)]);
+% missile.fovLimit = deg2rad(1.5);
+target = PlanarNonManeuvVehicle3dof(...
+    [0; 0; 20; 0]);
+model = PurePNG2dimEngagement(missile, target);
 
 tic
-Simulator(system).propagate(dt, finalTime, true);
+Simulator(model).propagate(dt, finalTime, true);
 elapsedTime = toc;
-missDistance = system.missDistance();
+missDistance = model.missDistance();
 
-system.plot();
+model.plot();
 fprintf("Elapsed time: %.2f [s] \n", elapsedTime)
 fprintf("Miss distance: %.4f [m] \n", missDistance)
 

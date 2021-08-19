@@ -35,7 +35,11 @@ classdef PlanarManeuvVehicle3dof < DynSystem
             p_x_dot = V*cos(gamma);
             p_y_dot = V*sin(gamma);
             V_dot = a_x;
-            gamma_dot = a_y/V;
+            if abs(V) < 1e-4
+                gamma_dot = 0;
+            else
+                gamma_dot = a_y/V;
+            end
             
             out = [p_x_dot; p_y_dot; V_dot; gamma_dot];
         end

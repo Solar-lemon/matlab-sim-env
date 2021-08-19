@@ -1,6 +1,6 @@
 classdef Missile3dof < ManeuvVehicle3dof
     properties
-       
+       fovLimit = inf;
     end
     methods
         function obj = Missile3dof(initialState)
@@ -35,6 +35,9 @@ classdef Missile3dof < ManeuvVehicle3dof
             state = obj.state;
             out = (state(3) > 0.5);
         end
-            
+        
+        function sigma = lookAngle(obj, losVector)
+            sigma = acos(obj.velVector.'*losVector);
+        end
     end
 end

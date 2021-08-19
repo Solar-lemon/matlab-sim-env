@@ -23,8 +23,17 @@ classdef MultipleSystem < BaseSystem
         end
         
         function attachDynSystems(obj, systemList)
-            obj.systemList = systemList;
-            obj.systemNum  = numel(systemList);
+            tempList = cell(size(systemList));
+            tempNum = 0;
+            for k = 1:numel(systemList)
+                if isa(systemList{k}, 'BaseSystem')
+                    tempNum = tempNum + 1;
+                    tempList{tempNum} = systemList{k};
+                end
+            end
+            
+            obj.systemList = tempList(1:tempNum);
+            obj.systemNum  = tempNum;
             
             stateVarNum = 0;
             for k = 1:obj.systemNum

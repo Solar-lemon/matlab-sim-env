@@ -12,6 +12,7 @@ classdef ManeuvVehicle3dof < DynSystem
     properties(Dependent)
         pos
         vel
+        velVector
         RLocalToVelocity
     end
     
@@ -37,12 +38,23 @@ classdef ManeuvVehicle3dof < DynSystem
             a_y = u(2);
             a_z = u(3);
             
-            p_n_dot = V*cos(gamma)*cos(chi);
-            p_e_dot = V*cos(gamma)*sin(chi);
-            p_d_dot = -V*sin(gamma);
+            c_gamma = cos(gamma);
+            s_gamma = sin(gamma);
+            
+            p_n_dot = V*c_gamma*cos(chi);
+            p_e_dot = V*c_gamma*sin(chi);
+            p_d_dot = -V*s_gamma;
             V_dot = a_x;
-            gamma_dot = -a_z/V;
-            chi_dot = a_y/(V*cos(gamma));
+            if abs(V) < 1e-4
+                gamma_dot = 0;
+            else
+                gamma_dot = -a_z/V;
+            end
+            if abs(V*c_gamma) < 1e-4
+                chi_dot = 0;
+            else
+                chi_dot = a_y/(V*c_gamma);
+            end
             
             out = [p_n_dot; p_e_dot; p_d_dot; V_dot; gamma_dot; chi_dot];
         end
@@ -61,6 +73,17 @@ classdef ManeuvVehicle3dof < DynSystem
                 V*cos(gamma)*cos(chi);
                 V*cos(gamma)*sin(chi);
                 -V*sin(gamma)];
+        end
+        
+        function out = get.velVector(obj)
+            state = obj.state;
+            gamma = state(5);
+            chi = state(6);
+            
+            out = [...
+                cos(gamma)*cos(chi);
+                cos(gamma)*sin(chi);
+                -sin(gamma)];
         end
         
         function R_VL = get.RLocalToVelocity(obj)
@@ -153,13 +176,14 @@ classdef ManeuvVehicle3dof < DynSystem
             
             figure(fig)
             hold on
+            plot3(posList(2, :), posList(1, :), -posList(3, :))
             xlabel('E [m]')
             ylabel('N [m]')
             zlabel('h [m]')
             view(45, 30)
             grid on
             box on
-            plot3(posList(2, :), posList(1, :), -posList(3, :))
+            daspect([1 1 1])
         end
     end
     methods(Static)
