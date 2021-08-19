@@ -14,6 +14,7 @@ classdef ManeuvVehicle3dof < DynSystem
         vel
         velVector
         RLocalToVelocity
+        speed
     end
     
     methods
@@ -92,6 +93,10 @@ classdef ManeuvVehicle3dof < DynSystem
             chi = state(6);
             
             R_VL = Orientations.eulerAnglesToRotation([chi; gamma; 0]);
+        end
+        
+        function out = get.speed(obj)
+            out = obj.state(4);
         end
         
         function out = gravAccel(obj)

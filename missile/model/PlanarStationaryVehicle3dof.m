@@ -2,6 +2,7 @@ classdef PlanarStationaryVehicle3dof < BaseFunction
     properties
         pos
         vel = zeros(2, 1);
+        speed = 0;
     end
     
     methods

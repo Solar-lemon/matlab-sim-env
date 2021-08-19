@@ -2,6 +2,7 @@ classdef StationaryVehicle3dof < BaseFunction
     properties
         pos
         vel = zeros(3, 1);
+        speed = 0;
     end
     methods
         function obj = StationaryVehicle3dof(pos)
