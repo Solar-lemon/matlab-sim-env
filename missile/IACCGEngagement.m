@@ -14,7 +14,7 @@ classdef IACCGEngagement < Engagement2dim
             if obj.missile.fovLimit == inf
                 sigma_d = deg2rad(30);
             else
-                sigma_d = obj.missile.fovLimit - 1e-4;
+                sigma_d = obj.missile.fovLimit - 1e-3;
             end
             N = 3;
             obj.iaccg = DiscreteFunction(...
@@ -32,6 +32,7 @@ classdef IACCGEngagement < Engagement2dim
             omega = obj.kinematics.losRate;
             
             a_M = obj.iaccg.forward(v_M, gamma_M, lam, omega);
+            a_M = CommonUtils.sat(a_M, 10*FlatEarthEnv.gravAccel, -10*FlatEarthEnv.gravAccel);
             obj.missile.forward([0; a_M]);
         end
         
