@@ -56,6 +56,8 @@ classdef MultiStateDynSystem < BaseSystem
         % to be implemented
         function out = derivative(obj, varargin)
             % implement this method if needed
+            % varargin: {state1, ..., stateN, input1, ..., inputM}
+            % out: {derivState1, ..., derivStateN}
             fprintf("Attach a derivFun or implement the derivative method! \n")
             out = cell(size(obj.initialState));
             for k = 1:numel(out)
@@ -63,12 +65,16 @@ classdef MultiStateDynSystem < BaseSystem
             end
         end
         
+        % to be implemented
+        function varsToLog = log(obj, varargin)
+            % implement this method if needed
+            % varargin: {input1, ..., inputM}
+            varsToLog = {};
+        end
+        
         % implement
         function out = forward(obj, varargin)
-            if obj.logger.toLog()
-                obj.logger.forward(obj.stateValueList{:}, varargin{:});
-            end
-            
+            % varargin: {input1, ..., inputM}
             if isa(obj.derivFun, 'BaseFunction')
                 derivList = obj.derivFun.forward(obj.stateValueList{:}, varargin{:});
             else
@@ -78,12 +84,21 @@ classdef MultiStateDynSystem < BaseSystem
                 obj.stateVarList{k}.deriv = derivList{k};
             end
             
+            if obj.logger.toLog()
+                varsToLog = obj.log(varargin{:});
+                obj.logger.forward(...
+                    obj.stateValueList{:}, varargin{:}, varsToLog{:});
+            end
+            
             if nargout > 0
                 out = obj.output;
             end
         end
         
+        % override
         function out = output(obj)
+            % outputFun: function_handle or BaseFunction
+            % outputFun(state)
             if isa(obj.outputFun, 'BaseFunction')
                 out = obj.outputFun.forward(obj.stateValueList{:});
             else

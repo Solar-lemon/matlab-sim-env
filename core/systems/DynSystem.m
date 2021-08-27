@@ -14,13 +14,29 @@ classdef DynSystem < TimeVaryingDynSystem
             obj.name = 'dynSystem';
         end
         
+        % to be implemented
+        function out = derivative(obj, varargin)
+            % implement this method if needed
+            % varargin: {state, input1, ..., inputM}
+            % out: derivState
+            fprintf("Attach a derivFun or implement the derivative method! \n")
+            out = zeros(size(obj.initialState));
+        end
+        
+        % to be implemented
+        function varsToLog = log(obj, varargin)
+            % implement this method if needed
+            % varargin: {input1, ..., inputM}
+            varsToLog = {};
+        end
+        
         % override
         function out = forward(obj, varargin)
-            % derivFun: function_handle or BaseFunction
-            % derivFun(state, input1, ..., inputM)
+            % varargin: {input1, ..., inputM}
             obj.stateVar.forward(varargin{:});
             if obj.logger.toLog()
-                obj.logger.forward(obj.state, varargin{:});
+                varsToLog = obj.log(varargin{:});
+                obj.logger.forward(obj.state, varargin{:}, varsToLog{:});
             end
             
             if nargout > 0
