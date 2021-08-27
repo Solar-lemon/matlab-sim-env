@@ -9,17 +9,11 @@ fprintf("== Test for ParallelSimulator ==\n")
 zetaList = 0.2:0.2:1.0;
 omegaList = 1:10;
 
-tic
 parSimulator = ParallelSimulator();
 parSimulator.attachParamLists(zetaList, omegaList);
 parSimulator.attachSimulationFun(@simulationFun);
 parSimulator.simulate();
 parSimulator.save();
-elapsedTime = toc;
-
-fprintf("ElapsedTime: %.2f [s] \n", elapsedTime);
-fprintf("The average time taken for each simulation: %.2f [s] \n",...
-    elapsedTime/parSimulator.totalSimNum);
 
 data = parSimulator.getDataByVarNames('zeta', 'omega', 'overshoot');
 [zeta, omega, overshoot] = data{:};

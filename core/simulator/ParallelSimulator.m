@@ -62,13 +62,29 @@ classdef ParallelSimulator < handle
         function simulate(obj)
             pool = gcp;
             numWorkers = pool.NumWorkers;
+            dataQueue = parallel.pool.DataQueue;
+            afterEach(dataQueue, @showProgress);
             
-            tempData = cell(1, obj.totalSimNum);
-            parfor (i = 1:obj.totalSimNum, numWorkers)
-                fprintf("=== %d-th simulation === \n", i)
+            totalSimNum_ = obj.totalSimNum;
+            doneSimNum = 0;
+            function showProgress(~)
+                doneSimNum = doneSimNum + 1;
+                fprintf("[%d/%d] Simulation has been finished.\n",...
+                    doneSimNum, totalSimNum_);
+            end
+            
+            fprintf("Total %d number of cases will be simulated. \n", totalSimNum_)
+            tic
+            tempData = cell(1, totalSimNum_);
+            parfor (i = 1:totalSimNum_, numWorkers)
                 paramSet = obj.paramSetList{i};
                 tempData{i} = obj.simulationFun(i, paramSet{:});
+                send(dataQueue, i);
             end
+            elapsedTime = toc;
+            fprintf("The total elapsed time: %.2f [s] \n", elapsedTime);
+            fprintf("The average time taken for each simulation: %.2f [s] \n",...
+                elapsedTime/totalSimNum_);
             
             if ~isempty(tempData{1})
                 fields = fieldnames(tempData{1});
@@ -78,6 +94,7 @@ classdef ParallelSimulator < handle
                     obj.data.append(simData{:});
                 end
             end
+            delete(gcp('nocreate'))
         end
         
         function out = getDataByVarNames(obj, varargin)

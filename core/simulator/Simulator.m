@@ -41,10 +41,16 @@ classdef Simulator < handle
             if nargin < 4 || isempty(saveHistory)
                 saveHistory = false;
             end
+            pool = gcp('nocreate');
+            measureElapsedTime = isempty(getCurrentTask());
+            iterNum = min(round(time/dt), intmax('int32'));
+                
             
-            iterNum = round(time/dt);
             if saveHistory
                 obj.startLogging(dt);
+            end
+            if measureElapsedTime
+                tic
             end
             for i = 1:iterNum
                 toStop = obj.model.checkStopCondition();
@@ -58,6 +64,10 @@ classdef Simulator < handle
                 obj.model.rk4Update2(t0, dt, varargin);
                 obj.model.rk4Update3(t0, dt, varargin);
                 obj.model.rk4Update4(t0, dt, varargin);
+            end
+            if measureElapsedTime
+                elapsedTime = toc;
+                fprintf("Elapsed time: %.2f [s] \n", elapsedTime);
             end
             
             obj.inValues = varargin;
@@ -82,14 +92,11 @@ classdef Simulator < handle
             finalTime = 5;
             saveHistory = true;
             
-            tic
             simulator.propagate(dt, finalTime, saveHistory);
             simulator.propagate(dt, finalTime, saveHistory);
-            elapsedTime = toc;
             
             fprintf('Initial state of the system: \n')
             disp(initialState)
-            fprintf('Elapsed time: %.2f [s] \n', elapsedTime);
             fprintf('State of the system after 10[s]: \n\n')
             disp(model.state)
             
