@@ -16,6 +16,12 @@ classdef Engagement2dim < MultipleSystem
             obj.attachDynSystems({obj.missile, obj.target});
         end
         
+        % override
+        function reset(obj)
+            reset@MultipleSystem(obj);
+            obj.prevRange = inf;
+        end
+        
         % implement
         function forward(obj)
             losAngle = obj.kinematics.losAngle;
@@ -49,7 +55,7 @@ classdef Engagement2dim < MultipleSystem
             % when the target has gone out of the field-of-view
             losAngle = obj.kinematics.losAngle;
             sigma = obj.missile.lookAngle(losAngle);
-            out = (sigma > obj.missile.fovLimit);
+            out = (abs(sigma) > obj.missile.fovLimit);
         end
         
         function updateRange(obj)
