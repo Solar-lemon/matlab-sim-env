@@ -1,6 +1,6 @@
 classdef CommonUtils < handle
     methods(Static)
-        function vector = sat(vector, upperLimit, lowerLimit)
+        function vector = sat(vector, lowerLimit, upperLimit)
             if nargin < 2
                 vector = Utils.unitSat(vector);
                 return
