@@ -1,6 +1,6 @@
 classdef CommonUtils < handle
     methods(Static)
-        function vector = sat(vector, upperLimit, lowerLimit)
+        function vector = sat(vector, lowerLimit, upperLimit)
             if nargin < 2
                 vector = Utils.unitSat(vector);
                 return
@@ -21,6 +21,11 @@ classdef CommonUtils < handle
         function vector = unitSat(vector)
             vector(vector > 1) = 1;
             vector(vector < -1) = -1;
+        end
+        
+        function angle = wrapToPi(angle)
+            angle(angle > pi) = angle(angle > pi) - 2*pi;
+            angle(angle < -pi) = angle(angle < -pi) + 2*pi;
         end
     end
 end

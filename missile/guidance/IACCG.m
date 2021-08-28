@@ -17,8 +17,9 @@ classdef IACCG < BaseFunction
         N
     end
     methods
-        function obj = IACCG(gamma_M_f, gamma_T, v_M, v_T, K, sigma_d, N)
+        function obj = IACCG(gamma_M_f, gamma_T, v_M, v_T, K, sigma_max, N)
             eta = IACCG.speedRatio(v_M, v_T);
+            sigma_d = min(acos(2*eta), sigma_max) - 1e-3;
             lam_s = IACCG.switchCond(N, gamma_M_f, gamma_T, eta, sigma_d);
             
             obj.gamma_M_f = gamma_M_f;
@@ -32,14 +33,12 @@ classdef IACCG < BaseFunction
         end
         
         % implement
-        function a_M = forward(obj, v_M, gamma_M, lam, omega)
+        function a_M = forward(obj, v_M, sigma, lam, omega)
             % v_M: speed of the missile
-            % gamma_M: flight path angle of the missile
-            % lam: LOS angle
+            % sigma: look angle
             % omega: LOS rate
             if abs(lam) < abs(obj.lam_s)
-                sigma = gamma_M - lam;
-                a_M = v_M*omega + obj.K*(obj.sigma_d - sigma);
+                a_M = v_M*(omega + obj.K*(obj.sigma_d - sigma));
             else
                 a_M = obj.N*v_M*omega;
             end
@@ -57,6 +56,7 @@ classdef IACCG < BaseFunction
                 (sin(gamma_M_f) - eta*sin(gamma_T)) / ...
                 (cos(gamma_M_f) - eta*cos(gamma_T)));
             lam_s = N/(N - 1)*(lam_f - (gamma_M_f - sigma_s)/N);
+            fprintf("[IACCG] The swithing value for LOS angle is: %.2f [deg] \n", rad2deg(lam_s))
         end
     end
 end
