@@ -14,29 +14,35 @@ classdef(ConstructOnLoad) MatStackedData < StackedData
         
         % override
         function append(obj, varargin)
-            % varargin = {value1, ..., valueK, multiple} or
             % varargin = {value1, ..., valueK}
             if isempty(obj.dataValue)
-                if isa(varargin{end}, 'logical')
-                    obj.stackedNum = numel(varargin) - 1;
-                else
-                    obj.stackedNum = numel(varargin);
-                end
+                obj.stackedNum = numel(varargin);
                 obj.dataValue = cell(obj.stackedNum, 1);
                 for k = 1:obj.stackedNum
                     obj.dataValue{k} = MatrixData();
                 end
             end
             
-            if isa(varargin{end}, 'logical')
-                multiple = varargin{end};
-            else
-                multiple = false;
+            for k = 1:obj.stackedNum
+                data = varargin{k};
+                obj.dataValue{k}.append(data);
+                obj.dataNum = max(obj.dataNum, obj.dataValue{k}.dataNum);
+            end
+        end
+        
+        function appendMultiple(obj, varargin)
+            % varargin = {value1, ..., valueK}
+            if isempty(obj.dataValue)
+                obj.stackedNum = numel(varargin);
+                obj.dataValue = cell(obj.stackedNum, 1);
+                for k = 1:obj.stackedNum
+                    obj.dataValue{k} = MatrixData();
+                end
             end
             
             for k = 1:obj.stackedNum
                 data = varargin{k};
-                obj.dataValue{k}.append(data, multiple);
+                obj.dataValue{k}.appendMultiple(data);
                 obj.dataNum = max(obj.dataNum, obj.dataValue{k}.dataNum);
             end
         end

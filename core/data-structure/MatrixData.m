@@ -1,5 +1,6 @@
 classdef(ConstructOnLoad) MatrixData < ArrayData
     properties
+        type
         shape
         accessIndex
     end
@@ -14,31 +15,45 @@ classdef(ConstructOnLoad) MatrixData < ArrayData
         end
         
         % implement
-        function append(obj, inDataValue, multiple)
+        function append(obj, inDataValue)
             % if multipe = false, inDataValue should be a single datum
             % matrix(sz1, sz2, ..., szN)
-            % if multipe = true,  inDataValue should be
-            % matrix(sz1, sz2, ..., szN, inDataNum)
-            if nargin < 3
-                multiple = false;
-            end
             
             % initialization
+            if isempty(obj.type)
+                obj.initializeType(inDataValue);
+            end
             if isempty(obj.shape)
-                initializeShape(obj, inDataValue, multiple);
+                obj.initializeShape(inDataValue, false);
             end
-            
-            if multiple
-                inDataNum = size(inDataValue, obj.ndims + 1);
-            else
-                inDataNum = 1;
-            end
-            
             if isempty(obj.dataValue)
-                initializeFreeSpace(obj);
+                obj.initializeFreeSpace();
             end
+            
+            while ~(obj.dataNum + 1 <= size(obj.dataValue, obj.ndims + 1))
+                obj.doubleSpaceSize();
+            end
+            obj.dataValue(obj.accessIndex{:}, obj.dataNum + 1) ...
+                = inDataValue;
+            obj.dataNum = obj.dataNum + 1;
+        end
+        
+        function appendMultiple(obj, inDataValue)
+            % inDataValue should be
+            % matrix(sz1, sz2, ..., szN, inDataNum)
+            if isempty(obj.type)
+                obj.initializeType(inDataValue);
+            end
+            if isempty(obj.shape)
+                obj.initializeShape(inDataValue, true);
+            end
+            if isempty(obj.dataValue)
+                obj.initializeFreeSpace();
+            end
+            
+            inDataNum = size(inDataValue, obj.ndims + 1);
             while ~(obj.dataNum + inDataNum <= size(obj.dataValue, obj.ndims + 1))
-                doubleSpaceSize(obj);
+                obj.doubleSpaceSize();
             end
             obj.dataValue(obj.accessIndex{:}, obj.dataNum + 1:obj.dataNum + inDataNum) ...
                 = inDataValue;
@@ -96,6 +111,10 @@ classdef(ConstructOnLoad) MatrixData < ArrayData
     end
     
     methods(Access = protected)
+        function initializeType(obj, inDataValue)
+            obj.type = class(inDataValue);
+        end
+        
         function initializeShape(obj, inDataValue, multiple)
             if multiple
                 obj.shape = size(inDataValue, 1:ndims(inDataValue) - 1);
@@ -113,7 +132,7 @@ classdef(ConstructOnLoad) MatrixData < ArrayData
         end
         
         function initializeFreeSpace(obj)
-            obj.dataValue = nan([obj.shape, obj.initSpaceSize]);
+            obj.dataValue = zeros([obj.shape, obj.initSpaceSize], obj.type);
         end
         
         function out = isFreeSpace(obj, inDataNum)
@@ -136,7 +155,11 @@ classdef(ConstructOnLoad) MatrixData < ArrayData
             end
             obj = MatrixData();
             obj.name = "matrixData";
-            obj.append(dataValue, multiple);
+            if multiple
+                obj.appendMultiple(dataValue);
+            else
+                obj.append(dataValue);
+            end
         end
         
         function test()
@@ -146,7 +169,7 @@ classdef(ConstructOnLoad) MatrixData < ArrayData
             rng(2021)
             cov1 = MatrixData();
             cov2 = MatrixData();
-            cov2.append(rand(3, 3, 2), true);
+            cov2.appendMultiple(rand(3, 3, 2));
             for i = 1:5
                 cov1.append(diag(rand(1, 3)));
                 cov2.append(diag(rand(1, 3)));
