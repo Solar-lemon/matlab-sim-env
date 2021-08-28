@@ -1,6 +1,9 @@
 classdef PlanarMissile3dof < PlanarManeuvVehicle3dof
     properties
         fovLimit = inf;
+        accLimit = [...
+            -inf, inf;...
+            -inf, inf];
         engKinematics
     end
     methods
@@ -11,6 +14,15 @@ classdef PlanarMissile3dof < PlanarManeuvVehicle3dof
         
         function attachEngKinematics(obj, engKinematics)
             obj.engKinematics = engKinematics;
+        end
+        
+        % override
+        function out = forward(obj, a_M)
+            a_M = CommonUtils.sat(a_M, obj.accLimit(:, 1), obj.accLimit(:, 2));
+            forward@PlanarManeuvVehicle3dof(obj, a_M);
+            if nargout > 1
+                out = obj.output;
+            end
         end
         
         % implement

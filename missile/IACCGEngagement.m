@@ -32,7 +32,6 @@ classdef IACCGEngagement < Engagement2dim
             omega = obj.kinematics.losRate;
             
             a_M = obj.iaccg.forward(v_M, gamma_M, lam, omega);
-            a_M = CommonUtils.sat(a_M, 10*FlatEarthEnv.gravAccel, -10*FlatEarthEnv.gravAccel);
             obj.missile.forward([0; a_M]);
         end
         
