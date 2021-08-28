@@ -69,11 +69,12 @@ classdef ParallelSimulator < handle
             doneSimNum = 0;
             function showProgress(~)
                 doneSimNum = doneSimNum + 1;
-                fprintf("[%d/%d] Simulation has been finished.\n",...
+                fprintf("[Simulator] [%d/%d] Simulation has been finished.\n",...
                     doneSimNum, totalSimNum_);
             end
             
-            fprintf("Total %d number of cases will be simulated. \n", totalSimNum_)
+            fprintf("[Simulator] Total %d number of cases will be simulated. \n", totalSimNum_)
+            fprintf("[Simulator] Simulating... \n")
             tic
             tempData = cell(1, totalSimNum_);
             parfor (i = 1:totalSimNum_, numWorkers)
@@ -82,8 +83,8 @@ classdef ParallelSimulator < handle
                 send(dataQueue, i);
             end
             elapsedTime = toc;
-            fprintf("The total elapsed time: %.2f [s] \n", elapsedTime);
-            fprintf("The average time taken for each simulation: %.2f [s] \n",...
+            fprintf("[Simulator] The total elapsed time: %.2f [s] \n", elapsedTime);
+            fprintf("[Simulator] The average time taken for each simulation: %.2f [s] \n",...
                 elapsedTime/totalSimNum_);
             
             if ~isempty(tempData{1})

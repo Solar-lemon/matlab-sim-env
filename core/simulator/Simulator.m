@@ -41,15 +41,14 @@ classdef Simulator < handle
             if nargin < 4 || isempty(saveHistory)
                 saveHistory = false;
             end
-            pool = gcp('nocreate');
             measureElapsedTime = isempty(getCurrentTask());
             iterNum = min(round(time/dt), intmax('int32'));
-                
             
             if saveHistory
                 obj.startLogging(dt);
             end
             if measureElapsedTime
+                fprintf("[Simulator] Simulating... \n")
                 tic
             end
             for i = 1:iterNum
@@ -67,7 +66,7 @@ classdef Simulator < handle
             end
             if measureElapsedTime
                 elapsedTime = toc;
-                fprintf("Elapsed time: %.2f [s] \n", elapsedTime);
+                fprintf("[Simulator] Elapsed time: %.2f [s] \n", elapsedTime);
             end
             
             obj.inValues = varargin;
