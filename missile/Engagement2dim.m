@@ -60,6 +60,10 @@ classdef Engagement2dim < MultipleSystem
             out = min(rangeList);
         end
         
+        function report(obj)
+            fprintf("[Engagement] Miss distance: %.4f [m] \n", obj.missDistance())
+        end
+        
         function figs = plot(obj)
             set(0,'DefaultFigureWindowStyle','docked')
             figs = cell(4, 1);
