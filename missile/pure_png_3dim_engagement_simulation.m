@@ -19,13 +19,10 @@ target = NonManeuvVehicle3dof(...
     [0; 0; 0; 20; 0; 0]);
 model = PurePNG3dimEngagement(missile, target);
 
-tic
 Simulator(model).propagate(dt, finalTime, true);
-elapsedTime = toc;
 missDistance = model.missDistance();
 
 model.plot();
-fprintf("Elapsed time: %.2f [s] \n", elapsedTime)
 fprintf("Miss distance: %.4f [m] \n", missDistance)
 
 rmpath(genpath('../core'))

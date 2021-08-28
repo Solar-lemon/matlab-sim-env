@@ -20,6 +20,7 @@ classdef PurePNG3dimEngagement < MultipleSystem
             obj.kinematics = EngKinematics(obj.missile, obj.target);
             obj.purePng = DiscreteFunction(PurePNG3dim(3), 1/40); % 40 Hz
             
+            obj.missile.attachEngKinematics(obj.kinematics);
             obj.attachDynSystems({obj.missile, obj.target});
             obj.attachDiscSystems({obj.purePng});
         end
@@ -28,8 +29,7 @@ classdef PurePNG3dimEngagement < MultipleSystem
         function forward(obj)
             R_VL = obj.missile.RLocalToVelocity;
             v_M = obj.missile.vel;
-            losVector = obj.kinematics.losVector;
-            sigma = obj.missile.lookAngle(losVector);
+            sigma = obj.missile.lookAngle();
             omega = obj.kinematics.losRate;
             r = obj.kinematics.range;
             
@@ -47,21 +47,13 @@ classdef PurePNG3dimEngagement < MultipleSystem
         function toStop = checkStopCondition(obj)
             toStop = obj.missile.checkStopCondition();
             toStop = toStop...
-                || obj.rangeIsIncreasing()...
-                || obj.isOutOfView();
+                || obj.rangeIsIncreasing();
             updateRange(obj);
         end
         
         function out = rangeIsIncreasing(obj)
             range = obj.kinematics.range;
             out = (range > obj.prevRange);
-        end
-        
-        function out = isOutOfView(obj)
-            % when the target has gone out of the field-of-view
-            losVector = obj.kinematics.losVector;
-            sigma = obj.missile.lookAngle(losVector);
-            out = (sigma > obj.missile.fovLimit);
         end
         
         function updateRange(obj)

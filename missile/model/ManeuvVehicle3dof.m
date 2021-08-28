@@ -15,18 +15,20 @@ classdef ManeuvVehicle3dof < DynSystem
         velVector
         RLocalToVelocity
         speed
+        pathAngle
     end
     
     methods
         function obj = ManeuvVehicle3dof(initialState)
             obj = obj@DynSystem(initialState);
             
-            function stateFeed = angleCorrectionFun(stateFeed)
+            function state = angleCorrectionFun(state)
                 % gamma should be in [-pi, pi] rad
                 % chi should be in [-pi, pi] rad
-                stateFeed(5:6) = ManeuvVehicle3dof.wrapToPi(stateFeed(5:6));
+                state(5:6) = CommonUtils.wrapToPi(state(5:6));
             end
             obj.stateVar.attachCorrectionFun(@angleCorrectionFun);
+            obj.name = 'maneuvVehicle3dof';
         end
         
         % override
@@ -96,7 +98,13 @@ classdef ManeuvVehicle3dof < DynSystem
         end
         
         function out = get.speed(obj)
+            % obj.speed = V
             out = obj.state(4);
+        end
+        
+        function out = get.pathAngle(obj)
+            % obj.pathAngle = [gamma; chi]
+            out = obj.state(5:6);
         end
         
         function out = gravAccel(obj)
@@ -181,7 +189,9 @@ classdef ManeuvVehicle3dof < DynSystem
             
             figure(fig)
             hold on
-            plot3(posList(2, :), posList(1, :), -posList(3, :))
+            plot3(posList(2, :), posList(1, :), -posList(3, :) ,'-o',...
+                'MarkerIndices', [1, size(posList, 2)],...
+                'DisplayName', obj.name)
             xlabel('E [m]')
             ylabel('N [m]')
             zlabel('h [m]')
@@ -189,12 +199,6 @@ classdef ManeuvVehicle3dof < DynSystem
             grid on
             box on
             daspect([1 1 1])
-        end
-    end
-    methods(Static)
-        function angle = wrapToPi(angle)
-            angle(angle > pi) = angle(angle > pi) - 2*pi;
-            angle(angle < -pi) = angle(angle < -pi) + 2*pi;
         end
     end
 end

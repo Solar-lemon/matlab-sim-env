@@ -37,10 +37,16 @@ classdef IACCGEngagement < Engagement2dim
         end
         
         function out = impactAngle(obj)
-            stateList = obj.missile.history{2};
-            rangeList = obj.historyByVarNames('range');
+            rangeList = obj.historyByVarNames('r');
             [~, index] = min(rangeList);
-            out = stateList(4, index);
+            
+            state_M = obj.missile.history{2};
+            state_T = obj.target.history{2};
+            
+            gamma_M = state_M(4, index);
+            gamma_T = state_T(4, index);
+            
+            out = gamma_M - gamma_T;
         end
     end
 end

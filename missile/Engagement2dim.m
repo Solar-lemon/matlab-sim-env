@@ -13,6 +13,7 @@ classdef Engagement2dim < MultipleSystem
             obj.target = target;
             obj.kinematics = EngKinematics(missile, target);
             
+            obj.missile.attachEngKinematics(obj.kinematics);
             obj.attachDynSystems({obj.missile, obj.target});
         end
         
@@ -24,16 +25,16 @@ classdef Engagement2dim < MultipleSystem
         
         % implement
         function forward(obj)
-            losAngle = obj.kinematics.losAngle;
-            sigma = obj.missile.lookAngle(losAngle);
+            sigma = obj.missile.lookAngle();
+            lam = obj.kinematics.losAngle;
             omega = obj.kinematics.losRate;
             r = obj.kinematics.range;
             
             obj.target.forward();
             
             if obj.logger.toLog()
-                obj.logger.forward(sigma, omega, r);
-                obj.logger.forwardVarNames('lookAngle', 'losRate', 'range');
+                obj.logger.forward(sigma, lam, omega, r);
+                obj.logger.forwardVarNames('sigma', 'lam', 'omega', 'r');
             end
         end
         
@@ -41,8 +42,7 @@ classdef Engagement2dim < MultipleSystem
         function toStop = checkStopCondition(obj)
             toStop = obj.missile.checkStopCondition();
             toStop = toStop...
-                || obj.rangeIsIncreasing()...
-                || obj.isOutOfView();
+                || obj.rangeIsIncreasing();
             updateRange(obj);
         end
         
@@ -51,25 +51,18 @@ classdef Engagement2dim < MultipleSystem
             out = (range > obj.prevRange);
         end
         
-        function out = isOutOfView(obj)
-            % when the target has gone out of the field-of-view
-            losAngle = obj.kinematics.losAngle;
-            sigma = obj.missile.lookAngle(losAngle);
-            out = (abs(sigma) > obj.missile.fovLimit);
-        end
-        
         function updateRange(obj)
             obj.prevRange = obj.kinematics.range;
         end
         
         function out = missDistance(obj)
-            rangeList = obj.historyByVarNames('range');
+            rangeList = obj.historyByVarNames('r');
             out = min(rangeList);
         end
         
         function figs = plot(obj)
             set(0,'DefaultFigureWindowStyle','docked')
-            figs = cell(2, 1);
+            figs = cell(4, 1);
             
             obj.missile.plot();
             
@@ -81,10 +74,11 @@ classdef Engagement2dim < MultipleSystem
             obj.target.plotPath(figs{1});
             daspect([1 1 1])
             
-            temp = obj.historyByVarNames('time', 'lookAngle', 'losRate');
-            [timeList, sigmaList, losRateList] = temp{:};
+            temp = obj.historyByVarNames('time', 'sigma', 'lam', 'omega');
+            [timeList, sigmaList, lamList, omegaList] = temp{:};
             sigmaList = rad2deg(sigmaList);
-            losRateList = rad2deg(losRateList);
+            lamList = rad2deg(lamList);
+            omegaList = rad2deg(omegaList);
             
             figs{2} = figure();
             figs{2}.Name = "Look angle";
@@ -99,10 +93,22 @@ classdef Engagement2dim < MultipleSystem
             legend()
             
             figs{3} = figure();
-            figs{3}.Name = "LOS rate";
+            figs{3}.Name = "LOS angle";
+            hold on
+            title("Los angle")
+            plot(timeList(1:end - 1), lamList(1:end - 1),...
+                'DisplayName', 'lambda')
+            xlabel("Time [s]")
+            ylabel("LOS angle [deg]")
+            grid on
+            box on
+            legend()
+            
+            figs{4} = figure();
+            figs{4}.Name = "LOS rate";
             hold on
             title("LOS rate")
-            plot(timeList, losRateList)
+            plot(timeList, omegaList)
             xlabel("Time [s]")
             ylabel("LOS rate [deg/s]")
             grid on

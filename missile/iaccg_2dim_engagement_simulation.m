@@ -21,14 +21,11 @@ gamma_M_f = deg2rad(-71);
 
 model = IACCGEngagement(missile, target, gamma_M_f);
 
-tic
 Simulator(model).propagate(dt, finalTime, true);
-elapsedTime = toc;
 missDistance = model.missDistance();
 impactAngle = model.impactAngle();
 
 model.plot();
-fprintf("Elapsed time: %.2f [s] \n", elapsedTime)
 fprintf("Miss distance: %.4f [m] \n", missDistance)
 fprintf("Impact angle: %.2f [deg] \n", rad2deg(impactAngle))
 

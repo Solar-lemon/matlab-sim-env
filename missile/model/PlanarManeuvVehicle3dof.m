@@ -11,15 +11,16 @@ classdef PlanarManeuvVehicle3dof < DynSystem
         pos
         vel
         speed
+        pathAngle
     end
     
     methods
         function obj = PlanarManeuvVehicle3dof(initialState)
             obj = obj@DynSystem(initialState);
             
-            function stateFeed = angleCorrectionFun(stateFeed)
+            function state = angleCorrectionFun(state)
                 % gamma should be in [-pi, pi] rad
-                stateFeed(4);
+                state(4) = CommonUtils.wrapToPi(state(4));
             end
             obj.stateVar.attachCorrectionFun(@angleCorrectionFun);
             obj.name = 'planarManeuvVehicle3dof';
@@ -114,11 +115,14 @@ classdef PlanarManeuvVehicle3dof < DynSystem
             
             figure(fig)
             hold on
+            plot(posList(1, :), posList(2, :), '-o',...
+                'MarkerIndices', [1, size(posList, 2)],...
+                'DisplayName', obj.name)
             xlabel('p_x [m]')
             ylabel('p_y [m]')
             grid on
             box on
-            plot(posList(1, :), posList(2, :), 'DisplayName', obj.name)
+            daspect([1 1 1])
         end
     end
     % set and get methods
@@ -138,13 +142,13 @@ classdef PlanarManeuvVehicle3dof < DynSystem
         end
         
         function out = get.speed(obj)
+            % obj.speed = V;
             out = obj.state(3);
         end
-    end
-    methods(Static)
-        function angle = wrapToPi(angle)
-            angle(angle > pi) = angle(angle > pi) - 2*pi;
-            angle(angle < -pi) = angle(angle < -pi) + 2*pi;
+        
+        function out = get.pathAngle(obj)
+            % obj.pathAngle = gamma;
+            out = obj.state(4);
         end
     end
 end

@@ -22,5 +22,10 @@ classdef CommonUtils < handle
             vector(vector > 1) = 1;
             vector(vector < -1) = -1;
         end
+        
+        function angle = wrapToPi(angle)
+            angle(angle > pi) = angle(angle > pi) - 2*pi;
+            angle(angle < -pi) = angle(angle < -pi) + 2*pi;
+        end
     end
 end
