@@ -10,15 +10,11 @@ classdef IACCGEngagement < Engagement2dim
             v_M = missile.speed;
             v_T = target.speed;
             
-            K = 300;
-            if obj.missile.fovLimit == inf
-                sigma_d = deg2rad(30);
-            else
-                sigma_d = obj.missile.fovLimit - 1e-3;
-            end
+            K = 1.5;
+            sigma_max = obj.missile.fovLimit;
             N = 3;
             obj.iaccg = DiscreteFunction(...
-                IACCG(gamma_M_f, gamma_T, v_M, v_T, K, sigma_d, N), 1/40); % 40 Hz
+                IACCG(gamma_M_f, gamma_T, v_M, v_T, K, sigma_max, N), 1/40); % 40 Hz
             
             obj.attachDiscSystems({obj.iaccg});
         end
@@ -26,12 +22,12 @@ classdef IACCGEngagement < Engagement2dim
         % implement
         function forward(obj)
             forward@Engagement2dim(obj);
-            v_M = obj.missile.state(3);
-            gamma_M = obj.missile.state(4);
+            v_M = obj.missile.speed;
+            sigma = obj.missile.lookAngle();
             lam = obj.kinematics.losAngle;
             omega = obj.kinematics.losRate;
             
-            a_M = obj.iaccg.forward(v_M, gamma_M, lam, omega);
+            a_M = obj.iaccg.forward(v_M, sigma, lam, omega);
             obj.missile.forward([0; a_M]);
         end
         
