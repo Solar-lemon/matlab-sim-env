@@ -4,6 +4,7 @@ classdef Engagement2dim < MultipleSystem
         target
         kinematics
         prevRange = inf
+        interceptionCriteria = 1
     end
     methods
         function obj = Engagement2dim(missile, target)
