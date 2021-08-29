@@ -47,7 +47,7 @@ classdef IACCGEngagement < Engagement2dim
         % override
         function report(obj)
             report@Engagement2dim(obj);
-            fprintf("[Engagement] Impact angle: %.2f [deg] \n", obj.impactAngle())
+            fprintf("[Engagement] Impact angle: %.2f [deg] \n", rad2deg(obj.impactAngle()))
         end
     end
 end
