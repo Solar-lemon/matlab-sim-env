@@ -5,6 +5,7 @@ classdef PlanarMissile3dof < PlanarManeuvVehicle3dof
             -inf, inf;...
             -inf, inf];
         engKinematics
+        groundElevation = 0;
     end
     methods
         function obj = PlanarMissile3dof(initialState)
@@ -52,8 +53,8 @@ classdef PlanarMissile3dof < PlanarManeuvVehicle3dof
         end
         
         function out = isCollided(obj)
-            % when the altitude is less than -0.5 m
-            out = (obj.state(2) < -0.5);
+            % when the altitude is less than the ground elevation
+            out = (obj.state(2) < obj.groundElevation - 0.5);
         end
         
         function out = isOutOfView(obj)
