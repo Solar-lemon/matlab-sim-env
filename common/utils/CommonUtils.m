@@ -27,5 +27,24 @@ classdef CommonUtils < handle
             angle(angle > pi) = angle(angle > pi) - 2*pi;
             angle(angle < -pi) = angle(angle < -pi) + 2*pi;
         end
+        
+        function out = distanceTrajSegment(p0, p1, q0, q1)
+            % p0: the initial point of trajectory segment 1
+            % p1: the final point of trajectory segment 1
+            % q0: the initial point of trajectory segment 2
+            % q1: the final point of trajectory segment 2
+            function [f, g] = sqDistanceFun(t)
+                p = p0 + t*(p1 - p0);
+                q = q0 + t*(q1 - q0);
+                f = sum((p - q).^2);
+                if nargout > 1
+                    g = 2*(p - q).'*((p1 - p0) - (q1 - q0));
+                end
+            end
+            % 0 <= t <= 1 (trajectory segments)
+            options = optimoptions('fmincon', 'Display', 'none', 'Algorithm', 'sqp');
+            d_sq = fmincon(@sqDistanceFun, 0.5, [], [], [], [], 0, 1, [], options);
+            out = sqrt(d_sq);
+        end
     end
 end
