@@ -125,6 +125,16 @@ classdef(Abstract) BaseSystem < handle
                 flag = obj.flag;
             end
         end
+        
+        % to be implemented
+        function plot(obj)
+            
+        end
+        
+        % to be implemented
+        function report(obj)
+            
+        end
     end
     
     methods
