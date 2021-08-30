@@ -1,6 +1,7 @@
 classdef ParallelSimulator < handle
     properties
         data
+        paramNums
         paramLists
         paramSetList
         totalSimNum
@@ -9,7 +10,7 @@ classdef ParallelSimulator < handle
     methods
         function obj = ParallelSimulator()
             obj.data = MatStackedData();
-            obj.attachSimulationFun();
+            obj.simulationFun = @obj.simulateModel;
         end
         
         function attachParamLists(obj, varargin)
@@ -28,16 +29,16 @@ classdef ParallelSimulator < handle
             obj.paramLists = varargin;
             
             N = numel(varargin);
-            paramNums = nan(1, N);
+            obj.paramNums = zeros(1, N);
             for n = 1:N
-                paramNums(n) = numel(varargin{n});
+                obj.paramNums(n) = numel(varargin{n});
             end
-            obj.totalSimNum = prod(paramNums);
+            obj.totalSimNum = prod(obj.paramNums);
             
             obj.paramSetList = cell(1, obj.totalSimNum);
             for i = 1:obj.totalSimNum
                 subs = cell(1, N);
-                [subs{:}] = ind2sub(paramNums, i);
+                [subs{:}] = ind2sub(obj.paramNums, i);
                 paramSet = cell(1, N);
                 for n = 1:N
                     if isa(varargin{n}, 'numeric')
@@ -51,8 +52,9 @@ classdef ParallelSimulator < handle
         end
         
         function attachSimulationFun(obj, simulationFun)
-            % output of the simulationFun should be simulation data with
-            % the type of structure.
+            % simulationFun should be defined as
+            % [simData, model] = simulationFun(i, param1, ..., paramN)
+            % simData should be simulation data defined using a structure.
             if nargin < 2 || isempty(simulationFun)
                 simulationFun = @obj.simulateModel;
             end
@@ -98,6 +100,14 @@ classdef ParallelSimulator < handle
             delete(gcp('nocreate'))
         end
         
+        function [simData, model] = simulateSingle(obj, varargin)
+            % varargin = {param1, ..., paramN};
+            i = nan;
+            [simData, model] = obj.simulationFun(i, varargin{:});
+            model.plot();
+            model.report();
+        end
+        
         function out = getDataByVarNames(obj, varargin)
             out = obj.data.matValuesByVarNames(varargin{:});
         end
@@ -116,9 +126,9 @@ classdef ParallelSimulator < handle
         end
         
         % to be implemented
-        function model = simulateModel(obj, i)
+        function [simData, model] = simulateModel(obj, i, varargin)
             % implement this method if needed
-            fprintf("Attach a modelGeneratingFun or implement generateModel method! \n")
+            fprintf("Attach a simulationFun or implement simulateModel method! \n")
         end
     end
 end

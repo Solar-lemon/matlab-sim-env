@@ -12,6 +12,7 @@ omegaList = 1:10;
 parSimulator = ParallelSimulator();
 parSimulator.attachParamLists(zetaList, omegaList);
 parSimulator.attachSimulationFun(@simulationFun);
+parSimulator.simulateSingle(0.4, 1);
 parSimulator.simulate();
 parSimulator.save();
 
@@ -36,7 +37,7 @@ colorbar('Location', 'EastOutside')
 rmpath(genpath('../core'))
 rmpath(genpath('../common'))
 
-function simData = simulationFun(i, zeta, omega)
+function [simData, model] = simulationFun(i, zeta, omega)
 model = SecondOrderDynSystem([0; 0], zeta, omega);
 model.name = ['model_', num2str(i)];
 
