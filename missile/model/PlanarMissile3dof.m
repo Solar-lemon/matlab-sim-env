@@ -27,6 +27,13 @@ classdef PlanarMissile3dof < PlanarManeuvVehicle3dof
         end
         
         % implement
+        function varsToLog = log(obj, a_M)
+            accSaturated = any(a_M <= obj.accLimit(:, 1) + 1e-8) ...
+                || any(a_M >= obj.accLimit(:, 2) - 1e-8);
+            varsToLog = {accSaturated};
+        end
+        
+        % implement
         function [toStop, flag] = checkStopCondition(obj)
             toStop = false;
             if obj.isFallenDown()
@@ -68,6 +75,13 @@ classdef PlanarMissile3dof < PlanarManeuvVehicle3dof
                 "First assign the engagement kinematics")
             lam = obj.engKinematics.losAngle;
             sigma = obj.state(4) - lam;
+        end
+        
+        function report(obj)
+            accSaturatedList = obj.history{4};
+            if any(accSaturatedList)
+                fprintf("[Missile] The acceleration command has been saturated. \n")
+            end
         end
     end
 end

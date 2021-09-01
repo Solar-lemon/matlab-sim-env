@@ -17,8 +17,8 @@ missile = PlanarMissile3dof(...
     [0; 0; 200; deg2rad(30)]);
 missile.fovLimit = deg2rad(45);
 missile.accLimit = ...
-    [0, 0;
-    -20*FlatEarthEnv.gravAccel, 20*FlatEarthEnv.gravAccel];
+    [-inf, inf;
+    -5*FlatEarthEnv.gravAccel, 5*FlatEarthEnv.gravAccel];
 target = PlanarNonManeuvVehicle3dof(...
     [5000; 0; 50; 0]);
 gamma_imp = deg2rad(71);
