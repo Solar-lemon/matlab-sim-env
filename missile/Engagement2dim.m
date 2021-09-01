@@ -65,7 +65,13 @@ classdef Engagement2dim < MultipleSystem
             d_miss = MissileUtils.missDistance(p_M, p_T);
         end
         
+        function out = accSaturated(obj)
+            accSaturated = obj.missile.history{4};
+            out = any(accSaturated);
+        end
+        
         function report(obj)
+            obj.missile.report();
             fprintf("[Engagement] Miss distance: %.4f [m] \n", obj.missDistance())
         end
         
