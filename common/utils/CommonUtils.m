@@ -44,7 +44,7 @@ classdef CommonUtils < handle
             % 0 <= t <= 1 (trajectory segments)
             options = optimoptions('fmincon', 'Display', 'none', ...
                 'Algorithm', 'sqp', 'SpecifyObjectiveGradient', true);
-            d_sq = fmincon(@sqDistanceFun, 0.5, [], [], [], [], 0, 1, [], options);
+            [~, d_sq] = fmincon(@sqDistanceFun, 0.5, [], [], [], [], 0, 1, [], options);
             out = sqrt(d_sq);
         end
     end
