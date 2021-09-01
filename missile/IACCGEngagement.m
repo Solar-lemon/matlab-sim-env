@@ -3,7 +3,12 @@ classdef IACCGEngagement < Engagement2dim
         iaccg
     end
     methods
-        function obj = IACCGEngagement(missile, target, gamma_imp)
+        function obj = IACCGEngagement(missile, target, gamma_imp, sigma_d)
+            sigma_max = missile.fovLimit;
+            if nargin < 4 || isempty(sigma_d)
+                sigma_d = sigma_max;
+            end
+            
             obj = obj@Engagement2dim(missile, target);
             
             gamma_T = target.state(4);
@@ -11,10 +16,9 @@ classdef IACCGEngagement < Engagement2dim
             v_T = target.speed;
             
             K = 1.5;
-            sigma_max = obj.missile.fovLimit;
             N = 3;
             obj.iaccg = DiscreteFunction(...
-                IACCG(gamma_imp, gamma_T, v_M, v_T, K, sigma_max, N), 1/40); % 40 Hz
+                IACCG(gamma_imp, gamma_T, v_M, v_T, K, sigma_d, N), 1/40); % 40 Hz
             
             obj.attachDiscSystems({obj.iaccg});
         end
