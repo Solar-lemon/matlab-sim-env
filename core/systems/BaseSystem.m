@@ -22,7 +22,9 @@ classdef(Abstract) BaseSystem < handle
                 initialState = [];
             end
             
-            if isa(initialState, 'numeric')
+            if isempty(initialState)
+                stateVarList = [];
+            elseif isa(initialState, 'numeric')
                 stateVarList = {StateVariable(initialState)};
             elseif isa(initialState, 'cell')
                 stateVarNum = numel(initialState);
@@ -30,8 +32,6 @@ classdef(Abstract) BaseSystem < handle
                 for k = 1:stateVarNum
                     stateVarList{k} = StateVariable(initialState{k});
                 end
-            else
-                stateVarList = [];
             end
             obj.stateVarList = stateVarList;
             obj.indexing(stateVarList);

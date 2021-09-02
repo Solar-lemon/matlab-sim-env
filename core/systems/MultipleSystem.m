@@ -23,53 +23,42 @@ classdef MultipleSystem < BaseSystem
         end
         
         function attachDynSystems(obj, systemList)
-            tempList = cell(size(systemList));
-            tempNum = 0;
+            lastSVI = obj.stateVarNum; % lastStateVarIndex
+            lastSI = obj.stateNum; % lastStateIndex
+            
+            stateVarIsNotEmpty = false(1, numel(systemList));
             for k = 1:numel(systemList)
-                if isa(systemList{k}, 'BaseSystem')
-                    tempNum = tempNum + 1;
-                    tempList{tempNum} = systemList{k};
+                if isa(systemList{k}, 'BaseSystem') && ~isempty(systemList{k}.stateVarList)
+                    stateVarIsNotEmpty(k) = true;
                 end
             end
+            newSysList = systemList(stateVarIsNotEmpty);
+            newSysNum = numel(newSysList);
             
-            obj.systemList = tempList(1:tempNum);
-            obj.systemNum  = tempNum;
+            obj.systemList = [obj.systemList, newSysList];
+            obj.systemNum = numel(obj.systemList);
             
-            stateVarNum = 0;
-            for k = 1:obj.systemNum
-                system = obj.systemList{k};
-                if ~isempty(system.stateVarList)
-                    stateVarNum = stateVarNum + system.stateVarNum;
-                end
+            obj.stateVarList = [obj.stateVarList, cell(1, newSysNum)];
+            obj.stateIndex = [obj.stateIndex, cell(1, newSysNum)];
+            for k = 1:newSysNum
+                system = newSysList{k};
+                obj.stateVarList(lastSVI + 1:lastSVI + system.stateVarNum) =...
+                    system.stateVarList;
+                updatedStateIndex = cellfun(@(x) x + lastSI, system.stateIndex,...
+                    'UniformOutput', false);
+                obj.stateIndex(lastSVI + 1:lastSVI + system.stateVarNum) =...
+                    updatedStateIndex;
+                
+                lastSVI = lastSVI + system.stateVarNum;
+                lastSI  = lastSI + system.stateNum;
             end
-            
-            stateVarList = cell(1, stateVarNum);
-            stateIndex   = cell(1, stateVarNum);
-            lastSVI = 0; % lastStateVarIndex
-            lastSI = 0;  % lastStateIndex
-            for k = 1:obj.systemNum
-                system = obj.systemList{k};
-                if ~isempty(system.stateVarList)
-                    stateVarList(lastSVI + 1:lastSVI + system.stateVarNum) =...
-                        system.stateVarList;
-                    updatedStateIndex = cellfun(@(x) x + lastSI, system.stateIndex,...
-                        'UniformOutput', false);
-                    stateIndex(lastSVI + 1:lastSVI + system.stateVarNum) =...
-                        updatedStateIndex;
-                    
-                    lastSVI = lastSVI + system.stateVarNum;
-                    lastSI  = lastSI + system.stateNum;
-                end
-            end
-            obj.stateVarList = stateVarList;
-            obj.stateIndex   = stateIndex;
             obj.stateVarNum  = lastSVI;
             obj.stateNum     = lastSI;
         end
         
         function attachDiscSystems(obj, discSystemList)
-            obj.discSystemList = discSystemList;
-            obj.discSystemNum = numel(discSystemList);
+            obj.discSystemList = [obj.discSystemList, discSystemList];
+            obj.discSystemNum = numel(obj.discSystemList);
         end
         
         % override
