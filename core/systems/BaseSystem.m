@@ -22,27 +22,35 @@ classdef(Abstract) BaseSystem < handle
                 initialState = [];
             end
             
+            obj.initializeState(initialState);
+            obj.logger = Logger();
+        end
+        
+        function initializeState(obj, initialState)
+            if nargin < 1 || isempty(initialState)
+                initialState = [];
+            end
+            
             if isempty(initialState)
-                stateVarList = [];
+                stateVarList_ = [];
             elseif isa(initialState, 'numeric')
-                stateVarList = {StateVariable(initialState)};
+                stateVarList_ = {StateVariable(initialState)};
             elseif isa(initialState, 'StateVariable')
-                stateVarList = {initialState};
+                stateVarList_ = {initialState};
             elseif isa(initialState, 'cell')
-                stateVarNum = numel(initialState);
-                stateVarList = cell(1, stateVarNum);
-                for k = 1:stateVarNum
+                stateVarNum_ = numel(initialState);
+                stateVarList_ = cell(1, stateVarNum_);
+                for k = 1:stateVarNum_
                     temp = initialState{k};
                     if isa(temp, 'numeric')
-                        stateVarList{k} = StateVariable(temp);
+                        stateVarList_{k} = StateVariable(temp);
                     elseif isa(temp, 'StateVariable')
-                        stateVarList{k} = temp;
+                        stateVarList_{k} = temp;
                     end
                 end
             end
-            obj.stateVarList = stateVarList;
-            obj.indexing(stateVarList);
-            obj.logger = Logger();
+            obj.stateVarList = stateVarList_;
+            obj.indexing(stateVarList_);
         end
         
         function reset(obj)

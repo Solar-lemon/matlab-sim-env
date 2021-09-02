@@ -1,4 +1,4 @@
-classdef MultiStateDynSystem < BaseSystem
+classdef MultiStateDynSystem < MultipleSystem
     properties
         initialState
         derivFun
@@ -14,9 +14,9 @@ classdef MultiStateDynSystem < BaseSystem
                 derivFun = [];
             end
             
-            obj = obj@BaseSystem(initialState);
+            obj = obj@MultipleSystem();
+            obj.initializeState(initialState);
             obj.name = 'multiStateDynSystem';
-            obj.initialState = initialState;
             
             if isempty(derivFun)
                 derivFun = @obj.derivative;
