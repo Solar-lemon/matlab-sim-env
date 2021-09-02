@@ -1,6 +1,7 @@
 classdef TimeVaryingDynSystem < BaseSystem
     properties
         initialState
+        derivFun
         outputFun
     end
     properties(Dependent)
@@ -38,6 +39,7 @@ classdef TimeVaryingDynSystem < BaseSystem
         function attachDerivFun(obj, derivFun)
             % derivFun: function_handle or BaseFunction
             % derivFun(state, time, input1, ..., inputM)
+            obj.derivFun = derivFun;
             obj.stateVar.attachDerivFun(derivFun);
         end
         
@@ -90,8 +92,9 @@ classdef TimeVaryingDynSystem < BaseSystem
             % implement this method if needed
             % varargin: {state, time, input1, ..., inputM}
             % out: derivState
-            fprintf("Attach a derivFun or implement the derivative method! \n")
-            out = zeros(size(obj.initialState));
+            assert(~isempty(obj.derivFun),...
+                "Attach a derivFun or implement the derivative method! \n")
+            out = obj.derivFun(varargin{:});
         end
         
         % to be implemented

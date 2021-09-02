@@ -53,11 +53,9 @@ classdef MultiStateDynSystem < BaseSystem
             % implement this method if needed
             % varargin: {state1, ..., stateN, input1, ..., inputM}
             % out: {derivState1, ..., derivStateN}
-            fprintf("Attach a derivFun or implement the derivative method! \n")
-            out = cell(size(obj.initialState));
-            for k = 1:numel(out)
-                out{k} = zeros(size(obj.initialState{k}));
-            end
+            assert(~isempty(obj.derivFun),...
+                "Attach a derivFun or implement the derivative method! \n")
+            out = obj.derivFun(varargin{:});
         end
         
         % to be implemented
