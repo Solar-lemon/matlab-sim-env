@@ -15,8 +15,7 @@ classdef TimeVaryingDynSystem < BaseSystem
             if nargin < 2
                 derivFun = [];
             end
-            stateVarList = {StateVariable(initialState(:))};
-            obj = obj@BaseSystem(stateVarList);
+            obj = obj@BaseSystem(initialState);
             obj.name = 'timeVaryingDynSystem';
             obj.initialState = initialState;
             
