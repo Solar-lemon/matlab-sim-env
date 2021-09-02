@@ -32,7 +32,7 @@ fprintf("Elapsed time: %.2f [s] \n\n", elapsedTime);
 % Using a BaseFunction object
 fprintf("Using a BaseFunction object \n")
 tic
-system2 = DynSystem([0; 0], SecondOrderDyn(zeta, omega));
+system2 = DynSystem([0; 0], SecondOrderDynFun(zeta, omega));
 Simulator(system2).propagate(dt, finalTime, true, u_step);
 elapsedTime = toc;
 
