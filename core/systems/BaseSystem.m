@@ -26,11 +26,18 @@ classdef(Abstract) BaseSystem < handle
                 stateVarList = [];
             elseif isa(initialState, 'numeric')
                 stateVarList = {StateVariable(initialState)};
+            elseif isa(initialState, 'StateVariable')
+                stateVarList = {initialState};
             elseif isa(initialState, 'cell')
                 stateVarNum = numel(initialState);
                 stateVarList = cell(1, stateVarNum);
                 for k = 1:stateVarNum
-                    stateVarList{k} = StateVariable(initialState{k});
+                    temp = initialState{k};
+                    if isa(temp, 'numeric')
+                        stateVarList{k} = StateVariable(temp);
+                    elseif isa(temp, 'StateVariable')
+                        stateVarList{k} = temp;
+                    end
                 end
             end
             obj.stateVarList = stateVarList;
