@@ -15,8 +15,22 @@ classdef(Abstract) BaseSystem < handle
         history
     end
     methods
-        function obj = BaseSystem(stateVarList)
-            if nargin < 1
+        function obj = BaseSystem(initialState)
+            % initialState: an array or
+            % cell array {state1, state2, ..., stateN}
+            if nargin < 1 || isempty(initialState)
+                initialState = [];
+            end
+            
+            if isa(initialState, 'numeric')
+                stateVarList = {StateVariable(initialState)};
+            elseif isa(initialState, 'cell')
+                stateVarNum = numel(initialState);
+                stateVarList = cell(1, stateVarNum);
+                for k = 1:stateVarNum
+                    stateVarList{k} = StateVariable(initialState{k});
+                end
+            else
                 stateVarList = [];
             end
             obj.stateVarList = stateVarList;

@@ -14,12 +14,7 @@ classdef MultiStateDynSystem < BaseSystem
                 derivFun = [];
             end
             
-            subStateVarNum = numel(initialState);
-            subStateVarList = cell(1, subStateVarNum);
-            for k = 1:subStateVarNum
-                subStateVarList{k} = StateVariable(initialState{k});
-            end
-            obj = obj@BaseSystem(subStateVarList);
+            obj = obj@BaseSystem(initialState);
             obj.name = 'multiStateDynSystem';
             obj.initialState = initialState;
             
