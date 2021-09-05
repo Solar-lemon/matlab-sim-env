@@ -59,7 +59,7 @@ classdef PolyTrajOptimization < handle
             % endpoint constraint
             A_end = cell(1, obj.k);
             b_end = cell(1, obj.k);
-            for l = 1:obj.k - 1
+            for l = 1:obj.k
                 [A_end{l}, b_end{l}] = obj.endpointConstraint(l, [false; false]);
             end
             
