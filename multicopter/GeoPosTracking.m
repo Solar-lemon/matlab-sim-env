@@ -47,6 +47,53 @@ classdef GeoPosTracking < MultipleSystem
             tau = obj.attControl.forward(R, omega, var_R_d);
             
             obj.quadrotor.forward([f; tau]);
+            
+            x_d = var_x_d.deriv(0);
+            psi_d = var_psi_d.deriv(0);
+            
+            obj.logger.forward(x_d, psi_d);
+            obj.logger.forwardVarNames('x_d', 'psi_d');
+        end
+        
+        function fig = plot(obj)
+            quadPos = obj.quadrotor.history{2};
+            [trajTime, trajPos, trajHead] = obj.history{1:3};
+            
+            quadFigs = obj.quadrotor.plot();
+            figure(quadFigs{1});
+            for k = 1:3
+                subplot(3, 1, k);
+                hold on
+                plot(trajTime, trajPos(k, :), '--', 'DisplayName', "Desired pos.")
+                legend()
+            end
+            
+            figure(quadFigs{5});
+            subplot(3, 1, 3);
+            hold on
+            plot(trajTime, rad2deg(trajHead), '--', 'DisplayName', "Desired head.")
+            legend()
+            
+            set(0,'DefaultFigureWindowStyle','docked')
+            fig = figure();
+            fig.Name = "Trajectory";
+            hold on
+            plot3(quadPos(1, :), quadPos(2, :), quadPos(3, :), '-o',...
+                'MarkerIndices', [1, size(quadPos, 2)],...
+                'DisplayName', "Actual traj.")
+            plot3(trajPos(1, :), trajPos(2, :), trajPos(3, :), '--o',...
+                'MarkerIndices', [1, size(trajPos, 2)],...
+                'DisplayName', "Desired traj.")
+            title("Trajectory")
+            xlabel('x')
+            ylabel('y')
+            zlabel('z')
+            view([-45, 30])
+            daspect([1 1 1])
+            grid on
+            legend('Location', 'Northoutside')
+            
+            set(0,'DefaultFigureWindowStyle','normal')
         end
     end
 end
