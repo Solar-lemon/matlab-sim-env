@@ -70,7 +70,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
             for k = 1:3
                 subplot(3, 1, k)
                 hold on
-                plot(timeList, posList(k, :))
+                plot(timeList, posList(k, :), 'DisplayName', "Quad. pos.")
                 xlabel('Time')
                 ylabel(ylabelList{k})
                 grid on
@@ -84,7 +84,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
             for k = 1:3
                 subplot(3, 1, k)
                 hold on
-                plot(timeList, velList(k, :))
+                plot(timeList, velList(k, :), 'DisplayName', "Quad. vel.")
                 xlabel('Time')
                 ylabel(ylabelList{k})
                 grid on
@@ -131,7 +131,8 @@ classdef QuadrotorDyn < MultiStateDynSystem
             for k = 1:3
                 subplot(3, 1, k)
                 hold on
-                plot(timeList, rad2deg(eulerAngleList(k, :)))
+                plot(timeList, rad2deg(eulerAngleList(k, :)),...
+                    'DisplayName', "Quad. att.")
                 xlabel('Time [s]')
                 ylabel(ylabelList{k})
                 grid on
