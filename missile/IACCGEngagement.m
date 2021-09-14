@@ -6,7 +6,7 @@ classdef IACCGEngagement < Engagement2dim
         function obj = IACCGEngagement(missile, target, gamma_imp, sigma_d)
             sigma_max = missile.fovLimit;
             if nargin < 4 || isempty(sigma_d)
-                sigma_d = sigma_max;
+                sigma_d = sigma_max - 1e-3;
             end
             
             obj = obj@Engagement2dim(missile, target);

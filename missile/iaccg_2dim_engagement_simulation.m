@@ -22,8 +22,9 @@ missile.accLimit = ...
 target = PlanarNonManeuvVehicle3dof(...
     [5000; 0; 50; 0]);
 gamma_imp = deg2rad(71);
+sigma_d = deg2rad(45) - 1e-3;
 
-model = IACCGEngagement(missile, target, gamma_imp);
+model = IACCGEngagement(missile, target, gamma_imp, sigma_d);
 Simulator(model).propagate(dt, finalTime, true);
 model.plot();
 model.report();
