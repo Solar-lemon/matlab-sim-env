@@ -18,11 +18,10 @@ classdef IACCG < BaseFunction
         N
     end
     methods
-        function obj = IACCG(gamma_imp, gamma_T, v_M, v_T, K, sigma_max, N)
+        function obj = IACCG(gamma_imp, gamma_T, v_M, v_T, K, sigma_d, N)
             % gamma_imp: impact angle
             gamma_M_f = gamma_T - gamma_imp;
             eta = IACCG.speedRatio(v_M, v_T);
-            sigma_d = min(acos(2*eta), sigma_max) - 1e-3;
             lam_s = IACCG.switchCond(N, gamma_M_f, gamma_T, eta, sigma_d);
             
             obj.gamma_imp = gamma_imp;
