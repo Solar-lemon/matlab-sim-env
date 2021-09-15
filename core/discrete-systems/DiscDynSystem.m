@@ -7,7 +7,7 @@ classdef DiscDynSystem < handle
         transFun
         outputFun
         logger
-        name = "DiscDynSystem";
+        name = "discDynSystem";
         flag = 0
     end
     properties(Dependent)
@@ -69,13 +69,17 @@ classdef DiscDynSystem < handle
             varsToLog = {};
         end
         
-        function step(obj, varargin)
+        function forward(obj, varargin)
             % varargin: {input1, ..., inputM}
             varsToLog = obj.log(varargin{:});
             obj.logger.append(obj.time, obj.state, varargin{:}, varsToLog{:});
-            
-            obj.time = obj.time + 1;
+        end
+        
+        function step(obj, varargin)
+            % varargin: {input1, ..., inputM}
+            obj.forward(varargin{:});
             obj.state = obj.transFun(obj.state, obj.time, varargin{:});
+            obj.time = obj.time + 1;
         end
         
         function out = output(obj)
@@ -85,6 +89,16 @@ classdef DiscDynSystem < handle
                 out = obj.outputFun.forward(obj.state, obj.time);
             else
                 out = obj.outputFun(obj.state, obj.time);
+            end
+        end
+        
+        % to be implemented
+        function [toStop, flag] = checkStopCondition(obj)
+            % implement this method if needed
+            toStop = false;
+            
+            if nargout > 1
+                flag = obj.flag;
             end
         end
     end
@@ -136,6 +150,28 @@ classdef DiscDynSystem < handle
                     box on
                 end
             end
+        end
+    end
+    
+    methods
+        function save(obj, folder)
+            if nargin < 2 || isempty(folder)
+                folder = "data/logData/" + obj.name + "/";
+            end
+            obj.logger.save(folder + "history.mat");
+            
+            infoFile = matfile(folder + "info.mat", 'Writable', true);
+            infoFile.state = obj.state;
+        end
+        
+        function load(obj, folder)
+            if nargin < 2 || isempty(folder)
+                folder = "data/logData/" + obj.name + "/";
+            end
+            obj.logger.load(folder + "history.mat");
+            
+            infoFile = matfile(folder + "info.mat");
+            obj.state = infoFile.state;
         end
     end
     

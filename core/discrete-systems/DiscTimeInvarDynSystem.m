@@ -8,7 +8,7 @@ classdef DiscTimeInvarDynSystem < DiscDynSystem
                 transFun = [];
             end
             obj = obj@DiscDynSystem(initialState, transFun, outputFun);
-            obj.name = "DiscTimeInvarDynSystem";
+            obj.name = "discTimeInvarDynSystem";
         end
         
         % to be implemented
@@ -23,11 +23,9 @@ classdef DiscTimeInvarDynSystem < DiscDynSystem
         % override
         function step(obj, varargin)
             % varargin: {input1, ..., inputM}
-            varsToLog = obj.log(varargin{:});
-            obj.logger.append(obj.time, obj.state, varargin{:}, varsToLog{:});
-            
-            obj.time = obj.time + 1;
+            obj.forward(varargin{:});
             obj.state = obj.transFun(obj.state, varargin{:});
+            obj.time = obj.time + 1;
         end
         
         % override
