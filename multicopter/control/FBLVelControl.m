@@ -36,20 +36,9 @@ classdef FBLVelControl < BaseFunction
             u_t_3 = u_tilde(3);
             g = FlatEarthEnv.gravAccel;
             
-            if abs(u_t_1) > 1e-4
-                beta = -sign(u_t_1)/sqrt(...
-                    1 + ((g - u_t_3)/u_t_1)^2);
-                f = obj.m*sqrt(...
-                    (u_t_1/beta)^2 + u_t_2^2);
-                alpha = obj.m/f*u_t_2;
-            else
-                beta = 0;
-                f = obj.m*sqrt(...
-                    u_t_2^2 + (g - u_t_3)^2);
-                alpha = obj.m/f*u_t_2;
-            end
-            phi_d = real(asin(alpha));
-            theta_d = real(asin(beta));
+            f = obj.m*sqrt(u_t_1^2 + u_t_2^2 + (u_t_3 - g)^2);
+            phi_d = asin(obj.m/f*u_t_2);
+            theta_d = atan(u_t_1/(u_t_3 - g));
             psi_d = 0;
             
             eta_d = [phi_d; theta_d; psi_d];
