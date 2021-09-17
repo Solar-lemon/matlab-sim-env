@@ -47,5 +47,20 @@ classdef CommonUtils < handle
             [~, d_sq] = fmincon(@sqDistanceFun, 0.5, [], [], [], [], 0, 1, [], options);
             out = sqrt(d_sq);
         end
+        
+        function [x_train, y_train, x_test, y_test] = splitTrainTestData(x, y, trainRatio)
+            % x: d_1 x n, y: d_2 x n
+            numSample = size(x, 2);
+            idx = randperm(numSample);
+            
+            numTrain = floor(numSample*trainRatio);
+            idx_train = idx(1:numTrain);
+            idx_test = idx(numTrain + 1:end);
+            
+            x_train = x(:, idx_train);
+            y_train = y(:, idx_train);
+            x_test = x(:, idx_test);
+            y_test = y(:, idx_test);
+        end
     end
 end
