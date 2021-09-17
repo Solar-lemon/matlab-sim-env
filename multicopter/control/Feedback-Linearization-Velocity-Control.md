@@ -139,7 +139,23 @@ x_{4d} = \arcsin \alpha,\quad x_{5d} = \arcsin \beta
 $$
 
 
- 
+
+#### Alternative formulation for the desired attitude angles
+
+Let $x_{6d}=0$. Using the equations,
+$$
+\tilde{u}_{1}^{2} + \tilde{u}_{2}^{2} + (\tilde{u}_{3} - g)^{2} = \left( \frac{f}{m} \right)^{2} \quad \therefore f = m \sqrt{\tilde{u}_{1}^{2} + \tilde{u}_{2}^{2} + (\tilde{u}_{3} - g)^{2})}
+$$
+In addition,
+$$
+\begin{align}
+x_{4d} &= \phi_{d} = \arcsin( \frac{m}{f}\tilde{u}_{2}) \\
+x_{5d} &= \theta_{d} = \arctan( \frac{\tilde{u}_{1}}{\tilde{u}_{3} - g} )
+\end{align}
+$$
+
+
+
 
 
 
