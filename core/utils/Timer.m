@@ -38,7 +38,7 @@ classdef Timer < handle
             end
             if obj.isOperating
                 elapsedTime = time - obj.lastEventTime;
-                if elapsedTime >= obj.eventTimeInterval - eps(time)
+                if elapsedTime >= obj.eventTimeInterval - 100*eps(time)
                     obj.isEvent = true;
                     obj.lastEventTime = time;
                 else
