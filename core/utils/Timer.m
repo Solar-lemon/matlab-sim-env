@@ -1,9 +1,10 @@
 classdef Timer < handle
     properties
-        eventTimeInterval
         isOperating = false
+        eventTimeInterval
         lastEventTime
-        isEvent = false
+        isEvent
+        timeResolution
     end
     methods
         function obj = Timer(eventTimeInterval)
@@ -12,33 +13,33 @@ classdef Timer < handle
             end
             
             obj.eventTimeInterval = eventTimeInterval;
-            obj.lastEventTime = 0;
         end
         
-        function turnOn(obj, time, withInitialEvent)
-            if nargin < 3 || isempty(withInitialEvent)
-                withInitialEvent = false;
-            end
-            assert(~isnan(obj.eventTimeInterval), "Set the eventTimeInterval first before turning on the timer.")
+        function turnOn(obj, currentTime, timeResolution)
+            assert(~isnan(obj.eventTimeInterval),...
+                "Set eventTimeInterval first before turning on the timer.")
             
             obj.isOperating = true;
-            obj.lastEventTime = time;
-            obj.isEvent = withInitialEvent;
+            obj.lastEventTime = currentTime;
+            obj.isEvent = true;
+            obj.timeResolution = timeResolution;
         end
         
         function turnOff(obj)
             obj.isOperating = false;
             obj.lastEventTime = [];
             obj.isEvent = [];
+            obj.timeResolution = [];
         end
         
         function forward(obj, time)
-            if abs(time - obj.lastEventTime) <= 10*eps(time)
+            if abs(time - obj.lastEventTime) <= obj.timeResolution
                 return
             end
+            
             if obj.isOperating
                 elapsedTime = time - obj.lastEventTime;
-                if elapsedTime >= obj.eventTimeInterval - 100*eps(time)
+                if elapsedTime >= (obj.eventTimeInterval - obj.timeResolution)
                     obj.isEvent = true;
                     obj.lastEventTime = time;
                 else
@@ -55,23 +56,24 @@ classdef Timer < handle
     methods(Static)
         function test()
             clc
+            fprintf("== Test for Timer ==\n")
             
-            eventTimeInterval = 1;
-            
+            eventTimeInterval = 0.1;
             timer = Timer(eventTimeInterval);
-            dt = 0.4;
+            
+            dt = 0.01;
+            time = 0;
+            timeResolution = 0.0001*dt;
+            timer.turnOn(time, timeResolution);
             
             fprintf('Initial time: 0.0[s] \n')
-            fprintf('Event time interval: %.1f[s] \n', eventTimeInterval)
-            fprintf('Sampling time interval: %.1f[s] \n', dt)
-            
-            time = 0;
-            timer.turnOn(time, false);
-            for i = 1:5
+            fprintf('Event time interval: %.2f[s] \n', eventTimeInterval)
+            fprintf('Sampling time interval: %.2f[s] \n\n', dt)
+            for i = 1:100
                 timer.forward(time);
                 isEvent = timer.checkEvent();
                 if isEvent
-                    fprintf('Event occured at time = %.1f [s] \n', time)
+                    fprintf('Event occured at time = %.1f[s] \n', time)
                 end
                 time = time + dt;
             end

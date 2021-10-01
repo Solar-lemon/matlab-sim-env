@@ -73,10 +73,10 @@ classdef MultipleSystem < BaseSystem
         end
         
         % override
-        function startLogging(obj, logTimeInterval)
-            startLogging@BaseSystem(obj, logTimeInterval);
+        function startLogging(obj, logTimeInterval, timeResolution)
+            startLogging@BaseSystem(obj, logTimeInterval, timeResolution);
             for k = 1:obj.systemNum
-                obj.systemList{k}.startLogging(logTimeInterval);
+                obj.systemList{k}.startLogging(logTimeInterval, timeResolution);
             end
         end
         

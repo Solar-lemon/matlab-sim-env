@@ -12,8 +12,8 @@ classdef Simulator < handle
             obj.model = model;
         end
         
-        function startLogging(obj, interval)
-            obj.model.startLogging(interval);
+        function startLogging(obj, interval, timeResolution)
+            obj.model.startLogging(interval, timeResolution);
         end
         
         function finishLogging(obj)
@@ -45,7 +45,7 @@ classdef Simulator < handle
             iterNum = min(round(time/dt), intmax('int32'));
             
             if saveHistory
-                obj.startLogging(dt);
+                obj.startLogging(dt, 0.0001*dt);
             end
             if measureElapsedTime
                 fprintf("[Simulator] Simulating... \n")
@@ -103,7 +103,7 @@ classdef Simulator < handle
             
             fprintf('Test for step method \n')
             model.reset();
-            simulator.startLogging(0.01);
+            simulator.startLogging(0.01, 1e-6);
             for i = 1:1000
                 simulator.step(0.01);
             end

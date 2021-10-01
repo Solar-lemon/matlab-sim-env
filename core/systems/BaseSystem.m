@@ -1,6 +1,7 @@
 classdef(Abstract) BaseSystem < handle
     properties
         time = 0
+        timeResolution
         stateVarList
         stateVarNum
         stateNum
@@ -102,7 +103,7 @@ classdef(Abstract) BaseSystem < handle
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update3(dt);
             end
-            obj.applyTime(t0 + dt - 10*eps(t0 + dt/2));
+            obj.applyTime(t0 + dt - 10*obj.timeResolution);
         end
         
         function rk4Update4(obj, t0, dt, inValues)
@@ -113,8 +114,9 @@ classdef(Abstract) BaseSystem < handle
             obj.applyTime(t0 + dt);
         end
         
-        function startLogging(obj, logTimeInterval)
-            obj.logger.turnOn(logTimeInterval);
+        function startLogging(obj, logTimeInterval, timeResolution)
+            obj.timeResolution = timeResolution;
+            obj.logger.turnOn(logTimeInterval, timeResolution);
         end
         
         function finishLogging(obj)

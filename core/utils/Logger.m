@@ -18,23 +18,18 @@ classdef Logger < handle
         
         function reset(obj)
             obj.time = 0;
-            if ~isempty(obj.timer)
-                obj.timer.turnOff();
-            end
+            obj.timer = [];
             obj.data.clear();
             obj.varNamesAreInitialized = false;
         end
         
-        function turnOn(obj, logTimeInterval)
-            if isempty(obj.timer)
-                obj.timer = Timer(logTimeInterval);
-            end
-            obj.timer.eventTimeInterval = logTimeInterval;
-            obj.timer.turnOn(obj.time, true);
+        function turnOn(obj, logTimeInterval, timeResolution)
+            obj.timer = Timer(logTimeInterval);
+            obj.timer.turnOn(obj.time, timeResolution);
         end
         
         function turnOff(obj)
-            obj.timer.turnOff();
+            obj.timer = [];
         end
         
         function out = isempty(obj)
@@ -43,23 +38,17 @@ classdef Logger < handle
         
         function applyTime(obj, timeFeed)
             obj.time = timeFeed;
-            obj.timer.forward(timeFeed);
+            obj.timer.forward(obj.time);
         end
         
         function out = toLog(obj)
-            if ~isempty(obj.timer)
-                out = obj.timer.checkEvent();
-            else
-                out = false;
-            end
+            out = ~isempty(obj.timer) && obj.timer.checkEvent();
         end
         
         function forward(obj, varargin)
-            if ~isempty(obj.timer)
-                obj.timer.forward(obj.time);
-                if obj.timer.checkEvent()
-                    obj.data.append(obj.time, varargin{:});
-                end
+            obj.timer.forward(obj.time);
+            if ~isempty(obj.timer) && obj.timer.checkEvent()
+                obj.data.append(obj.time, varargin{:});
             end
         end
         
@@ -124,8 +113,9 @@ classdef Logger < handle
             fprintf("== Test for Logger == \n")
             dt = 0.01;
             logTimeInterval = 0.1;
+            timeResolution = 0.0001*dt;
             logger = Logger();
-            logger.turnOn(logTimeInterval);
+            logger.turnOn(logTimeInterval, timeResolution);
             
             time = 0;
             pos = [0; 0];
