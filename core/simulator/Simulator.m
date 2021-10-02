@@ -17,7 +17,8 @@ classdef Simulator < handle
         end
         
         function finishLogging(obj)
-            obj.model.forwardWrapper(obj.inValues);
+            inputs = obj.model.processInput(obj.inValues);
+            obj.model.forward(inputs{:});
             obj.model.finishLogging();
         end
         
@@ -28,11 +29,7 @@ classdef Simulator < handle
             end
             
             t0 = obj.model.time;
-            
-            obj.model.rk4Update1(t0, dt, varargin);
-            obj.model.rk4Update2(t0, dt, varargin);
-            obj.model.rk4Update3(t0, dt, varargin);
-            obj.model.rk4Update4(t0, dt, varargin);
+            obj.model.step(t0, dt, varargin);
             
             obj.inValues = varargin;
         end
@@ -58,11 +55,7 @@ classdef Simulator < handle
                 end
                 
                 t0 = obj.model.time;
-                
-                obj.model.rk4Update1(t0, dt, varargin);
-                obj.model.rk4Update2(t0, dt, varargin);
-                obj.model.rk4Update3(t0, dt, varargin);
-                obj.model.rk4Update4(t0, dt, varargin);
+                obj.model.step(t0, dt, varargin);
             end
             if measureElapsedTime
                 elapsedTime = toc;

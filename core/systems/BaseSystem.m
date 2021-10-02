@@ -65,52 +65,50 @@ classdef(Abstract) BaseSystem < handle
             end
         end
         
-        function forwardWrapper(obj, inValues)
-            inputsToForward = cell(size(inValues));
-            for i = 1:numel(inValues)
-                if isa(inValues{i}, 'numeric')
-                    inputsToForward{i} = inValues{i};
-                elseif isa(inValues{i}, 'function_handle')
-                    inputsToForward{i} = inValues{i}(obj.time);
-                elseif isa(inValues{i}, 'BaseFunction')
-                    if isa(inValues{i}, 'DiscreteFunction')
-                        inValues{i}.applyTime(obj.time);
+        function out = processInput(obj, inputs)
+            out = cell(size(inputs));
+            for i = 1:numel(inputs)
+                if isa(inputs{i}, 'numeric')
+                    out{i} = inputs{i};
+                elseif isa(inputs{i}, 'function_handle')
+                    out{i} = inputs{i}(obj.time);
+                elseif isa(inputs{i}, 'BaseFunction')
+                    if isa(inputs{i}, 'DiscreteFunction')
+                        inputs{i}.applyTime(obj.time);
                     end
-                    inputsToForward{i} = inValues{i}.forward(obj.time);
+                    out{i} = inputs{i}.forward(obj.time);
                 end
             end
-            obj.forward(inputsToForward{:});
         end
         
-        function rk4Update1(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
+        function step(obj, t0, dt, inputs)
+            inputs = obj.processInput(inputs);
+            obj.forward(inputs{:});
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update1(dt);
             end
+            
             obj.applyTime(t0 + dt/2);
-        end
-        
-        function rk4Update2(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
+            inputs = obj.processInput(inputs);
+            obj.forward(inputs{:});
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update2(dt);
             end
+            
             obj.applyTime(t0 + dt/2);
-        end
-        
-        function rk4Update3(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
+            inputs = obj.processInput(inputs);
+            obj.forward(inputs{:});
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update3(dt);
             end
+            
             obj.applyTime(t0 + dt - 10*obj.timeResolution);
-        end
-        
-        function rk4Update4(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
+            inputs = obj.processInput(inputs);
+            obj.forward(inputs{:});
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update4(dt);
             end
+            
             obj.applyTime(t0 + dt);
         end
         

@@ -53,30 +53,26 @@ classdef TimeVaryingDynSystem < BaseSystem
         end
         
         % override
-        function rk4Update1(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
+        function step(obj, t0, dt, inputs)
+            inputs = obj.processInput(inputs);
+            obj.forward(inputs{:});
             obj.stateVar.rk4Update1(dt);
+            
             obj.applyTime(t0 + dt/2);
-        end
-        
-        % override
-        function rk4Update2(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
-            obj.stateVar.rk4Update2(dt);
+            inputs = obj.processInput(inputs);
+            obj.forward(inputs{:});
+            obj.stateVar.rk4Update1(dt);
+            
             obj.applyTime(t0 + dt/2);
-        end
-        
-        % override
-        function rk4Update3(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
-            obj.stateVar.rk4Update3(dt);
-            obj.applyTime(t0 + dt - 10*eps(t0 + dt/2));
-        end
-        
-        % override
-        function rk4Update4(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
-            obj.stateVar.rk4Update4(dt);
+            inputs = obj.processInput(inputs);
+            obj.forward(inputs{:});
+            obj.stateVar.rk4Update1(dt);
+            
+            obj.applyTime(t0 + dt - 10*obj.timeResolution);
+            inputs = obj.processInput(inputs);
+            obj.forward(inputs{:});
+            obj.stateVar.rk4Update1(dt);
+            
             obj.applyTime(t0 + dt);
         end
         
