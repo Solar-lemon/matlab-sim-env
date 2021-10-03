@@ -1,6 +1,6 @@
 classdef Logger < handle
     properties
-        time = 0
+        simClock
         timer
         data
         varNamesAreInitialized = false
@@ -16,16 +16,21 @@ classdef Logger < handle
             obj.data = MatStackedData();
         end
         
+        function attachSimClock(obj, simClock)
+            obj.simClock = simClock;
+        end
+        
         function reset(obj)
-            obj.time = 0;
             obj.timer = [];
             obj.data.clear();
             obj.varNamesAreInitialized = false;
         end
         
-        function turnOn(obj, logTimeInterval, timeResolution)
+        function turnOn(obj, logTimeInterval)
+            assert(~isempty(obj.simClock), "[Logger] Attach a clock first.\n")
             obj.timer = Timer(logTimeInterval);
-            obj.timer.turnOn(obj.time, timeResolution);
+            obj.timer.attachSimClock(obj.simClock);
+            obj.timer.turnOn();
         end
         
         function turnOff(obj)
@@ -36,19 +41,15 @@ classdef Logger < handle
             out = isempty(obj.data);
         end
         
-        function applyTime(obj, timeFeed)
-            obj.time = timeFeed;
-            obj.timer.forward(obj.time);
-        end
-        
         function out = toLog(obj)
+            obj.timer.forward();
             out = ~isempty(obj.timer) && obj.timer.checkEvent();
         end
         
         function forward(obj, varargin)
-            obj.timer.forward(obj.time);
+            obj.timer.forward();
             if ~isempty(obj.timer) && obj.timer.checkEvent()
-                obj.data.append(obj.time, varargin{:});
+                obj.data.append(obj.simClock.time, varargin{:});
             end
         end
         
@@ -112,23 +113,22 @@ classdef Logger < handle
             
             fprintf("== Test for Logger == \n")
             dt = 0.01;
+            timeResolution = 1e-6;
             logTimeInterval = 0.1;
-            timeResolution = 0.0001*dt;
-            logger = Logger();
-            logger.turnOn(logTimeInterval, timeResolution);
             
-            time = 0;
+            simClock = Clock(0, timeResolution);
+            logger = Logger();
+            logger.attachSimClock(simClock);
+            logger.turnOn(logTimeInterval);
+            
             pos = [0; 0];
             vel = [1; 0];
             for i = 1:100
-                logger.applyTime(time);
-                if logger.toLog()
-                    logger.forward(pos, vel);
-                    logger.forwardVarNames('pos', 'vel');
-                end
+                logger.forward(pos, vel);
+                logger.forwardVarNames('pos', 'vel');
                 
                 pos = pos + vel*dt;
-                time = time + dt;
+                simClock.elapse(dt);
             end
             [timeList, posList, velList] = logger.matValues{:};
             fprintf("size(timeList): (%d, %d) \n", ...
