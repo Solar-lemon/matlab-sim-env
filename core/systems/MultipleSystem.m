@@ -12,6 +12,17 @@ classdef MultipleSystem < BaseSystem
         end
         
         % override
+        function attachSimClock(obj, simClock)
+            attachSimClock@BaseSystem(obj, simClock);
+            for k = 1:obj.systemNum
+                obj.systemList{k}.attachSimClock(simClock);
+            end
+            for k = 1:obj.discSystemNum
+                obj.discSystemList{k}.attachSimClock(simClock);
+            end
+        end
+        
+        % override
         function reset(obj)
             reset@BaseSystem(obj);
             for k = 1:obj.systemNum
@@ -73,10 +84,10 @@ classdef MultipleSystem < BaseSystem
         end
         
         % override
-        function startLogging(obj, logTimeInterval, timeResolution)
-            startLogging@BaseSystem(obj, logTimeInterval, timeResolution);
+        function startLogging(obj, logTimeInterval)
+            startLogging@BaseSystem(obj, logTimeInterval);
             for k = 1:obj.systemNum
-                obj.systemList{k}.startLogging(logTimeInterval, timeResolution);
+                obj.systemList{k}.startLogging(logTimeInterval);
             end
         end
         

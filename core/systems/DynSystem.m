@@ -34,10 +34,9 @@ classdef DynSystem < TimeVaryingDynSystem
         function out = forward(obj, varargin)
             % varargin: {input1, ..., inputM}
             obj.stateVar.forward(varargin{:});
-            if obj.logger.toLog()
-                varsToLog = obj.log(varargin{:});
-                obj.logger.forward(obj.state, varargin{:}, varsToLog{:});
-            end
+            
+            varsToLog = obj.log(varargin{:});
+            obj.logger.forward(obj.state, varargin{:}, varsToLog{:});
             
             if nargout > 0
                 out = obj.output;

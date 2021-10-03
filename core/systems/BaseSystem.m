@@ -1,7 +1,6 @@
 classdef(Abstract) BaseSystem < handle
     properties
-        time = 0
-        timeResolution
+        simClock
         stateVarList
         stateVarNum
         stateNum
@@ -11,6 +10,7 @@ classdef(Abstract) BaseSystem < handle
         flag = 0
     end
     properties(Dependent)
+        time
         state
         stateValueList
         history
@@ -39,8 +39,12 @@ classdef(Abstract) BaseSystem < handle
             obj.logger = Logger();
         end
         
+        function attachSimClock(obj, simClock)
+            obj.simClock = simClock;
+            obj.logger.attachSimClock(simClock);
+        end
+        
         function reset(obj)
-            obj.time = 0;
             obj.logger.reset();
         end
         
@@ -49,11 +53,6 @@ classdef(Abstract) BaseSystem < handle
                 index = obj.stateIndex{k};
                 obj.stateVarList{k}.setFlatValue(stateFeed(index, 1));
             end
-        end
-        
-        function applyTime(obj, timeFeed)
-            obj.time = timeFeed;
-            obj.logger.applyTime(timeFeed);
         end
         
         function out = flatDeriv(obj)
@@ -65,56 +64,51 @@ classdef(Abstract) BaseSystem < handle
             end
         end
         
-        function out = processInput(obj, inputs)
-            out = cell(size(inputs));
+        function forwardWrapper(obj, inputs)
+            processedInputs = cell(size(inputs));
             for i = 1:numel(inputs)
                 if isa(inputs{i}, 'numeric')
-                    out{i} = inputs{i};
+                    processedInputs{i} = inputs{i};
                 elseif isa(inputs{i}, 'function_handle')
-                    out{i} = inputs{i}(obj.time);
+                    processedInputs{i} = inputs{i}(obj.simClock.time);
                 elseif isa(inputs{i}, 'BaseFunction')
-                    if isa(inputs{i}, 'DiscreteFunction')
-                        inputs{i}.applyTime(obj.time);
-                    end
-                    out{i} = inputs{i}.forward(obj.time);
+                    processedInputs{i} = inputs{i}.forward(obj.simClock.time);
                 end
             end
+            obj.forward(processedInputs{:});
         end
         
-        function step(obj, t0, dt, inputs)
-            inputs = obj.processInput(inputs);
-            obj.forward(inputs{:});
+        function step(obj, dt, inputs)
+            t0 = obj.simClock.time;
+            
+            obj.forwardWrapper(inputs);
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update1(dt);
             end
             
-            obj.applyTime(t0 + dt/2);
-            inputs = obj.processInput(inputs);
-            obj.forward(inputs{:});
+            obj.simClock.applyTime(t0 + dt/2);
+            obj.forwardWrapper(inputs);
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update2(dt);
             end
             
-            obj.applyTime(t0 + dt/2);
-            inputs = obj.processInput(inputs);
-            obj.forward(inputs{:});
+            obj.simClock.applyTime(t0 + dt/2);
+            obj.forwardWrapper(inputs);
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update3(dt);
             end
             
-            obj.applyTime(t0 + dt - 10*obj.timeResolution);
-            inputs = obj.processInput(inputs);
-            obj.forward(inputs{:});
+            obj.simClock.applyTime(t0 + dt - 10*obj.simClock.timeResolution);
+            obj.forwardWrapper(inputs);
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update4(dt);
             end
             
-            obj.applyTime(t0 + dt);
+            obj.simClock.applyTime(t0 + dt);
         end
         
-        function startLogging(obj, logTimeInterval, timeResolution)
-            obj.timeResolution = timeResolution;
-            obj.logger.turnOn(logTimeInterval, timeResolution);
+        function startLogging(obj, logTimeInterval)
+            obj.logger.turnOn(logTimeInterval);
         end
         
         function finishLogging(obj)
@@ -175,6 +169,10 @@ classdef(Abstract) BaseSystem < handle
     
     % set and get methods
     methods
+        function out = get.time(obj)
+            out = obj.simClock.time;
+        end
+        
         function out = get.state(obj)
             out = stateFlatValue(obj);
         end

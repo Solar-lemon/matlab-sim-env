@@ -53,27 +53,26 @@ classdef TimeVaryingDynSystem < BaseSystem
         end
         
         % override
-        function step(obj, t0, dt, inputs)
-            inputs = obj.processInput(inputs);
-            obj.forward(inputs{:});
+        function step(obj, dt, inputs)
+            t0 = obj.simClock.time;
+            
+            obj.forwardWrapper(inputs);
             obj.stateVar.rk4Update1(dt);
             
-            obj.applyTime(t0 + dt/2);
-            inputs = obj.processInput(inputs);
-            obj.forward(inputs{:});
-            obj.stateVar.rk4Update1(dt);
+            obj.simClock.applyTime(t0 + dt/2);
+            obj.forwardWrapper(inputs);
+            obj.stateVar.rk4Update2(dt);
             
-            obj.applyTime(t0 + dt/2);
-            inputs = obj.processInput(inputs);
-            obj.forward(inputs{:});
-            obj.stateVar.rk4Update1(dt);
+            obj.simClock.applyTime(t0 + dt/2);
+            obj.forwardWrapper(inputs);
             
-            obj.applyTime(t0 + dt - 10*obj.timeResolution);
-            inputs = obj.processInput(inputs);
-            obj.forward(inputs{:});
-            obj.stateVar.rk4Update1(dt);
+            obj.stateVar.rk4Update3(dt);
             
-            obj.applyTime(t0 + dt);
+            obj.simClock.applyTime(t0 + dt - 10*obj.simClock.timeResolution);
+            obj.forwardWrapper(inputs);
+            obj.stateVar.rk4Update4(dt);
+            
+            obj.simClock.applyTime(t0 + dt);
         end
         
         % override
@@ -101,10 +100,9 @@ classdef TimeVaryingDynSystem < BaseSystem
         function out = forward(obj, varargin)
             % varargin: {input1, ..., inputM}
             obj.stateVar.forward(obj.time, varargin{:});
-            if obj.logger.toLog()
-                varsToLog = obj.log(varargin{:});
-                obj.logger.forward(obj.state, varargin{:}, varsToLog{:});
-            end
+            
+            varsToLog = obj.log(varargin{:});
+            obj.logger.forward(obj.state, varargin{:}, varsToLog{:});
             
             if nargout > 0
                 out = obj.output;
