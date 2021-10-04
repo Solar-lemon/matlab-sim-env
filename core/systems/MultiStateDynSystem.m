@@ -75,8 +75,9 @@ classdef MultiStateDynSystem < BaseSystem
             else
                 derivList = obj.derivFun(obj.stateValueList{:}, varargin{:});
             end
-            for k = 1:obj.stateVarNum
-                obj.stateVarList{k}.deriv = derivList{k};
+            
+            for k = 1:numel(obj.stateVarList)
+                obj.stateVarList{k}.forward(derivList{k});
             end
             
             varsToLog = obj.log(varargin{:});

@@ -104,7 +104,7 @@ classdef MultipleSystem < BaseSystem
             assert(~isempty(obj.systemList),...
                 "Attach dynamic systems first")
             for k = 1:numel(obj.systemList)
-                obj.systemList{k}.forwardWrapper(varargin);
+                obj.systemList{k}.forward(varargin{:});
             end
         end
         

@@ -23,19 +23,26 @@ classdef(Abstract) BaseSystem < handle
                 initialState = [];
             end
             
-            if isempty(initialState)
-                stateVarList = [];
-            elseif isa(initialState, 'numeric')
-                stateVarList = {StateVariable(initialState)};
-            elseif isa(initialState, 'cell')
-                stateVarNum = numel(initialState);
-                stateVarList = cell(1, stateVarNum);
-                for k = 1:stateVarNum
-                    stateVarList{k} = StateVariable(initialState{k});
+            if ~isempty(initialState)
+                if isa(initialState, 'numeric')
+                    obj.stateVarList = {StateVariable(initialState)};
+                elseif isa(initialState, 'cell')
+                    obj.stateVarList = cell(size(initialState));
+                    for k = 1:numel(initialState)
+                        obj.stateVarList{k} = StateVariable(initialState{k});
+                    end
                 end
             end
-            obj.stateVarList = stateVarList;
-            obj.indexing(stateVarList);
+            
+            obj.stateVarNum = numel(obj.stateVarList);
+            obj.stateIndex  = cell(size(obj.stateVarList));
+            lastIndex = 0;
+            for k = 1:obj.stateVarNum
+                obj.stateIndex{k} = lastIndex + 1:lastIndex + numel(obj.stateVarList{k}.state);
+                lastIndex = lastIndex + numel(obj.stateVarList{k}.state);
+            end
+            obj.stateNum = lastIndex;
+            
             obj.logger = Logger();
         end
         
@@ -46,22 +53,6 @@ classdef(Abstract) BaseSystem < handle
         
         function reset(obj)
             obj.logger.reset();
-        end
-        
-        function applyState(obj, stateFeed)
-            for k = 1:obj.stateVarNum
-                index = obj.stateIndex{k};
-                obj.stateVarList{k}.setFlatValue(stateFeed(index, 1));
-            end
-        end
-        
-        function out = flatDeriv(obj)
-            out = nan(obj.stateNum, 1);
-            for k = 1:obj.stateVarNum
-                stateVar = obj.stateVarList{k};
-                index = obj.stateIndex{k};
-                out(index, 1) = stateVar.flatDeriv;
-            end
         end
         
         function forwardWrapper(obj, inputs)
@@ -174,13 +165,13 @@ classdef(Abstract) BaseSystem < handle
         end
         
         function out = get.state(obj)
-            out = stateFlatValue(obj);
+            out = obj.getState();
         end
         
         function out = get.stateValueList(obj)
             out = cell(1, obj.stateVarNum);
             for k = 1:obj.stateVarNum
-                out{k} = obj.stateVarList{k}.value;
+                out{k} = obj.stateVarList{k}.state;
             end
         end
         
@@ -189,25 +180,21 @@ classdef(Abstract) BaseSystem < handle
                 "There is no simulation data to save \n")
             out = obj.logger.matValues;
         end
-    end
-    
-    methods(Access=protected)
-        function indexing(obj, stateVarList)
-            obj.stateVarNum = numel(stateVarList);
-            obj.stateIndex  = cell(size(stateVarList));
-            lastIndex = 0;
-            for k = 1:obj.stateVarNum
-                obj.stateIndex{k} = lastIndex + 1:lastIndex + numel(stateVarList{k});
-                lastIndex = lastIndex + numel(stateVarList{k});
-            end
-            obj.stateNum = lastIndex;
-        end
         
         function out = stateFlatValue(obj)
             out = nan(obj.stateNum, 1);
             for k = 1:obj.stateVarNum
                 index = obj.stateIndex{k};
-                out(index, 1) = obj.stateVarList{k}.flatValue;
+                out(index, 1) = reshape(obj.stateVarList{k}.state, [], 1);
+            end
+        end
+    end
+    
+    methods(Access=protected)
+        function out = getState(obj)
+            out = cell(1, obj.stateVarNum);
+            for k = 1:obj.stateVarNum
+                out{k} = obj.stateVarList{k}.state;
             end
         end
     end

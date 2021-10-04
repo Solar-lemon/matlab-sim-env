@@ -90,7 +90,7 @@ classdef Simulator < handle
             fprintf('Simulating the system... \n')
             
             model = ExampleSystem(); % Refer to ExampleSystem class
-            initialState = model.state;
+            initialState = model.state{1};
             simulator = Simulator(model);
             
             dt = 0.01;
@@ -103,7 +103,7 @@ classdef Simulator < handle
             fprintf('Initial state of the system: \n')
             disp(initialState)
             fprintf('State of the system after 10[s]: \n\n')
-            disp(model.state)
+            disp(model.state{1})
             
             model.linearSystem.plot();
             
