@@ -1,6 +1,6 @@
 classdef(Abstract) BaseSystem < handle
     properties
-        time = 0
+        simClock
         stateVarList
         stateVarNum
         stateNum
@@ -10,6 +10,7 @@ classdef(Abstract) BaseSystem < handle
         flag = 0
     end
     properties(Dependent)
+        time
         state
         stateValueList
         history
@@ -22,95 +23,79 @@ classdef(Abstract) BaseSystem < handle
                 initialState = [];
             end
             
-            if isempty(initialState)
-                stateVarList = [];
-            elseif isa(initialState, 'numeric')
-                stateVarList = {StateVariable(initialState)};
-            elseif isa(initialState, 'cell')
-                stateVarNum = numel(initialState);
-                stateVarList = cell(1, stateVarNum);
-                for k = 1:stateVarNum
-                    stateVarList{k} = StateVariable(initialState{k});
+            if ~isempty(initialState)
+                if isa(initialState, 'numeric')
+                    obj.stateVarList = {StateVariable(initialState)};
+                elseif isa(initialState, 'cell')
+                    obj.stateVarList = cell(size(initialState));
+                    for k = 1:numel(initialState)
+                        obj.stateVarList{k} = StateVariable(initialState{k});
+                    end
                 end
             end
-            obj.stateVarList = stateVarList;
-            obj.indexing(stateVarList);
+            
+            obj.stateVarNum = numel(obj.stateVarList);
+            obj.stateIndex  = cell(size(obj.stateVarList));
+            lastIndex = 0;
+            for k = 1:obj.stateVarNum
+                obj.stateIndex{k} = lastIndex + 1:lastIndex + numel(obj.stateVarList{k}.state);
+                lastIndex = lastIndex + numel(obj.stateVarList{k}.state);
+            end
+            obj.stateNum = lastIndex;
+            
             obj.logger = Logger();
         end
         
+        function attachSimClock(obj, simClock)
+            obj.simClock = simClock;
+            obj.logger.attachSimClock(simClock);
+        end
+        
         function reset(obj)
-            obj.time = 0;
             obj.logger.reset();
         end
         
-        function applyState(obj, stateFeed)
-            for k = 1:obj.stateVarNum
-                index = obj.stateIndex{k};
-                obj.stateVarList{k}.setFlatValue(stateFeed(index, 1));
-            end
-        end
-        
-        function applyTime(obj, timeFeed)
-            obj.time = timeFeed;
-            obj.logger.applyTime(timeFeed);
-        end
-        
-        function out = flatDeriv(obj)
-            out = nan(obj.stateNum, 1);
-            for k = 1:obj.stateVarNum
-                stateVar = obj.stateVarList{k};
-                index = obj.stateIndex{k};
-                out(index, 1) = stateVar.flatDeriv;
-            end
-        end
-        
-        function forwardWrapper(obj, inValues)
-            inputsToForward = cell(size(inValues));
-            for i = 1:numel(inValues)
-                if isa(inValues{i}, 'numeric')
-                    inputsToForward{i} = inValues{i};
-                elseif isa(inValues{i}, 'function_handle')
-                    inputsToForward{i} = inValues{i}(obj.time);
-                elseif isa(inValues{i}, 'BaseFunction')
-                    if isa(inValues{i}, 'DiscreteFunction')
-                        inValues{i}.applyTime(obj.time);
-                    end
-                    inputsToForward{i} = inValues{i}.forward(obj.time);
+        function forwardWrapper(obj, inputs)
+            processedInputs = cell(size(inputs));
+            for i = 1:numel(inputs)
+                if isa(inputs{i}, 'numeric')
+                    processedInputs{i} = inputs{i};
+                elseif isa(inputs{i}, 'function_handle')
+                    processedInputs{i} = inputs{i}(obj.simClock.time);
+                elseif isa(inputs{i}, 'BaseFunction')
+                    processedInputs{i} = inputs{i}.forward(obj.simClock.time);
                 end
             end
-            obj.forward(inputsToForward{:});
+            obj.forward(processedInputs{:});
         end
         
-        function rk4Update1(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
+        function step(obj, dt, inputs)
+            t0 = obj.simClock.time;
+            
+            obj.forwardWrapper(inputs);
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update1(dt);
             end
-            obj.applyTime(t0 + dt/2);
-        end
-        
-        function rk4Update2(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
+            
+            obj.simClock.applyTime(t0 + dt/2);
+            obj.forwardWrapper(inputs);
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update2(dt);
             end
-            obj.applyTime(t0 + dt/2);
-        end
-        
-        function rk4Update3(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
+            
+            obj.simClock.applyTime(t0 + dt/2);
+            obj.forwardWrapper(inputs);
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update3(dt);
             end
-            obj.applyTime(t0 + dt - 10*eps(t0 + dt/2));
-        end
-        
-        function rk4Update4(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
+            
+            obj.simClock.applyTime(t0 + dt - 10*obj.simClock.timeResolution);
+            obj.forwardWrapper(inputs);
             for k = 1:obj.stateVarNum
                 obj.stateVarList{k}.rk4Update4(dt);
             end
-            obj.applyTime(t0 + dt);
+            
+            obj.simClock.applyTime(t0 + dt);
         end
         
         function startLogging(obj, logTimeInterval)
@@ -175,14 +160,18 @@ classdef(Abstract) BaseSystem < handle
     
     % set and get methods
     methods
+        function out = get.time(obj)
+            out = obj.simClock.time;
+        end
+        
         function out = get.state(obj)
-            out = stateFlatValue(obj);
+            out = obj.getState();
         end
         
         function out = get.stateValueList(obj)
             out = cell(1, obj.stateVarNum);
             for k = 1:obj.stateVarNum
-                out{k} = obj.stateVarList{k}.value;
+                out{k} = obj.stateVarList{k}.state;
             end
         end
         
@@ -191,25 +180,21 @@ classdef(Abstract) BaseSystem < handle
                 "There is no simulation data to save \n")
             out = obj.logger.matValues;
         end
-    end
-    
-    methods(Access=protected)
-        function indexing(obj, stateVarList)
-            obj.stateVarNum = numel(stateVarList);
-            obj.stateIndex  = cell(size(stateVarList));
-            lastIndex = 0;
-            for k = 1:obj.stateVarNum
-                obj.stateIndex{k} = lastIndex + 1:lastIndex + numel(stateVarList{k});
-                lastIndex = lastIndex + numel(stateVarList{k});
-            end
-            obj.stateNum = lastIndex;
-        end
         
         function out = stateFlatValue(obj)
             out = nan(obj.stateNum, 1);
             for k = 1:obj.stateVarNum
                 index = obj.stateIndex{k};
-                out(index, 1) = obj.stateVarList{k}.flatValue;
+                out(index, 1) = reshape(obj.stateVarList{k}.state, [], 1);
+            end
+        end
+    end
+    
+    methods(Access=protected)
+        function out = getState(obj)
+            out = cell(1, obj.stateVarNum);
+            for k = 1:obj.stateVarNum
+                out{k} = obj.stateVarList{k}.state;
             end
         end
     end

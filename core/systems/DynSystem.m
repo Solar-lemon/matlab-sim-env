@@ -33,11 +33,18 @@ classdef DynSystem < TimeVaryingDynSystem
         % override
         function out = forward(obj, varargin)
             % varargin: {input1, ..., inputM}
-            obj.stateVar.forward(varargin{:});
-            if obj.logger.toLog()
-                varsToLog = obj.log(varargin{:});
-                obj.logger.forward(obj.state, varargin{:}, varsToLog{:});
+            if isa(obj.derivFun, 'BaseFunction')
+                deriv = obj.derivFun.forward(...
+                    obj.stateVarList{1}.state, varargin{:});
+                obj.stateVarList{1}.forward(deriv);
+            else
+                deriv = obj.derivFun(...
+                    obj.stateVarList{1}.state, varargin{:});
+                obj.stateVarList{1}.forward(deriv);
             end
+            
+            varsToLog = obj.log(varargin{:});
+            obj.logger.forward(obj.stateVarList{1}.state, varargin{:}, varsToLog{:});
             
             if nargout > 0
                 out = obj.output;
@@ -49,9 +56,9 @@ classdef DynSystem < TimeVaryingDynSystem
             % outputFun: function_handle or BaseFunction
             % outputFun(state)
             if isa(obj.outputFun, 'BaseFunction')
-                out = obj.outputFun.forward(obj.state);
+                out = obj.outputFun.forward(obj.stateVarList{1}.state);
             else
-                out = obj.outputFun(obj.state);
+                out = obj.outputFun(obj.stateVarList{1}.state);
             end
         end
     end

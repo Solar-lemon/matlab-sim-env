@@ -1,9 +1,10 @@
 classdef Timer < handle
     properties
-        eventTimeInterval
+        simClock
         isOperating = false
+        eventTimeInterval
         lastEventTime
-        isEvent = false
+        isEvent
     end
     methods
         function obj = Timer(eventTimeInterval)
@@ -12,18 +13,19 @@ classdef Timer < handle
             end
             
             obj.eventTimeInterval = eventTimeInterval;
-            obj.lastEventTime = 0;
         end
         
-        function turnOn(obj, time, withInitialEvent)
-            if nargin < 3 || isempty(withInitialEvent)
-                withInitialEvent = false;
-            end
-            assert(~isnan(obj.eventTimeInterval), "Set the eventTimeInterval first before turning on the timer.")
+        function attachSimClock(obj, simClock)
+            obj.simClock = simClock;
+        end
+        
+        function turnOn(obj)
+            assert(~isnan(obj.eventTimeInterval),...
+                "Set eventTimeInterval first before turning on the timer.")
             
             obj.isOperating = true;
-            obj.lastEventTime = time;
-            obj.isEvent = withInitialEvent;
+            obj.lastEventTime = obj.simClock.time;
+            obj.isEvent = true;
         end
         
         function turnOff(obj)
@@ -32,15 +34,16 @@ classdef Timer < handle
             obj.isEvent = [];
         end
         
-        function forward(obj, time)
-            if abs(time - obj.lastEventTime) <= 10*eps(time)
+        function forward(obj)
+            if abs(obj.simClock.time - obj.lastEventTime) <= obj.simClock.timeResolution
                 return
             end
+            
             if obj.isOperating
-                elapsedTime = time - obj.lastEventTime;
-                if elapsedTime >= obj.eventTimeInterval - 100*eps(time)
+                elapsedTime = obj.simClock.time - obj.lastEventTime;
+                if elapsedTime >= (obj.eventTimeInterval - obj.simClock.timeResolution)
                     obj.isEvent = true;
-                    obj.lastEventTime = time;
+                    obj.lastEventTime = obj.simClock.time;
                 else
                     obj.isEvent = false;
                 end
@@ -55,25 +58,28 @@ classdef Timer < handle
     methods(Static)
         function test()
             clc
+            fprintf("== Test for Timer ==\n")
             
-            eventTimeInterval = 1;
+            dt = 0.01;
+            timeResolution = 0.0001*dt;
             
+            simClock = Clock(0, timeResolution);
+            
+            eventTimeInterval = 0.1;
             timer = Timer(eventTimeInterval);
-            dt = 0.4;
+            timer.attachSimClock(simClock);
+            timer.turnOn();
             
             fprintf('Initial time: 0.0[s] \n')
-            fprintf('Event time interval: %.1f[s] \n', eventTimeInterval)
-            fprintf('Sampling time interval: %.1f[s] \n', dt)
-            
-            time = 0;
-            timer.turnOn(time, false);
-            for i = 1:5
-                timer.forward(time);
+            fprintf('Event time interval: %.2f[s] \n', eventTimeInterval)
+            fprintf('Sampling time interval: %.2f[s] \n\n', dt)
+            for i = 1:100
+                timer.forward();
                 isEvent = timer.checkEvent();
                 if isEvent
-                    fprintf('Event occured at time = %.1f [s] \n', time)
+                    fprintf('Event occured at time = %.1f[s] \n', simClock.time)
                 end
-                time = time + dt;
+                simClock.elapse(dt);
             end
         end
     end

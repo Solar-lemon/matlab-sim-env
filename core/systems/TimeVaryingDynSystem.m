@@ -1,6 +1,7 @@
 classdef TimeVaryingDynSystem < BaseSystem
     properties
         initialState
+        derivFun
         outputFun
     end
     properties(Dependent)
@@ -22,8 +23,8 @@ classdef TimeVaryingDynSystem < BaseSystem
             if isempty(derivFun)
                 derivFun = @obj.derivative;
             end
-            attachDerivFun(obj, derivFun);
-            attachOutputFun(obj, outputFun);
+            obj.derivFun = derivFun;
+            obj.outputFun = outputFun;
         end
         
         % override
@@ -32,57 +33,19 @@ classdef TimeVaryingDynSystem < BaseSystem
                 initialState = obj.initialState;
             end
             reset@BaseSystem(obj);
-            applyState(obj, initialState);
+            obj.stateVarList{1}.state = initialState;
         end
         
         function attachDerivFun(obj, derivFun)
             % derivFun: function_handle or BaseFunction
             % derivFun(state, time, input1, ..., inputM)
-            obj.stateVar.attachDerivFun(derivFun);
+            obj.derivFun = derivFun;
         end
         
         function attachOutputFun(obj, outputFun)
             % outputFun: function_handle or BaseFunction
             % outputFun(state, time)
             obj.outputFun = outputFun;
-        end
-        
-        % override
-        function applyState(obj, stateFeed)
-            obj.stateVar.setFlatValue(stateFeed);
-        end
-        
-        % override
-        function rk4Update1(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
-            obj.stateVar.rk4Update1(dt);
-            obj.applyTime(t0 + dt/2);
-        end
-        
-        % override
-        function rk4Update2(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
-            obj.stateVar.rk4Update2(dt);
-            obj.applyTime(t0 + dt/2);
-        end
-        
-        % override
-        function rk4Update3(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
-            obj.stateVar.rk4Update3(dt);
-            obj.applyTime(t0 + dt - 10*eps(t0 + dt/2));
-        end
-        
-        % override
-        function rk4Update4(obj, t0, dt, inValues)
-            obj.forwardWrapper(inValues);
-            obj.stateVar.rk4Update4(dt);
-            obj.applyTime(t0 + dt);
-        end
-        
-        % override
-        function out = flatDeriv(obj)
-            out = obj.stateVar.flatDeriv;
         end
         
         % to be implemented
@@ -104,11 +67,18 @@ classdef TimeVaryingDynSystem < BaseSystem
         % implement
         function out = forward(obj, varargin)
             % varargin: {input1, ..., inputM}
-            obj.stateVar.forward(obj.time, varargin{:});
-            if obj.logger.toLog()
-                varsToLog = obj.log(varargin{:});
-                obj.logger.forward(obj.state, varargin{:}, varsToLog{:});
+            if isa(obj.derivFun, 'BaseFunction')
+                deriv = obj.derivFun.forward(...
+                    obj.stateVarList{1}.state, obj.time, varargin{:});
+                obj.stateVarList{1}.forward(deriv);
+            else
+                deriv = obj.derivFun(...
+                    obj.stateVarList{1}.state, obj.time, varargin{:});
+                obj.stateVarList{1}.forward(deriv);
             end
+            
+            varsToLog = obj.log(varargin{:});
+            obj.logger.forward(obj.stateVarList{1}.state, varargin{:}, varsToLog{:});
             
             if nargout > 0
                 out = obj.output;
@@ -120,9 +90,9 @@ classdef TimeVaryingDynSystem < BaseSystem
             % outputFun: function_handle or BaseFunction
             % outputFun(state)
             if isa(obj.outputFun, 'BaseFunction')
-                out = obj.outputFun.forward(obj.state, obj.time);
+                out = obj.outputFun.forward(obj.stateVarList{1}.state, obj.time);
             else
-                out = obj.outputFun(obj.state, obj.time);
+                out = obj.outputFun(obj.stateVarList{1}.state, obj.time);
             end
         end
     end
@@ -132,13 +102,18 @@ classdef TimeVaryingDynSystem < BaseSystem
         function out = get.stateVar(obj)
             out = obj.stateVarList{1};
         end
+        
+        % override
+        function out = stateFlatValue(obj)
+            out = reshape(obj.stateVarList{1}.state, [], 1);
+        end
     end
     
     methods(Access=protected)
         % override
-        function out = stateFlatValue(obj)
-            out = obj.stateVar.value;
-        end
+         function out = getState(obj)
+            out = obj.stateVarList{1}.state;
+         end
     end
     
     methods

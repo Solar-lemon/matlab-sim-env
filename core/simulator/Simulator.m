@@ -1,5 +1,6 @@
 classdef Simulator < handle
     properties
+        simClock
         model
         inValues
     end
@@ -9,10 +10,21 @@ classdef Simulator < handle
             if nargin < 1
                 model = [];
             end
+            obj.simClock = Clock();
             obj.model = model;
+            obj.model.attachSimClock(obj.simClock);
         end
         
-        function startLogging(obj, interval)
+        function reset(obj)
+            obj.simClock.reset();
+            obj.model.reset();
+        end
+        
+        function startLogging(obj, interval, timeResolution)
+            if nargin < 3
+                timeResolution = 1e-6;
+            end
+            obj.simClock.applyTimeResolution(timeResolution);
             obj.model.startLogging(interval);
         end
         
@@ -27,13 +39,7 @@ classdef Simulator < handle
                 return
             end
             
-            t0 = obj.model.time;
-            
-            obj.model.rk4Update1(t0, dt, varargin);
-            obj.model.rk4Update2(t0, dt, varargin);
-            obj.model.rk4Update3(t0, dt, varargin);
-            obj.model.rk4Update4(t0, dt, varargin);
-            
+            obj.model.step(dt, varargin);
             obj.inValues = varargin;
         end
         
@@ -44,8 +50,14 @@ classdef Simulator < handle
             measureElapsedTime = isempty(getCurrentTask());
             iterNum = min(round(time/dt), intmax('int32'));
             
+            for i = 1:numel(varargin)
+                if isa(varargin{i}, 'DiscreteFunction')
+                    varargin{i}.attachSimClock(obj.simClock);
+                end
+            end
+            
             if saveHistory
-                obj.startLogging(dt);
+                obj.startLogging(dt, 0.0001*dt);
             end
             if measureElapsedTime
                 fprintf("[Simulator] Simulating... \n")
@@ -56,13 +68,7 @@ classdef Simulator < handle
                 if toStop
                     break
                 end
-                
-                t0 = obj.model.time;
-                
-                obj.model.rk4Update1(t0, dt, varargin);
-                obj.model.rk4Update2(t0, dt, varargin);
-                obj.model.rk4Update3(t0, dt, varargin);
-                obj.model.rk4Update4(t0, dt, varargin);
+                obj.model.step(dt, varargin);
             end
             if measureElapsedTime
                 elapsedTime = toc;
@@ -84,7 +90,7 @@ classdef Simulator < handle
             fprintf('Simulating the system... \n')
             
             model = ExampleSystem(); % Refer to ExampleSystem class
-            initialState = model.state;
+            initialState = model.state{1};
             simulator = Simulator(model);
             
             dt = 0.01;
@@ -97,13 +103,13 @@ classdef Simulator < handle
             fprintf('Initial state of the system: \n')
             disp(initialState)
             fprintf('State of the system after 10[s]: \n\n')
-            disp(model.state)
+            disp(model.state{1})
             
             model.linearSystem.plot();
             
             fprintf('Test for step method \n')
-            model.reset();
-            simulator.startLogging(0.01);
+            simulator.reset();
+            simulator.startLogging(0.01, 1e-6);
             for i = 1:1000
                 simulator.step(0.01);
             end

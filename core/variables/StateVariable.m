@@ -1,96 +1,66 @@
-classdef StateVariable < Variable
+classdef StateVariable < handle
     properties
-        useBaseFunction
-        derivFun
+        state
         deriv
         rk4Buffer
-    end
-    properties(Dependent)
-        flatDeriv
+        correctionFun
     end
     methods
-        function obj = StateVariable(value, derivFun)
-            % value: numeric
-            % derivFun: function_handle or BaseFunction
-            obj = obj@Variable(value);
-            if nargin > 1
-                attachDerivFun(obj, derivFun);
-            end
-            obj.rk4Buffer = cell(1, 5); % rk4Buffer = {x0, k1, k2, k3, k4}
-            obj.rk4Buffer{1} = obj.flatValue;
+        function obj = StateVariable(state)
+            obj.state = state;
+            obj.rk4Buffer = cell(1, 4);
         end
         
-        function attachDerivFun(obj, derivFun)
-            obj.useBaseFunction = isa(derivFun, 'BaseFunction');
-            obj.derivFun = derivFun;
-        end
-        
-        function forward(obj, varargin)
-            if obj.useBaseFunction
-                obj.deriv = obj.derivFun.forward(obj.value, varargin{:});
-            else
-                obj.deriv = obj.derivFun(obj.value, varargin{:});
-            end
+        function forward(obj, deriv)
+            obj.deriv = deriv;
         end
         
         function rk4Update1(obj, dt)
-            obj.rk4Buffer{1} = obj.flatValue; % y0
-            obj.rk4Buffer{2} = obj.flatDeriv; % k1
-            obj.setFlatValue(...
-                obj.rk4Buffer{1} + dt/2*obj.rk4Buffer{2});
-            % y = y0 + dt/2*k1
+            x_0 = obj.state;
+            k_1 = obj.deriv;
+            
+            obj.rk4Buffer{1} = x_0;
+            obj.rk4Buffer{2} = k_1;
+            obj.state = x_0 + dt/2*k_1; % x = x0 + dt/2*k1
+            if ~isempty(obj.correctionFun)
+                obj.state = obj.correctionFun(obj.state);
+            end
         end
         
         function rk4Update2(obj, dt)
-            obj.rk4Buffer{3} = obj.flatDeriv; % k2
-            obj.setFlatValue(...
-                obj.rk4Buffer{1} + dt/2*obj.rk4Buffer{3});
-            % y = y0 + dt/2*k2
+            x_0 = obj.rk4Buffer{1};
+            k_2 = obj.deriv;
+            
+            obj.rk4Buffer{3} = k_2;
+            obj.state = x_0 + dt/2*k_2; % x = x0 + dt/2*k2
+            if ~isempty(obj.correctionFun)
+                obj.state = obj.correctionFun(obj.state);
+            end
         end
         
         function rk4Update3(obj, dt)
-            obj.rk4Buffer{4} = obj.flatDeriv; % k3
-            obj.setFlatValue(...
-                obj.rk4Buffer{1} + dt*obj.rk4Buffer{4});
-            % y = y0 + dt*k3
+            x_0 = obj.rk4Buffer{1};
+            k_3 = obj.deriv;
+            
+            obj.rk4Buffer{4} = k_3;
+            obj.state = x_0 + dt*k_3; % x = x0 + dt*k3
+            if ~isempty(obj.correctionFun)
+                obj.state = obj.correctionFun(obj.state);
+            end
         end
         
         function rk4Update4(obj, dt)
-            obj.rk4Buffer{5} = obj.flatDeriv; % k4
-            [y0, k1, k2, k3, k4] = obj.rk4Buffer{:};
-            y = y0 + dt*(k1 + 2*k2 + 2*k3 + k4)/6;
+            [x_0, k_1, k_2, k_3] = obj.rk4Buffer{:};
+            k_4 = obj.deriv;
             
-            obj.setFlatValue(y);
-            obj.rk4Buffer{1} = y;
+            obj.state = x_0 + dt*(k_1 + 2*k_2 + 2*k_3 + k_4)/6;
+            if ~isempty(obj.correctionFun)
+                obj.state = obj.correctionFun(obj.state);
+            end
         end
-    end
-    % Set and get methods
-    methods
-        function out = get.flatDeriv(obj)
-            out = reshape(obj.deriv, [], 1);
-        end
-    end
-    
-    methods(Static)
-        function test()
-            clc
-            close all
-            
-            fprintf('== Test for StateVariable == \n')
-            A = [-1, 1;
-                0, -2];
-            B = [1; 1];
-            derivFun = @(x, u) A*x + B*u;
-            x = StateVariable([1; 1], derivFun);
-            u = 1;
-            
-            x.forward(u);
-            fprintf('A = [-1, 1; 0, -2], B = [1; 1] \n')
-            fprintf('derivFun = @(x, u) A*x + B*u \n')
-            fprintf('x = StateVariable([1; 1], derivFun), u = 1 \n')
-            fprintf('x.forward(u) \n')
-            fprintf('x.deriv: \n')
-            disp(x.deriv)
+        
+        function attachCorrectionFun(obj, correctionFun)
+            obj.correctionFun = correctionFun;
         end
     end
 end
