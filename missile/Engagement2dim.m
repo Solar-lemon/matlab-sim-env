@@ -1,80 +1,10 @@
-classdef Engagement2dim < MultipleSystem
-    properties
-        missile
-        target
-        kinematics
-        prevRange = inf
-        interceptionCriteria = 1
-    end
+classdef Engagement2dim < Engagement3dim
     methods
         function obj = Engagement2dim(missile, target)
-            obj = obj@MultipleSystem();
-            
-            obj.missile = missile;
-            obj.target = target;
-            obj.kinematics = EngKinematics(missile, target);
-            
-            obj.missile.attachEngKinematics(obj.kinematics);
-            obj.attachDynSystems({obj.missile, obj.target});
+            obj = obj@Engagement3dim(missile, target);
         end
         
         % override
-        function reset(obj)
-            reset@MultipleSystem(obj);
-            obj.prevRange = inf;
-        end
-        
-        % implement
-        function forward(obj)
-            sigma = obj.missile.lookAngle();
-            lam = obj.kinematics.losAngle;
-            omega = obj.kinematics.losRate;
-            r = obj.kinematics.range;
-            
-            p_M = obj.missile.pos;
-            p_T = obj.target.pos;
-            
-            obj.target.forward();
-            
-            if obj.logger.toLog()
-                obj.logger.forward(sigma, lam, omega, r, p_M, p_T);
-                obj.logger.forwardVarNames('sigma', 'lam', 'omega', 'r', 'p_M', 'p_T');
-            end
-        end
-        
-        % implement
-        function toStop = checkStopCondition(obj)
-            toStop = obj.missile.checkStopCondition();
-            toStop = toStop...
-                || obj.rangeIsIncreasing();
-            updateRange(obj);
-        end
-        
-        function out = rangeIsIncreasing(obj)
-            range = obj.kinematics.range;
-            out = (range > obj.prevRange);
-        end
-        
-        function updateRange(obj)
-            obj.prevRange = obj.kinematics.range;
-        end
-        
-        function d_miss = missDistance(obj)
-            p_M = obj.historyByVarNames('p_M');
-            p_T = obj.historyByVarNames('p_T');
-            d_miss = MissileUtils.missDistance(p_M, p_T);
-        end
-        
-        function out = accSaturated(obj)
-            accSaturated = obj.missile.history{4};
-            out = any(accSaturated);
-        end
-        
-        function report(obj)
-            obj.missile.report();
-            fprintf("[Engagement] Miss distance: %.4f [m] \n", obj.missDistance())
-        end
-        
         function figs = plot(obj)
             set(0,'DefaultFigureWindowStyle','docked')
             figs = cell(4, 1);
