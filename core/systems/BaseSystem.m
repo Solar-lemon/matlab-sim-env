@@ -12,6 +12,7 @@ classdef(Abstract) BaseSystem < handle
     properties(Dependent)
         time
         state
+        deriv
         stateValueList
         history
     end
@@ -168,6 +169,10 @@ classdef(Abstract) BaseSystem < handle
             out = obj.getState();
         end
         
+        function out = get.deriv(obj)
+            out = obj.getDeriv();
+        end
+        
         function out = get.stateValueList(obj)
             out = cell(1, obj.stateVarNum);
             for k = 1:obj.stateVarNum
@@ -195,6 +200,13 @@ classdef(Abstract) BaseSystem < handle
             out = cell(1, obj.stateVarNum);
             for k = 1:obj.stateVarNum
                 out{k} = obj.stateVarList{k}.state;
+            end
+        end
+        
+        function out = getDeriv(obj)
+            out = cell(1, obj.stateVarNum);
+            for k = 1:obj.stateVarNum
+                out{k} = obj.stateVarList{k}.deriv;
             end
         end
     end

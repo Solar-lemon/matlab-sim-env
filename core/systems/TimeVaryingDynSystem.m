@@ -111,9 +111,14 @@ classdef TimeVaryingDynSystem < BaseSystem
     
     methods(Access=protected)
         % override
-         function out = getState(obj)
+        function out = getState(obj)
             out = obj.stateVarList{1}.state;
-         end
+        end
+        
+        % override
+        function out = getDeriv(obj)
+            out = obj.stateVarList{1}.deriv;
+        end
     end
     
     methods
