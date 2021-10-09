@@ -14,7 +14,6 @@ classdef(Abstract) BaseSystem < handle
         state
         deriv
         stateValueList
-        history
     end
     methods
         function obj = BaseSystem(initialState)
@@ -107,8 +106,13 @@ classdef(Abstract) BaseSystem < handle
             obj.logger.turnOff();
         end
         
-        function out = historyByVarNames(obj, varargin)
-            out = obj.logger.matValuesByVarNames(varargin{:});
+        function loggedData = history(obj, varargin)
+            assert(~obj.logger.isempty(),...
+                "There is no simulation data recorded \n")
+            loggedData = obj.logger.get(varargin);
+            if numel(varargin) == 1
+                loggedData = loggedData{:};
+            end
         end
         
         % to be implemented
@@ -178,12 +182,6 @@ classdef(Abstract) BaseSystem < handle
             for k = 1:obj.stateVarNum
                 out{k} = obj.stateVarList{k}.state;
             end
-        end
-        
-        function out = get.history(obj)
-            assert(obj.logger.dataNum > 0,...
-                "There is no simulation data to save \n")
-            out = obj.logger.matValues;
         end
         
         function out = stateFlatValue(obj)
