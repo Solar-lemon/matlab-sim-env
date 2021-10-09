@@ -36,10 +36,9 @@ classdef Engagement2dim < MultipleSystem
             
             obj.target.forward();
             
-            if obj.logger.toLog()
-                obj.logger.forward(sigma, lam, omega, r, p_M, p_T);
-                obj.logger.forwardVarNames('sigma', 'lam', 'omega', 'r', 'p_M', 'p_T');
-            end
+            obj.logger.forward(...
+                {'time', 'sigma', 'lam', 'omega', 'r', 'p_M', 'p_T'},...
+                {obj.simClock.time, sigma, lam, omega, r, p_M, p_T});
         end
         
         % implement
@@ -60,13 +59,13 @@ classdef Engagement2dim < MultipleSystem
         end
         
         function d_miss = missDistance(obj)
-            p_M = obj.historyByVarNames('p_M');
-            p_T = obj.historyByVarNames('p_T');
+            p_M = obj.history('p_M');
+            p_T = obj.history('p_T');
             d_miss = MissileUtils.missDistance(p_M, p_T);
         end
         
         function out = accSaturated(obj)
-            accSaturated = obj.missile.history{4};
+            accSaturated = obj.missile.history('accSaturated');
             out = any(accSaturated);
         end
         
@@ -89,8 +88,8 @@ classdef Engagement2dim < MultipleSystem
             obj.target.plotPath(figs{1});
             daspect([1 1 1])
             
-            temp = obj.historyByVarNames('time', 'sigma', 'lam', 'omega');
-            [timeList, sigmaList, lamList, omegaList] = temp{:};
+            loggedData = obj.history('time', 'sigma', 'lam', 'omega');
+            [timeList, sigmaList, lamList, omegaList] = loggedData{:};
             sigmaList = rad2deg(sigmaList);
             lamList = rad2deg(lamList);
             omegaList = rad2deg(omegaList);
