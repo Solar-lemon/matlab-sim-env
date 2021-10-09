@@ -65,10 +65,8 @@ classdef GeoAttTracking < MultipleSystem
             tau = obj.attControl.forward(R, omega, var_R_d);
             
             obj.quadrotor.forward([f; tau]);
-            if obj.logger.toLog()
-                obj.logger.forward(Psi);
-                obj.logger.forwardVarNames('attError');
-            end
+            obj.logger.forward(...
+                {'time', 'attError'}, {obj.simClock.time, Psi});
         end
         
         function fig = plot(obj, fig)
@@ -77,7 +75,8 @@ classdef GeoAttTracking < MultipleSystem
                 fig = figure();
             end
             
-            [timeList, attErrorList] = obj.history{:};
+            loggedData = obj.history('time', 'attError');
+            [timeList, attErrorList] = loggedData{:};
             
             figure(fig);
             fig.Name = 'Attitude Error Function';

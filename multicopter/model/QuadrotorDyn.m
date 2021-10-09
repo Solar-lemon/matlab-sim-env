@@ -50,8 +50,10 @@ classdef QuadrotorDyn < MultiStateDynSystem
                 end
             end
             
+            loggedData = obj.history(...
+                'time', 'state1', 'state2', 'state3', 'state4', 'input1');
             [timeList, posList, velList, ...
-                rotationList, angVelList, controlList] = obj.history{:};
+                rotationList, angVelList, controlList] = loggedData{:};
             dataNum = size(rotationList, 3);
             
             quatList = nan(4, dataNum);
