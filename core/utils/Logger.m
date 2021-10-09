@@ -3,17 +3,12 @@ classdef Logger < handle
         simClock
         timer
         data
-        varNamesAreInitialized = false
+        isInitialized = false
+        name = "Logger"
     end
-    properties(Dependent)
-        logTimeInterval
-        dataNum
-        matValues
-    end
-    
     methods
         function obj = Logger()
-            obj.data = MatStackedData();
+            obj.data = containers.Map();
         end
         
         function attachSimClock(obj, simClock)
@@ -22,8 +17,8 @@ classdef Logger < handle
         
         function reset(obj)
             obj.timer = [];
-            obj.data.clear();
-            obj.varNamesAreInitialized = false;
+            obj.data.remove(obj.data.keys());
+            obj.isInitialized = false;
         end
         
         function turnOn(obj, logTimeInterval)
@@ -34,11 +29,11 @@ classdef Logger < handle
         end
         
         function turnOff(obj)
-            obj.timer = [];
+            obj.timer.turnOff();
         end
         
         function out = isempty(obj)
-            out = isempty(obj.data);
+            out = obj.data.isempty();
         end
         
         function out = toLog(obj)
@@ -46,107 +41,89 @@ classdef Logger < handle
             out = ~isempty(obj.timer) && obj.timer.checkEvent();
         end
         
-        function forward(obj, varargin)
-            obj.timer.forward();
-            if ~isempty(obj.timer) && obj.timer.checkEvent()
-                obj.data.append(obj.simClock.time, varargin{:});
-            end
-        end
-        
-        function forwardVarNames(obj, varargin)
-            names = [{'time'}, varargin(:)'];
-            if ~obj.varNamesAreInitialized
-                obj.data.setVarNames(names{:});
-                obj.varNamesAreInitialized = true;
-            end
-        end
-        
-        function out = matValuesByVarNames(obj, varargin)
-            % out = matValueForName1 for a single name
-            % out = {matValueForName1, ... matValueForNameN} for multiple
-            % names
-            out = obj.data.matValuesByVarNames(varargin{:});
-        end
-        
-        function save(obj, filePath)
-            if isempty(obj.data)
-                fprintf("There is no data to save \n");
+        function out = numel(obj)
+            if obj.data.isempty()
+                out = 0;
                 return
             end
-            if nargin < 2 || isempty(filePath)
-                filePath = 'data/logData/logger.mat';
-            end
-            obj.data.save(filePath);
+            keys = obj.data.keys();
+            out = obj.data(keys{1}).numel();
         end
         
-        function load(obj, filePath)
-            if nargin < 2 || isempty(filePath)
-                filePath = 'data/logData/logger.mat';
+        function forward(obj, keySet, valueSet)
+            obj.timer.forward();
+            if ~isempty(obj.timer) && obj.timer.checkEvent()
+                if ~isa(keySet, 'cell')
+                    keySet = {keySet};
+                end
+                if ~isa(valueSet, 'cell')
+                    valueSet = {valueSet};
+                end
+                
+                if ~obj.isInitialized
+                    if obj.data.isKey(keySet{1})
+                        obj.isInitialized = true;
+                    else
+                        for i = 1:numel(keySet)
+                            obj.data(keySet{i}) = MatrixList();
+                        end
+                    end
+                end
+                for i = 1:numel(keySet)
+                    matrixList = obj.data(keySet{i});
+                    matrixList.append(valueSet{i});
+                end
             end
-            obj.data.load(filePath);
+        end
+        
+        function loggedData = get(obj, keySet)
+            if nargin < 2
+                keySet = obj.data.keys();
+            end
+            loggedData = cell(size(keySet));
+            for i = 1:numel(loggedData)
+                loggedData{i} = obj.data(keySet{i}).get();
+            end
         end
     end
-    
-    % set and get methods
-    methods
-        function out = get.dataNum(obj)
-            out = obj.data.dataNum;
-        end
-        
-        function out = get.matValues(obj)
-            out = obj.data.matValues;
-        end
-        
-        function out = get.logTimeInterval(obj)
-            if isempty(obj.timer)
-                out = [];
-            else
-                out = obj.timer.eventTimeInterval;
-            end
-        end
-    end
-    
     methods(Static)
         function test()
             clc
             close all
-            
             fprintf("== Test for Logger == \n")
-            dt = 0.01;
-            timeResolution = 1e-6;
-            logTimeInterval = 0.1;
             
-            simClock = Clock(0, timeResolution);
+            dt = 0.01;
+            logTimeInterval = 0.01;
+            
+            simClock = Clock();
             logger = Logger();
             logger.attachSimClock(simClock);
             logger.turnOn(logTimeInterval);
             
-            pos = [0; 0];
-            vel = [1; 0];
+            A = [1, dt; 0, 1];
+            B = [0; dt];
+            x = [0; 0];
+            u = 1;
+            
+            tic
             for i = 1:100
-                logger.forward(pos, vel);
-                logger.forwardVarNames('pos', 'vel');
-                
-                pos = pos + vel*dt;
+                logger.forward({'time', 'state', 'control'}, {simClock.time, x, u});
+                x = A*x + B*u;
                 simClock.elapse(dt);
             end
-            [timeList, posList, velList] = logger.matValues{:};
-            fprintf("size(timeList): (%d, %d) \n", ...
-                size(timeList, 1), size(timeList, 2))
-            fprintf("size(posList): (%d, %d) \n", ...
-                size(posList, 1), size(posList, 2))
-            fprintf("size(velList): (%d, %d) \n \n", ...
-                size(velList, 1), size(velList, 2))
+            loggedData = logger.get({'time', 'state'});
+            [time, state] = loggedData{:};
+            elapsedTime = toc;
+            fprintf("ElapsedTime: %.2f [s] \n", elapsedTime)
             
-            fprintf("== Using matValuesByNames(varargin) == \n")
-            posList = logger.matValuesByVarNames('pos');
-            velList = logger.matValuesByVarNames('vel');
-            fprintf("posList = logger.matValuesByNames('pos') \n")
-            fprintf("size(posList): (%d, %d) \n", ...
-                size(posList, 1), size(posList, 2))
-            fprintf("velList = logger.matValuesByNames('vel') \n")
-            fprintf("size(velList): (%d, %d) \n", ...
-                size(velList, 1), size(velList, 2))
+            figure();
+            hold on
+            plot(time, state(1, :), 'DisplayName', "Pos. [m]")
+            plot(time, state(2, :), "DisplayName", "Vel. [m/s]")
+            xlabel("Time [s]")
+            ylabel("State")
+            grid on
+            legend()
         end
     end
 end

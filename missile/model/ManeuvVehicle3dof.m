@@ -124,8 +124,10 @@ classdef ManeuvVehicle3dof < DynSystem
                     figs{k} = figure();
                 end
             end
-  
-            [timeList, stateList, accelList] = obj.history{:};
+            
+            loggedData = obj.history('time', 'state', 'input1');
+            [timeList, stateList, accelList] = loggedData{:};
+            
             % posList: km, velList: m/s, angleList: deg, accelList: m/s^2
             posList = [stateList(1:2, :); -stateList(3, :)]/1E3;
             velList = stateList(4, :);
@@ -184,7 +186,7 @@ classdef ManeuvVehicle3dof < DynSystem
             if nargin < 2
                 fig = figure();
             end
-            stateList = obj.history{2};
+            stateList = obj.history('state');
             posList = stateList(1:3, :);
             
             figure(fig)

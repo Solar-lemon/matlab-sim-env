@@ -25,10 +25,10 @@ classdef BOMIACGEngagement < Engagement2dim
         end
         
         function out = impactAngle(obj)
-            rangeList = obj.historyByVarNames('r');
+            rangeList = obj.history('r');
             [~, index] = min(rangeList);
             
-            state_M = obj.missile.history{2};
+            state_M = obj.missile.history('state');
             out = state_M(4, index);
         end
         

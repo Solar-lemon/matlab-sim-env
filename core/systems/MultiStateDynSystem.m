@@ -60,13 +60,6 @@ classdef MultiStateDynSystem < BaseSystem
             end
         end
         
-        % to be implemented
-        function varsToLog = log(obj, varargin)
-            % implement this method if needed
-            % varargin: {input1, ..., inputM}
-            varsToLog = {};
-        end
-        
         % implement
         function out = forward(obj, varargin)
             % varargin: {input1, ..., inputM}
@@ -80,9 +73,21 @@ classdef MultiStateDynSystem < BaseSystem
                 obj.stateVarList{k}.forward(derivList{k});
             end
             
-            varsToLog = obj.log(varargin{:});
-            obj.logger.forward(...
-                obj.stateValueList{:}, varargin{:}, varsToLog{:});
+            keySet = {'time'};
+            valueSet = {obj.simClock.time};
+            
+            stateKeySet = cell(1, obj.stateVarNum);
+            for i = 1:obj.stateVarNum
+                stateKeySet{i} = ['state', num2str(i)];
+            end
+            inputKeySet = cell(size(varargin));
+            for i = 1:numel(varargin)
+                inputKeySet{i} = ['input', num2str(i)];
+            end
+           
+            keySet = [keySet, stateKeySet, inputKeySet];
+            valueSet = [valueSet, obj.stateValueList, varargin];
+            obj.logger.forward(keySet, valueSet);
             
             if nargout > 0
                 out = obj.output;
@@ -119,7 +124,8 @@ classdef MultiStateDynSystem < BaseSystem
             elapsedTime = toc;
             
             fprintf('ElapsedTime: %.2f [s] \n', elapsedTime)
-            [timeList, posList, velList] = system.history{:};
+            loggedData = system.history('time', 'state1', 'state2');
+            [timeList, posList, velList] = loggedData{:};
             
             figure();
             subplot(2, 1, 1);

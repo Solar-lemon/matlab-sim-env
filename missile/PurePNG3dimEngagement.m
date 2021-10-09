@@ -37,10 +37,9 @@ classdef PurePNG3dimEngagement < MultipleSystem
             obj.missile.forward(a_M);
             obj.target.forward();
             
-            if obj.logger.toLog()
-                obj.logger.forward(sigma, omega, r);
-                obj.logger.forwardVarNames('lookAngle', 'losRate', 'range');
-            end
+            obj.logger.forward(...
+                {'time', 'lookAngle', 'losRate', 'range'},...
+                {obj.simClock.time, sigma, omega, r});
         end
         
         % implement
@@ -61,7 +60,7 @@ classdef PurePNG3dimEngagement < MultipleSystem
         end
         
         function out = missDistance(obj)
-            rangeList = obj.historyByVarNames('range');
+            rangeList = obj.history('range');
             out = min(rangeList);
         end
         
@@ -78,8 +77,8 @@ classdef PurePNG3dimEngagement < MultipleSystem
             obj.missile.plotPath(figs{1});
             obj.target.plotPath(figs{1});
             
-            temp = obj.historyByVarNames('time', 'lookAngle', 'losRate');
-            [timeList, sigmaList, losRateList] = temp{:};
+            loggedData = obj.history('time', 'lookAngle', 'losRate');
+            [timeList, sigmaList, losRateList] = loggedData{:};
             sigmaList = rad2deg(sigmaList);
             losRateList = rad2deg(losRateList);
             
