@@ -130,6 +130,7 @@ classdef Logger < handle
                 pos = pos + vel*dt;
                 simClock.elapse(dt);
             end
+            
             [timeList, posList, velList] = logger.matValues{:};
             fprintf("size(timeList): (%d, %d) \n", ...
                 size(timeList, 1), size(timeList, 2))
