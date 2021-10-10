@@ -19,8 +19,8 @@ classdef Engagement2dim < Engagement3dim
             obj.target.plotPath(figs{1});
             daspect([1 1 1])
             
-            temp = obj.historyByVarNames('time', 'sigma', 'lam', 'omega');
-            [timeList, sigmaList, lamList, omegaList] = temp{:};
+            loggedData = obj.history('time', 'sigma', 'lam', 'omega');
+            [timeList, sigmaList, lamList, omegaList] = loggedData{:};
             sigmaList = rad2deg(sigmaList);
             lamList = rad2deg(lamList);
             omegaList = rad2deg(omegaList);

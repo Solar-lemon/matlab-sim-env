@@ -57,13 +57,6 @@ classdef TimeVaryingDynSystem < BaseSystem
             out = zeros(size(obj.initialState));
         end
         
-        % to be implemented
-        function varsToLog = log(obj, varargin)
-            % implement this method if needed
-            % varargin: {input1, ..., inputM}
-            varsToLog = {};
-        end
-        
         % implement
         function out = forward(obj, varargin)
             % varargin: {input1, ..., inputM}
@@ -77,8 +70,17 @@ classdef TimeVaryingDynSystem < BaseSystem
                 obj.stateVarList{1}.forward(deriv);
             end
             
-            varsToLog = obj.log(varargin{:});
-            obj.logger.forward(obj.stateVarList{1}.state, varargin{:}, varsToLog{:});
+            keySet = {'time', 'state'};
+            valueSet = {obj.simClock.time, obj.stateVarList{1}.state};
+            
+            inputKeySet = cell(size(varargin));
+            for i = 1:numel(varargin)
+                inputKeySet{i} = ['input', num2str(i)];
+            end
+            keySet = [keySet, inputKeySet];
+            valueSet = [valueSet, varargin];
+            
+            obj.logger.forward(keySet, valueSet);
             
             if nargout > 0
                 out = obj.output;
@@ -111,9 +113,14 @@ classdef TimeVaryingDynSystem < BaseSystem
     
     methods(Access=protected)
         % override
-         function out = getState(obj)
+        function out = getState(obj)
             out = obj.stateVarList{1}.state;
-         end
+        end
+        
+        % override
+        function out = getDeriv(obj)
+            out = obj.stateVarList{1}.deriv;
+        end
     end
     
     methods
@@ -125,7 +132,8 @@ classdef TimeVaryingDynSystem < BaseSystem
                 fig = figure();
             end
             
-            [timeList, stateList, controlList] = obj.history{:};
+            loggedData = obj.history('time', 'state', 'input1');
+            [timeList, stateList, controlList] = loggedData{:};
             stateNum = obj.stateNum;
             inputNum = size(controlList, 1);
             

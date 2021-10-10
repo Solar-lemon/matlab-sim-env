@@ -51,13 +51,14 @@ classdef GeoPosTracking < MultipleSystem
             x_d = var_x_d.deriv(0);
             psi_d = var_psi_d.deriv(0);
             
-            obj.logger.forward(x_d, psi_d);
-            obj.logger.forwardVarNames('x_d', 'psi_d');
+            obj.logger.forward(...
+                {'time', 'x_d', 'psi_d'}, {obj.simClock.time, x_d, psi_d});
         end
         
         function fig = plot(obj)
-            quadPos = obj.quadrotor.history{2};
-            [trajTime, trajPos, trajHead] = obj.history{1:3};
+            quadPos = obj.quadrotor.history('state2');
+            temp = obj.history('time', 'x_d', 'psi_d');
+            [trajTime, trajPos, trajHead] = temp{:};
             
             quadFigs = obj.quadrotor.plot();
             figure(quadFigs{1});

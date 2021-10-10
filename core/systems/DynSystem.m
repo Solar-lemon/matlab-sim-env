@@ -23,13 +23,6 @@ classdef DynSystem < TimeVaryingDynSystem
             out = zeros(size(obj.initialState));
         end
         
-        % to be implemented
-        function varsToLog = log(obj, varargin)
-            % implement this method if needed
-            % varargin: {input1, ..., inputM}
-            varsToLog = {};
-        end
-        
         % override
         function out = forward(obj, varargin)
             % varargin: {input1, ..., inputM}
@@ -43,8 +36,17 @@ classdef DynSystem < TimeVaryingDynSystem
                 obj.stateVarList{1}.forward(deriv);
             end
             
-            varsToLog = obj.log(varargin{:});
-            obj.logger.forward(obj.stateVarList{1}.state, varargin{:}, varsToLog{:});
+            keySet = {'time', 'state'};
+            valueSet = {obj.simClock.time, obj.stateVarList{1}.state};
+            
+            inputKeySet = cell(size(varargin));
+            for i = 1:numel(varargin)
+                inputKeySet{i} = ['input', num2str(i)];
+            end
+            keySet = [keySet, inputKeySet];
+            valueSet = [valueSet, varargin];
+            
+            obj.logger.forward(keySet, valueSet);
             
             if nargout > 0
                 out = obj.output;

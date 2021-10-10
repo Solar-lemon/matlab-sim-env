@@ -21,6 +21,11 @@ classdef PlanarMissile3dof < PlanarManeuvVehicle3dof
         function out = forward(obj, a_M)
             a_M = CommonUtils.sat(a_M, obj.accLimit(:, 1), obj.accLimit(:, 2));
             forward@PlanarManeuvVehicle3dof(obj, a_M);
+            
+            accSaturated = any(a_M <= obj.accLimit(:, 1) + 1e-8) ...
+                || any(a_M >= obj.accLimit(:, 2) - 1e-8);
+            obj.logger.forward('accSaturated', accSaturated);
+            
             if nargout > 1
                 out = obj.output;
             end
@@ -78,7 +83,7 @@ classdef PlanarMissile3dof < PlanarManeuvVehicle3dof
         end
         
         function report(obj)
-            accSaturatedList = obj.history{4};
+            accSaturatedList = obj.history('accSaturated');
             if any(accSaturatedList)
                 fprintf("[Missile] The acceleration command has been saturated. \n")
             end
