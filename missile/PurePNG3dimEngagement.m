@@ -26,10 +26,6 @@ classdef PurePNG3dimEngagement < Engagement3dim
             a_M = obj.purePng.forward(R_VL, v_M, omega);
             obj.missile.forward(a_M);
             obj.target.forward();
-            
-            obj.logger.forward(...
-                {'time', 'lookAngle', 'losRate', 'range'},...
-                {obj.simClock.time, sigma, omega, r});
         end
     end
 end

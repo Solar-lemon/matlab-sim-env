@@ -65,14 +65,25 @@ classdef Missile3dof < ManeuvVehicle3dof
         
         function out = isOutOfView(obj)
             % when the target has gone out of the field-of-view
-            out = (abs(obj.lookAngle()) > obj.fovLimit);
+            out = (norm(obj.lookAngle()) > obj.fovLimit);
         end
         
         function sigma = lookAngle(obj)
             assert(~isempty(obj.engKinematics),...
                 "First assign the engagement kinematics")
-            losVector = obj.engKinematics.losVector;
-            sigma = acos(obj.velVector.'*losVector);
+            
+            R_VL = obj.RLocalToVelocity;
+            los_L = obj.engKinematics.losVector;
+            los_V = R_VL*los_L;
+            
+            losN = los_V(1);
+            losE = los_V(2);
+            losD = los_V(3);
+            
+            sigma_lat = atan2(losE, losN);
+            sigma_lon = atan2(losD, norm(los_V(1:2)));
+            
+            sigma = [sigma_lat; sigma_lon];
         end
         
         function report(obj)
