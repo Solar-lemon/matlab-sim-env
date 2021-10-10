@@ -51,7 +51,7 @@ classdef EngKinematics < handle
             losE = los(2);
             losD = los(3);
             azim = atan2(losE, losN);
-            elev = atan2(-losD, norm(los(2:3)));
+            elev = atan2(-losD, sqrt(losN^2 + losE^2));
             out = [azim; elev];
         end
         

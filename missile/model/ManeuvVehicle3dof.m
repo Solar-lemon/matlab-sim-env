@@ -94,7 +94,7 @@ classdef ManeuvVehicle3dof < DynSystem
             gamma = state(5);
             chi = state(6);
             
-            R_VL = Orientations.eulerAnglesToRotation([chi; gamma; 0]);
+            R_VL = Orientations.eulerAnglesToRotation([0; gamma; chi]);
         end
         
         function out = get.speed(obj)
