@@ -9,7 +9,7 @@ classdef ParallelSimulator < handle
     end
     methods
         function obj = ParallelSimulator()
-            obj.data = MatStackedData();
+            obj.data = containers.Map();
             obj.simulationFun = @obj.simulateModel;
         end
         
@@ -90,11 +90,16 @@ classdef ParallelSimulator < handle
                 elapsedTime/totalSimNum_);
             
             if ~isempty(tempData{1})
-                fields = fieldnames(tempData{1});
-                obj.data.setVarNames(fields{:});
-                for i = 1:obj.totalSimNum
-                    simData = struct2cell(tempData{i});
-                    obj.data.append(simData{:});
+                keySet = fieldnames(tempData{1});
+                for i = 1:numel(keySet)
+                    key = keySet{i};
+                    matrixList = MatrixList();
+                    for j = 1:obj.totalSimNum
+                        indivData = tempData{j};
+                        value = getfield(indivData, key);
+                        matrixList.append(value);
+                    end
+                    obj.data(key) = matrixList;
                 end
             end
             delete(gcp('nocreate'))
@@ -108,8 +113,14 @@ classdef ParallelSimulator < handle
             model.report();
         end
         
-        function out = getDataByVarNames(obj, varargin)
-            out = obj.data.matValuesByVarNames(varargin{:});
+        function out = get(obj, keySet)
+            if nargin < 2
+                keySet = obj.data.keys();
+            end
+            out = cell(size(keySet));
+            for i = 1:numel(out)
+                out{i} = obj.data(keySet{i}).get();
+            end
         end
         
         function save(obj, filePath)
@@ -122,7 +133,9 @@ classdef ParallelSimulator < handle
                 end
                 filePath = "data/parSim/data.mat";
             end
-            obj.data.save(filePath);
+            C = [keys(obj.data); values(obj.data)];
+            S = struct(C{:});
+            save(filePath,'-struct','S')
         end
         
         % to be implemented

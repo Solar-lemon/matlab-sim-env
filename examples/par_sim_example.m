@@ -16,7 +16,7 @@ parSimulator.simulateSingle(0.4, 1);
 parSimulator.simulate();
 parSimulator.save();
 
-data = parSimulator.getDataByVarNames('zeta', 'omega', 'overshoot');
+data = parSimulator.get({'zeta', 'omega', 'overshoot'});
 [zeta, omega, overshoot] = data{:};
 numColor = 16;
 offset = 1;
@@ -43,7 +43,7 @@ model.name = ['model_', num2str(i)];
 
 u_step = 1;
 Simulator(model).propagate(0.01, 100, true, u_step);
-stateList = model.history{2};
+stateList = model.history('state');
 overshoot = max(stateList(1, :) - u_step)/u_step*100;
 
 simData.zeta = zeta;
