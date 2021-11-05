@@ -1,29 +1,31 @@
-classdef Clock < handle
+classdef SimClock < handle
     properties
         time = 0
-        timeResolution = 1e-6
+        timeRes = 1e-6
     end
     methods
-        function obj = Clock(time, timeResolution)
-            if nargin > 1
-                obj.time = time;
+        function obj = SimClock(time, timeRes)
+            if nargin < 2
+                timeRes = 1e-6; % Time resolution
             end
-            if nargin > 2
-                obj.timeResolution = timeResolution;
+            if nargin < 1
+                time = 0; % Current time
             end
+            
+            obj.time = time;
+            obj.timeRes = timeRes;
         end
         
         function reset(obj)
             obj.time = 0;
-            obj.timeResolution = 1e-6;
         end
         
         function applyTime(obj, time)
             obj.time = time;
         end
         
-        function applyTimeResolution(obj, timeResolution)
-            obj.timeResolution = timeResolution;
+        function applyTimeRes(obj, timeRes)
+            obj.timeRes = timeRes;
         end
         
         function elapse(obj, dt)
