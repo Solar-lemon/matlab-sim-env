@@ -58,6 +58,29 @@ classdef List < handle
                 out = cat(numel(shape) + 1, obj.items{1, :});
             end
         end
+        
+        function remove(obj, value)
+            index = [];
+            if isa(value, 'numeric')
+                for i = 1:obj.dataNum
+                    if all(obj.items{i} == value)
+                        index = i;
+                        break
+                    end
+                end
+            elseif isa(value, 'char') || isa(value, 'string')
+                index = find(strcmp(obj.items, value));
+            end
+            if isempty(index)
+                return
+            end
+            obj.pop(index);
+        end
+        
+        function pop(obj, index)
+            obj.items(index:end - 1) = obj.items(index + 1:end);
+            obj.dataNum = obj.dataNum - 1;
+        end
     end
 end
         
