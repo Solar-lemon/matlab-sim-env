@@ -26,7 +26,7 @@ classdef Timer < handle
         end
         
         function turnOn(obj, eventTimeInterval)
-            if nargin > 2
+            if nargin > 1
                 obj.eventTimeInterval = eventTimeInterval;
             end
             assert(~isnan(obj.eventTimeInterval),...
