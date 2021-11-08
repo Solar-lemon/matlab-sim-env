@@ -24,11 +24,11 @@ classdef PlanarMissile3dof < PlanarManeuvVehicle3dof
             
             accSaturated = any(a_M <= obj.accLimit(:, 1) + 1e-8) ...
                 || any(a_M >= obj.accLimit(:, 2) - 1e-8);
-            obj.logger.forward('accSaturated', accSaturated);
-            
-            if nargout > 1
-                out = obj.output;
+            if obj.logTimer.toLog
+                obj.logger.append({'accSaturated'}, {accSaturated});
             end
+            
+            out = obj.output;
         end
         
         % implement

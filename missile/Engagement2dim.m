@@ -15,7 +15,7 @@ classdef Engagement2dim < MultipleSystem
             obj.kinematics = EngKinematics(missile, target);
             
             obj.missile.attachEngKinematics(obj.kinematics);
-            obj.attachDynSystems({obj.missile, obj.target});
+            obj.attachSimObjects({obj.missile, obj.target});
         end
         
         % override
@@ -36,16 +36,23 @@ classdef Engagement2dim < MultipleSystem
             
             obj.target.forward();
             
-            obj.logger.forward(...
-                {'time', 'sigma', 'lam', 'omega', 'r', 'p_M', 'p_T'},...
-                {obj.simClock.time, sigma, lam, omega, r, p_M, p_T});
+            if obj.logTimer.isEvent
+                obj.logger.append(...
+                    {'time', 'sigma', 'lam', 'omega', 'r', 'p_M', 'p_T'},...
+                    {obj.simClock.time, sigma, lam, omega, r, p_M, p_T});
+            end
         end
         
         % implement
-        function toStop = checkStopCondition(obj)
+        function [toStop, flag] = checkStopCondition(obj)
             toStop = obj.missile.checkStopCondition();
-            toStop = toStop...
-                || obj.rangeIsIncreasing();
+            if toStop
+                flag = 1;
+            end
+            if obj.rangeIsIncreasing()
+                toStop = true;
+                flag = 2;
+            end
             updateRange(obj);
         end
         

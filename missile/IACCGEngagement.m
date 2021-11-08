@@ -17,10 +17,10 @@ classdef IACCGEngagement < Engagement2dim
             
             K = 1.5;
             N = 3;
-            obj.iaccg = DiscreteFunction(...
+            obj.iaccg = ZeroOrderHold(...
                 IACCG(gamma_imp, gamma_T, v_M, v_T, K, sigma_d, N), 1/40); % 40 Hz
             
-            obj.attachDiscSystems({obj.iaccg});
+            obj.attachSimObjects({obj.iaccg});
         end
         
         % implement

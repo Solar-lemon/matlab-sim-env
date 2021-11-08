@@ -6,10 +6,10 @@ classdef ModifiedDPPEngagement < Engagement2dim
         function obj = ModifiedDPPEngagement(missile, target)
             obj = obj@Engagement2dim(missile, target);
             
-            obj.modifiedDPP = DiscreteFunction(...
+            obj.modifiedDPP = ZeroOrderHold(...
                 ModifiedDPP(2.0), 1/40); % 40 Hz
             
-            obj.attachDiscSystems({obj.modifiedDPP});
+            obj.attachSimObjects({obj.modifiedDPP});
         end
         
         % implement

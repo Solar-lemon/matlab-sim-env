@@ -7,10 +7,10 @@ classdef BOMIACGEngagement < Engagement2dim
             obj = obj@Engagement2dim(missile, target);
             
             sigma_max = missile.fovLimit;
-            obj.bomiaccg = DiscreteFunction(...
+            obj.bomiaccg = ZeroOrderHold(...
                 BOMIACG(gamma_d, sigma_max, 10, 0.5, 0.15), 1/40); % 40Hz
             
-            obj.attachDiscSystems({obj.bomiaccg});
+            obj.attachSimObjects({obj.bomiaccg});
         end
         
         % implement

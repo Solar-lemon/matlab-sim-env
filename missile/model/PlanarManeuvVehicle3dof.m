@@ -54,7 +54,7 @@ classdef PlanarManeuvVehicle3dof < DynSystem
                 end
             end
             
-            loggedData = obj.history('time', 'state', 'input1');
+            loggedData = obj.history('time', 'state', 'u_1');
             [timeList, stateList, accelList] = loggedData{:};
             % posList: km, velList: m/s, angleList: deg, accelList: m/s^2
             posList = stateList(1:2, :);
