@@ -49,7 +49,7 @@ classdef List < handle
         end
         
         function out = toMatrix(obj)
-            assert(isa(obj.items{1}, 'numeric'),...
+            assert(isa(obj.items{1}, 'numeric') || isa(obj.items{1}, 'logical'),...
                 "Stored items are not numeric.")
             shape = size(obj.items{1});
             if shape(end) == 1
