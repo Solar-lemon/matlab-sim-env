@@ -96,6 +96,10 @@ classdef List < handle
                 return
             end
         end
+        
+        function newList = copy(obj)
+            newList = List(obj.items);
+        end
     end
 end
         
