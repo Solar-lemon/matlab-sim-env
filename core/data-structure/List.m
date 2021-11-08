@@ -81,6 +81,21 @@ classdef List < handle
             obj.items(index:end - 1) = obj.items(index + 1:end);
             obj.dataNum = obj.dataNum - 1;
         end
+        
+        function extend(obj, newItems)
+            if isa(newItems, 'cell')
+                for i = 1:numel(cell)
+                    obj.append(newItems{i});
+                end
+                return
+            end
+            if isa(newItems, 'List')
+                for i = 1:numel(newItems)
+                    obj.append(newItems.get(i));
+                end
+                return
+            end
+        end
     end
 end
         
