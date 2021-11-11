@@ -1,15 +1,19 @@
 classdef Logger < handle
     properties
         data
-        name = "Logger"
-        
-        simClock
-        timer
-        isInitialized = false
+        isOperating = true;
     end
     methods
         function obj = Logger()
             obj.data = containers.Map();
+        end
+        
+        function turnOn(obj)
+            obj.isOperating = true;
+        end
+        
+        function turnOff(obj)
+            obj.isOperating = false;
         end
         
         function clear(obj)
@@ -30,20 +34,28 @@ classdef Logger < handle
         end
         
         function append(obj, keySet, valueSet)
-            for i = 1:numel(keySet)
-                key = keySet{i};
-                try
-                    list = obj.data(key);
-                catch
-                    list = List();
-                    obj.data(key) = list;
+            if obj.isOperating
+                for i = 1:numel(keySet)
+                    key = keySet{i};
+                    try
+                        list = obj.data(key);
+                    catch
+                        list = List();
+                        obj.data(key) = list;
+                    end
+                    list.append(valueSet{i});
                 end
-                list.append(valueSet{i});
             end
         end
         
-        function out = get(obj, keySet)
-            if nargin < 2
+        function out = get(obj, varargin)
+            if obj.isempty()
+                out = [];
+                return
+            end
+            
+            keySet = varargin;
+            if numel(varargin) == 0
                 keySet = obj.data.keys();
             end
             
@@ -86,9 +98,8 @@ classdef Logger < handle
             elapsedTime = toc;
             fprintf("ElapsedTime: %.2f [s] \n", elapsedTime)
             
-            loggedData = logger.get();
-            time = loggedData('time');
-            state = loggedData('state');
+            loggedData = logger.get('time', 'state');
+            [time, state] = loggedData{:};
             figure();
             hold on
             plot(time, state(1, :), 'DisplayName', "Pos. [m]")
