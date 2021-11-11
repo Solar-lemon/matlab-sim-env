@@ -1,44 +1,23 @@
 classdef Logger < handle
     properties
+        data
+        name = "Logger"
+        
         simClock
         timer
-        data
         isInitialized = false
-        name = "Logger"
     end
     methods
         function obj = Logger()
             obj.data = containers.Map();
         end
         
-        function attachSimClock(obj, simClock)
-            obj.simClock = simClock;
-        end
-        
-        function reset(obj)
-            obj.timer = [];
+        function clear(obj)
             obj.data.remove(obj.data.keys());
-            obj.isInitialized = false;
-        end
-        
-        function turnOn(obj, logTimeInterval)
-            assert(~isempty(obj.simClock), "[Logger] Attach a clock first.\n")
-            obj.timer = Timer(logTimeInterval);
-            obj.timer.attachSimClock(obj.simClock);
-            obj.timer.turnOn();
-        end
-        
-        function turnOff(obj)
-            obj.timer.turnOff();
         end
         
         function out = isempty(obj)
-            out = obj.data.isempty();
-        end
-        
-        function out = toLog(obj)
-            obj.timer.forward();
-            out = ~isempty(obj.timer) && obj.timer.checkEvent();
+            out = isempty(obj.data);
         end
         
         function out = numel(obj)
@@ -50,40 +29,37 @@ classdef Logger < handle
             out = obj.data(keys{1}).numel();
         end
         
-        function forward(obj, keySet, valueSet)
-            obj.timer.forward();
-            if ~isempty(obj.timer) && obj.timer.checkEvent()
-                if ~isa(keySet, 'cell')
-                    keySet = {keySet};
+        function append(obj, keySet, valueSet)
+            for i = 1:numel(keySet)
+                key = keySet{i};
+                try
+                    list = obj.data(key);
+                catch
+                    list = List();
+                    obj.data(key) = list;
                 end
-                if ~isa(valueSet, 'cell')
-                    valueSet = {valueSet};
-                end
-                
-                if ~obj.isInitialized
-                    if obj.data.isKey(keySet{1})
-                        obj.isInitialized = true;
-                    else
-                        for i = 1:numel(keySet)
-                            obj.data(keySet{i}) = MatrixList();
-                        end
-                    end
-                end
+                list.append(valueSet{i});
+            end
+        end
+        
+        function out = get(obj, keySet)
+            if nargin < 2
+                keySet = obj.data.keys();
+            end
+            
+            if numel(keySet) == 1
+                out = obj.data(keySet{1}).toMatrix();
+            else
+                out = cell(1, numel(keySet));
                 for i = 1:numel(keySet)
-                    matrixList = obj.data(keySet{i});
-                    matrixList.append(valueSet{i});
+                    key = keySet{i};
+                    out{i} = obj.data(key).toMatrix();
                 end
             end
         end
         
-        function loggedData = get(obj, keySet)
-            if nargin < 2
-                keySet = obj.data.keys();
-            end
-            loggedData = cell(size(keySet));
-            for i = 1:numel(loggedData)
-                loggedData{i} = obj.data(keySet{i}).get();
-            end
+        function out = keys(obj)
+            out = obj.data.keys();
         end
     end
     methods(Static)
@@ -93,12 +69,8 @@ classdef Logger < handle
             fprintf("== Test for Logger == \n")
             
             dt = 0.01;
-            logTimeInterval = 0.01;
-            
-            simClock = Clock();
+            simClock = SimClock();
             logger = Logger();
-            logger.attachSimClock(simClock);
-            logger.turnOn(logTimeInterval);
             
             A = [1, dt; 0, 1];
             B = [0; dt];
@@ -107,15 +79,16 @@ classdef Logger < handle
             
             tic
             for i = 1:100
-                logger.forward({'time', 'state', 'control'}, {simClock.time, x, u});
+                logger.append({'time', 'state', 'control'}, {simClock.time, x, u});
                 x = A*x + B*u;
                 simClock.elapse(dt);
             end
-            loggedData = logger.get({'time', 'state'});
-            [time, state] = loggedData{:};
             elapsedTime = toc;
             fprintf("ElapsedTime: %.2f [s] \n", elapsedTime)
             
+            loggedData = logger.get();
+            time = loggedData('time');
+            state = loggedData('state');
             figure();
             hold on
             plot(time, state(1, :), 'DisplayName', "Pos. [m]")

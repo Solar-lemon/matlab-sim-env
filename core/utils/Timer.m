@@ -3,13 +3,13 @@ classdef Timer < handle
         simClock
         isOperating = false
         eventTimeInterval
-        lastEventTime
-        isEvent
+        lastEventTime = -inf
+        isEvent = false
     end
     methods
         function obj = Timer(eventTimeInterval)
             if nargin < 1 || isempty(eventTimeInterval)
-                eventTimeInterval = nan;
+                eventTimeInterval = 0;
             end
             
             obj.eventTimeInterval = eventTimeInterval;
@@ -19,7 +19,16 @@ classdef Timer < handle
             obj.simClock = simClock;
         end
         
-        function turnOn(obj)
+        function reset(obj)
+            obj.isOperating = false;
+            obj.lastEventTime = -inf;
+            obj.isEvent = false;
+        end
+        
+        function turnOn(obj, eventTimeInterval)
+            if nargin > 1
+                obj.eventTimeInterval = eventTimeInterval;
+            end
             assert(~isnan(obj.eventTimeInterval),...
                 "Set eventTimeInterval first before turning on the timer.")
             
@@ -30,18 +39,18 @@ classdef Timer < handle
         
         function turnOff(obj)
             obj.isOperating = false;
-            obj.lastEventTime = [];
-            obj.isEvent = [];
+            obj.lastEventTime = -inf;
+            obj.isEvent = false;
         end
         
         function forward(obj)
-            if abs(obj.simClock.time - obj.lastEventTime) <= obj.simClock.timeResolution
+            if abs(obj.simClock.time - obj.lastEventTime) <= obj.simClock.timeRes
                 return
             end
             
             if obj.isOperating
                 elapsedTime = obj.simClock.time - obj.lastEventTime;
-                if elapsedTime >= (obj.eventTimeInterval - obj.simClock.timeResolution)
+                if elapsedTime >= (obj.eventTimeInterval - obj.simClock.timeRes)
                     obj.isEvent = true;
                     obj.lastEventTime = obj.simClock.time;
                 else
@@ -61,9 +70,9 @@ classdef Timer < handle
             fprintf("== Test for Timer ==\n")
             
             dt = 0.01;
-            timeResolution = 0.0001*dt;
+            timeRes = 0.0001*dt;
             
-            simClock = Clock(0, timeResolution);
+            simClock = SimClock(0, timeRes);
             
             eventTimeInterval = 0.1;
             timer = Timer(eventTimeInterval);
@@ -75,7 +84,7 @@ classdef Timer < handle
             fprintf('Sampling time interval: %.2f[s] \n\n', dt)
             for i = 1:100
                 timer.forward();
-                isEvent = timer.checkEvent();
+                isEvent = timer.isEvent;
                 if isEvent
                     fprintf('Event occured at time = %.1f[s] \n', simClock.time)
                 end

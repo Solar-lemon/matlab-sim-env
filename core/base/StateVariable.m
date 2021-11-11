@@ -8,7 +8,16 @@ classdef StateVariable < handle
     methods
         function obj = StateVariable(state)
             obj.state = state;
+            obj.deriv = zeros(size(state));
             obj.rk4Buffer = cell(1, 4);
+        end
+        
+        function applyState(obj, state)
+            obj.state = state;
+        end
+        
+        function out = numel(obj)
+            out = numel(obj.state);
         end
         
         function forward(obj, deriv)

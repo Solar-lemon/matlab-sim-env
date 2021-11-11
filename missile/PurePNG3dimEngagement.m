@@ -18,11 +18,10 @@ classdef PurePNG3dimEngagement < MultipleSystem
             obj.missile = missile;
             obj.target = target;
             obj.kinematics = EngKinematics(obj.missile, obj.target);
-            obj.purePng = DiscreteFunction(PurePNG3dim(3), 1/40); % 40 Hz
+            obj.purePng = ZeroOrderHold(PurePNG3dim(3), 1/40); % 40 Hz
             
             obj.missile.attachEngKinematics(obj.kinematics);
-            obj.attachDynSystems({obj.missile, obj.target});
-            obj.attachDiscSystems({obj.purePng});
+            obj.attachSimObjects({obj.missile, obj.target, obj.purePng});
         end
         
         % implement
@@ -37,16 +36,23 @@ classdef PurePNG3dimEngagement < MultipleSystem
             obj.missile.forward(a_M);
             obj.target.forward();
             
-            obj.logger.forward(...
-                {'time', 'lookAngle', 'losRate', 'range'},...
-                {obj.simClock.time, sigma, omega, r});
+            if obj.logTimer.isEvent
+                obj.logger.append(...
+                    {'time', 'lookAngle', 'losRate', 'range'},...
+                    {obj.simClock.time, sigma, omega, r});
+            end
         end
         
         % implement
-        function toStop = checkStopCondition(obj)
+        function [toStop, flag] = checkStopCondition(obj)
             toStop = obj.missile.checkStopCondition();
-            toStop = toStop...
-                || obj.rangeIsIncreasing();
+            if toStop
+                flag = 1;
+            end
+            if obj.rangeIsIncreasing()
+                toStop = true;
+                flag = 2;
+            end
             updateRange(obj);
         end
         

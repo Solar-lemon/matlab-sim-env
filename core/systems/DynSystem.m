@@ -15,71 +15,68 @@ classdef DynSystem < TimeVaryingDynSystem
         end
         
         % to be implemented
-        function out = derivative(obj, varargin)
-            % implement this method if needed
-            % varargin: {state, input1, ..., inputM}
-            % out: derivState
-            fprintf("Attach a derivFun or implement the derivative method! \n")
-            out = zeros(size(obj.initialState));
+        function out = derivative(obj, state, varargin)
+            assert(~isempty(obj.derivFun),...
+                "Attach a derivFun or implement the derivative method!")
+            out = obj.derivFun(state, varargin{:});
         end
         
         % override
         function out = forward(obj, varargin)
             % varargin: {input1, ..., inputM}
-            if isa(obj.derivFun, 'BaseFunction')
-                deriv = obj.derivFun.forward(...
-                    obj.stateVarList{1}.state, varargin{:});
-                obj.stateVarList{1}.forward(deriv);
-            else
-                deriv = obj.derivFun(...
-                    obj.stateVarList{1}.state, varargin{:});
-                obj.stateVarList{1}.forward(deriv);
+            deriv = obj.derivative(...
+                obj.stateVarList.get(1).state, varargin{:});
+            obj.stateVarList.get(1).forward(deriv);
+            
+            if obj.logTimer.isEvent
+                obj.logger.append(...
+                    {'time', 'state'},...
+                    {obj.simClock.time, obj.stateVarList.get(1).state});
+                inputKeySet = cell(size(varargin));
+                for i = 1:numel(varargin)
+                    inputKeySet{i} = ['u_', num2str(i)];
+                end
+                obj.logger.append(inputKeySet, varargin);
             end
             
-            keySet = {'time', 'state'};
-            valueSet = {obj.simClock.time, obj.stateVarList{1}.state};
-            
-            inputKeySet = cell(size(varargin));
-            for i = 1:numel(varargin)
-                inputKeySet{i} = ['input', num2str(i)];
-            end
-            keySet = [keySet, inputKeySet];
-            valueSet = [valueSet, varargin];
-            
-            obj.logger.forward(keySet, valueSet);
-            
-            if nargout > 0
-                out = obj.output;
-            end
+            out = obj.output;
         end
         
         % override
         function out = output(obj)
             % outputFun: function_handle or BaseFunction
             % outputFun(state)
-            if isa(obj.outputFun, 'BaseFunction')
-                out = obj.outputFun.forward(obj.stateVarList{1}.state);
-            else
-                out = obj.outputFun(obj.stateVarList{1}.state);
-            end
+            out = obj.outputFun(obj.stateVarList.get(1).state);
         end
     end
     
     methods(Static)
         function test()
+            clc
+            close all
+            
             fprintf('== Test for DynSystem == \n')
+            dt = 0.01;
+            simClock = SimClock();
+            logTimer = Timer(dt);
+            logTimer.attachSimClock(simClock);
+            logTimer.turnOn();
+            
             A = [0, 1;
                 -1, -1];
             B = [0; 1];
-            dynSystem = DynSystem([0; 1], @(x, u) A*x + B*u);
+            derivFun = @(x, u) A*x + B*u;
+            model = DynSystem([0; 1], derivFun);
+            model.attachSimClock(simClock);
+            model.attachLogTimer(logTimer);
             
             tic
             u_step = 1;
-            Simulator(dynSystem).propagate(0.01, 10, true, u_step);
+            model.propagate(0.01, 10, u_step);
             elapsedTime = toc;
             
             fprintf('ElapsedTime: %.2f [s] \n', elapsedTime)
-            dynSystem.plot();
+            model.plot();
         end
     end
 end

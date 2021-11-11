@@ -1,128 +1,83 @@
 classdef MultipleSystem < BaseSystem
     properties
-        systemList
-        systemNum
-        discSystemList
-        discSystemNum
+        simObjList
+        simObjNum
     end
     methods
         function obj = MultipleSystem()
             obj = obj@BaseSystem();
             obj.name = 'multipleSystem';
+            obj.simObjList = List();
+            obj.simObjNum = 0;
+        end
+        
+        function attachSimObjects(obj, simObjList)
+            if isa(simObjList, 'cell')
+                simObjList = List(simObjList);
+            end
+            SVI = obj.stateVarNum; % last state var index
+            SI = obj.stateNum; % last state index
+            
+            for i = 1:numel(simObjList)
+                simObj = simObjList.get(i);
+                if isa(simObj, 'SimObject')
+                    obj.simObjList.append(simObj);
+                    
+                    if isa(simObj, 'BaseSystem')
+                        obj.stateVarList.extend(simObj.stateVarList);
+                        for j = 1:numel(simObj.stateIndex)
+                            newIndex = SI + simObj.stateIndex.get(j);
+                            obj.stateIndex.append(newIndex);
+                        end
+                        SVI = SVI + simObj.stateVarNum;
+                        SI = SI + simObj.stateNum;
+                    end
+                end
+            end
+            obj.stateVarNum = SVI;
+            obj.stateNum = SI;
+            obj.simObjNum = numel(obj.simObjList);
+            obj.flag = zeros(obj.simObjNum, 1);
         end
         
         % override
         function attachSimClock(obj, simClock)
             attachSimClock@BaseSystem(obj, simClock);
-            for k = 1:obj.systemNum
-                obj.systemList{k}.attachSimClock(simClock);
+            for i = 1:numel(obj.simObjList)
+                obj.simObjList.get(i).attachSimClock(simClock);
             end
-            for k = 1:obj.discSystemNum
-                obj.discSystemList{k}.attachSimClock(simClock);
+        end
+        
+        % override
+        function attachLogTimer(obj, logTimer)
+            attachLogTimer@BaseSystem(obj, logTimer);
+            for i = 1:numel(obj.simObjList)
+                obj.simObjList.get(i).attachLogTimer(logTimer);
             end
         end
         
         % override
         function reset(obj)
             reset@BaseSystem(obj);
-            for k = 1:obj.systemNum
-                obj.systemList{k}.reset();
-            end
-            for k = 1:obj.discSystemNum
-                obj.discSystemList{k}.reset();
-            end
-        end
-        
-        function attachDynSystems(obj, systemList)
-            lastSVI = obj.stateVarNum; % lastStateVarIndex
-            lastSI = obj.stateNum; % lastStateIndex
-            
-            stateVarIsNotEmpty = false(1, numel(systemList));
-            for k = 1:numel(systemList)
-                if isa(systemList{k}, 'BaseSystem') && ~isempty(systemList{k}.stateVarList)
-                    stateVarIsNotEmpty(k) = true;
-                end
-            end
-            newSysList = systemList(stateVarIsNotEmpty);
-            newSysNum = numel(newSysList);
-            
-            obj.systemList = [obj.systemList, newSysList];
-            obj.systemNum = numel(obj.systemList);
-            
-            obj.stateVarList = [obj.stateVarList, cell(1, newSysNum)];
-            obj.stateIndex = [obj.stateIndex, cell(1, newSysNum)];
-            for k = 1:newSysNum
-                system = newSysList{k};
-                obj.stateVarList(lastSVI + 1:lastSVI + system.stateVarNum) =...
-                    system.stateVarList;
-                updatedStateIndex = cellfun(@(x) x + lastSI, system.stateIndex,...
-                    'UniformOutput', false);
-                obj.stateIndex(lastSVI + 1:lastSVI + system.stateVarNum) =...
-                    updatedStateIndex;
-                
-                lastSVI = lastSVI + system.stateVarNum;
-                lastSI  = lastSI + system.stateNum;
-            end
-            obj.stateVarNum  = lastSVI;
-            obj.stateNum     = lastSI;
-        end
-        
-        function attachDiscSystems(obj, discSystemList)
-            obj.discSystemList = [obj.discSystemList, discSystemList];
-            obj.discSystemNum = numel(obj.discSystemList);
-        end
-        
-        % override
-        function applyTime(obj, timeFeed)
-            applyTime@BaseSystem(obj, timeFeed);
-            for k = 1:numel(obj.systemList)
-                obj.systemList{k}.applyTime(timeFeed);
-            end
-            for k = 1:numel(obj.discSystemList)
-                obj.discSystemList{k}.applyTime(timeFeed);
-            end
-        end
-        
-        % override
-        function startLogging(obj, logTimeInterval)
-            startLogging@BaseSystem(obj, logTimeInterval);
-            for k = 1:obj.systemNum
-                obj.systemList{k}.startLogging(logTimeInterval);
-            end
-        end
-        
-        % override
-        function finishLogging(obj)
-            finishLogging@BaseSystem(obj);
-            for k = 1:obj.systemNum
-                obj.systemList{k}.finishLogging();
-            end
-        end
-        
-        % to be implemented
-        function forward(obj, varargin)
-            assert(~isempty(obj.systemList),...
-                "Attach dynamic systems first")
-            for k = 1:numel(obj.systemList)
-                obj.systemList{k}.forward(varargin{:});
+            for i = 1:numel(obj.simObjList)
+                obj.simObjList.get(i).reset();
             end
         end
         
         % implement
         function [toStop, flag] = checkStopCondition(obj)
-            toStopList = false(obj.systemNum, 1);
-            for k = 1:obj.systemNum
-                toStopList(k) = obj.systemList{k}.checkStopCondition();
+            toStopList = false(obj.simObjNum, 1);
+            for i = 1:obj.simObjNum
+                toStopList(i) = obj.simObjList.get(i).checkStopCondition();
             end
             
             toStop = any(toStopList);
             if toStop
-                obj.flag = find(toStopList);
+                for i = 1:obj.simObjNum
+                    obj.flag(i) = obj.simObjList.get(i).flag;
+                end
             end
-            
-            if nargout > 1
-                flag = obj.flag;
-            end
+            flag = obj.flag;
         end
     end
     
@@ -130,25 +85,25 @@ classdef MultipleSystem < BaseSystem
         function test()
             clc
             fprintf("== Test for MultipleSystem class == \n")
-            fprintf("Unrelated systems can be simulated simply using a MultipleSystem object.\n")
-            fprintf("For more complex systems, define a class that inherits MultipleSystem \n")
-            fprintf("and implement a forward method. \n")
-            system1 = DynSystem([0; 0], SecondOrderDynFun(0.3, 2));
-            system2 = DynSystem([0; 0], SecondOrderDynFun(0.5, 2));
-            system3 = DynSystem([0; 0], SecondOrderDynFun(0.8, 2));
-            multipleSystem = MultipleSystem();
-            multipleSystem.attachDynSystems({system1, system2, system3});
             
-            simulator = Simulator(multipleSystem);
+            zeta = 0.1;
+            omega = 1;
+            A = [...
+                0, 1;
+                -omega^2, -2*zeta*omega];
+            B = [0; omega^2];
+            K = [0.4142, 1.1669];
             
-            tic
-            simulator.propagate(0.01, 10, true, 1);
-            elapsedTime = toc;
-            fprintf('Elapsed time: %.2f [s] \n', elapsedTime);
+            derivFun = @(x, u) A*x + B*u;
+            linearSys = DynSystem([0; 1], derivFun);
+            lqrControl = BaseFunction(@(y, r) -K*y);
             
-            system1.plot();
-            system2.plot();
-            system3.plot();
+            model = FeedbackControl(linearSys, lqrControl);
+            
+            simulator = Simulator(model);
+            simulator.propagate(0.01, 10, true);
+            
+            linearSys.plot();
         end
     end
 end

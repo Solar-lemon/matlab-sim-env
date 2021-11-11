@@ -11,8 +11,8 @@ classdef PurePNG2dimEngagement < Engagement2dim
             end
             obj = obj@Engagement2dim(missile, target);
             
-            obj.purePng = DiscreteFunction(PurePNG2dim(3), 1/40); % 40 Hz
-            obj.attachDiscSystems({obj.purePng});
+            obj.purePng = ZeroOrderHold(PurePNG2dim(3), 1/40);
+            obj.attachSimObjects({obj.purePng});
         end
         
         % implement

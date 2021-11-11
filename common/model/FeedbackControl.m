@@ -9,10 +9,7 @@ classdef FeedbackControl < MultipleSystem
             obj.system = system;
             obj.control = control;
             
-            obj.attachDynSystems({system});
-            if isa(control, 'DiscreteFunction')
-                obj.attachDiscSystems({control});
-            end
+            obj.attachSimObjects({system, control});
         end
         
         % implement
@@ -20,8 +17,8 @@ classdef FeedbackControl < MultipleSystem
             if nargin < 2
                 r = [];
             end
-            x = obj.system.output;
-            u = obj.control.forward(x, r);
+            y = obj.system.output;
+            u = obj.control.forward(y, r);
             obj.system.forward(u);
         end
     end
