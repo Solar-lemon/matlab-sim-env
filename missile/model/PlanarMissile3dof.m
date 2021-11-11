@@ -24,7 +24,7 @@ classdef PlanarMissile3dof < PlanarManeuvVehicle3dof
             
             accSaturated = any(a_M <= obj.accLimit(:, 1) + 1e-8) ...
                 || any(a_M >= obj.accLimit(:, 2) - 1e-8);
-            if obj.logTimer.toLog
+            if obj.logTimer.isEvent
                 obj.logger.append({'accSaturated'}, {accSaturated});
             end
             

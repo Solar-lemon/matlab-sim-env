@@ -1,6 +1,7 @@
 classdef IACCGEngagement < Engagement2dim
     properties
         iaccg
+        iaccgZOH
     end
     methods
         function obj = IACCGEngagement(missile, target, gamma_imp, sigma_d)
@@ -17,10 +18,11 @@ classdef IACCGEngagement < Engagement2dim
             
             K = 1.5;
             N = 3;
-            obj.iaccg = ZeroOrderHold(...
-                IACCG(gamma_imp, gamma_T, v_M, v_T, K, sigma_d, N), 1/40); % 40 Hz
+            obj.iaccg = IACCG(gamma_imp, gamma_T, v_M, v_T, K, sigma_d, N); 
+            obj.iaccgZOH = ZeroOrderHold(...
+                obj.iaccg, 1/40); % 40 Hz
             
-            obj.attachSimObjects({obj.iaccg});
+            obj.attachSimObjects({obj.iaccgZOH});
         end
         
         % implement
@@ -31,19 +33,22 @@ classdef IACCGEngagement < Engagement2dim
             lam = obj.kinematics.losAngle;
             omega = obj.kinematics.losRate;
             
-            a_M = obj.iaccg.forward(v_M, sigma, lam, omega);
+            a_M = obj.iaccgZOH.forward(v_M, sigma, lam, omega);
             obj.missile.forward([0; a_M]);
         end
         
         function out = impactAngle(obj)
-            rangeList = obj.history('r');
-            [~, index] = min(rangeList);
+            x_M = obj.missile.history('state');
+            x_T = obj.target.history('state');
             
-            state_M = obj.missile.history('state');
-            state_T = obj.target.history('state');
+            p_M = x_M(1:2, :);
+            p_T = x_T(1:2, :);
+            r = vecnorm(p_M - p_T, 2, 1);
             
-            gamma_M = state_M(4, index);
-            gamma_T = state_T(4, index);
+            [~, index] = min(r);
+            
+            gamma_M = x_M(4, index);
+            gamma_T = x_T(4, index);
             
             out = gamma_T - gamma_M;
         end
@@ -52,6 +57,7 @@ classdef IACCGEngagement < Engagement2dim
         function report(obj)
             report@Engagement2dim(obj);
             fprintf("[Engagement] Impact angle: %.2f [deg] \n", rad2deg(obj.impactAngle()))
+            obj.iaccg.report();
         end
     end
 end
