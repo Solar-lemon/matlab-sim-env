@@ -8,7 +8,7 @@ close all
 
 fprintf("== Two dimensional BOMIACG engagement for a stationary target == \n")
 
-dt = 0.005;
+dt = 0.01;
 finalTime = 100;
 
 missile = PlanarMissile3dof(...

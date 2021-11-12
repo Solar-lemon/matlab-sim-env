@@ -28,10 +28,14 @@ classdef IACCGEngagement < Engagement2dim
         % implement
         function forward(obj)
             forward@Engagement2dim(obj);
+            x_M = obj.missile.state;
+            x_T = obj.target.state;
             v_M = obj.missile.speed;
-            sigma = obj.missile.lookAngle();
-            lam = obj.kinematics.losAngle;
-            omega = obj.kinematics.losRate;
+            
+            relKinematics = RelativeKinematics2dim(x_M, x_T);
+            lam = relKinematics.losAngle();
+            omega = relKinematics.losRate();
+            sigma = relKinematics.lookAngle();
             
             a_M = obj.iaccgZOH.forward(v_M, sigma, lam, omega);
             obj.missile.forward([0; a_M]);

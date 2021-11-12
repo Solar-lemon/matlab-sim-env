@@ -16,9 +16,14 @@ classdef BOMIACGEngagement < Engagement2dim
         % implement
         function forward(obj)
             forward@Engagement2dim(obj);
+            
+            x_M = obj.missile.state;
+            x_T = obj.target.state;
             v_M = obj.missile.speed;
-            sigma_M = obj.missile.lookAngle();
-            lam = obj.kinematics.losAngle;
+            
+            relKinematics = RelativeKinematics2dim(x_M, x_T);
+            lam = relKinematics.losAngle();
+            sigma_M = relKinematics.lookAngle();
             
             a_M = obj.bomiaccg.forward(v_M, sigma_M, lam);
             obj.missile.forward([0; a_M]);
