@@ -26,18 +26,7 @@ classdef Engagement2dim < MultipleSystem
         
         % implement
         function forward(obj)
-            sigma = obj.missile.lookAngle();
-            lam = obj.kinematics.losAngle;
-            omega = obj.kinematics.losRate;
-            r = obj.kinematics.range;
-            
             obj.target.forward();
-            
-            if obj.logTimer.isEvent
-                obj.logger.append(...
-                    {'time', 'sigma', 'lam', 'omega', 'r'},...
-                    {obj.simClock.time, sigma, lam, omega, r});
-            end
         end
         
         % implement
@@ -46,20 +35,12 @@ classdef Engagement2dim < MultipleSystem
             if toStop
                 flag = 1;
             end
-            if obj.rangeIsIncreasing()
+            range = obj.kinematics.range;
+            if (range > obj.prevRange)
                 toStop = true;
                 flag = 2;
             end
-            updateRange(obj);
-        end
-        
-        function out = rangeIsIncreasing(obj)
-            range = obj.kinematics.range;
-            out = (range > obj.prevRange);
-        end
-        
-        function updateRange(obj)
-            obj.prevRange = obj.kinematics.range;
+            obj.prevRange = range;
         end
         
         function d_miss = missDistance(obj)
@@ -95,8 +76,15 @@ classdef Engagement2dim < MultipleSystem
             obj.target.plotPath(figs{1});
             daspect([1 1 1])
             
-            loggedData = obj.history('time', 'sigma', 'lam', 'omega');
-            [timeList, sigmaList, lamList, omegaList] = loggedData{:};
+            timeList = obj.missile.history('time');
+            x_M = obj.missile.history('state');
+            x_T = obj.target.history('state');
+            
+            relKinematics = RelativeKinematics2dim(x_M, x_T);
+            sigmaList = relKinematics.lookAngle();
+            lamList = relKinematics.losAngle();
+            omegaList = relKinematics.losRate();
+            
             sigmaList = rad2deg(sigmaList);
             lamList = rad2deg(lamList);
             omegaList = rad2deg(omegaList);
