@@ -45,6 +45,10 @@ classdef IACCG < BaseFunction
                 a_M = obj.N*v_M*omega;
             end
         end
+        
+        function report(obj)
+            fprintf("[IACCG] The swithing value for LOS angle is: %.2f [deg] \n", rad2deg(obj.lam_s))
+        end
     end
     
     methods(Static)
@@ -58,7 +62,6 @@ classdef IACCG < BaseFunction
                 (sin(gamma_M_f) - eta*sin(gamma_T)) / ...
                 (cos(gamma_M_f) - eta*cos(gamma_T)));
             lam_s = N/(N - 1)*(lam_f - (gamma_M_f - sigma_s)/N);
-            fprintf("[IACCG] The swithing value for LOS angle is: %.2f [deg] \n", rad2deg(lam_s))
         end
     end
 end

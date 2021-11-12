@@ -31,15 +31,12 @@ classdef Engagement2dim < MultipleSystem
             omega = obj.kinematics.losRate;
             r = obj.kinematics.range;
             
-            p_M = obj.missile.pos;
-            p_T = obj.target.pos;
-            
             obj.target.forward();
             
             if obj.logTimer.isEvent
                 obj.logger.append(...
-                    {'time', 'sigma', 'lam', 'omega', 'r', 'p_M', 'p_T'},...
-                    {obj.simClock.time, sigma, lam, omega, r, p_M, p_T});
+                    {'time', 'sigma', 'lam', 'omega', 'r'},...
+                    {obj.simClock.time, sigma, lam, omega, r});
             end
         end
         
@@ -66,8 +63,11 @@ classdef Engagement2dim < MultipleSystem
         end
         
         function d_miss = missDistance(obj)
-            p_M = obj.history('p_M');
-            p_T = obj.history('p_T');
+            x_M = obj.missile.history('state');
+            x_T = obj.target.history('state');
+            
+            p_M = x_M(1:2, :);
+            p_T = x_T(1:2, :);
             d_miss = MissileUtils.missDistance(p_M, p_T);
         end
         

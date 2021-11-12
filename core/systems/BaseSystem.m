@@ -101,7 +101,7 @@ classdef BaseSystem < SimObject
         function out = history(obj, varargin)
             assert(~obj.logger.isempty(),...
                 "There is no simulation data recorded")
-            out = obj.logger.get(varargin);
+            out = obj.logger.get(varargin{:});
         end
         
         % to be implemented
