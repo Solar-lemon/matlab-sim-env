@@ -93,7 +93,7 @@ classdef ParallelSimulator < handle
                 keySet = fieldnames(tempData{1});
                 for i = 1:numel(keySet)
                     key = keySet{i};
-                    matrixList = MatrixList();
+                    matrixList = List();
                     for j = 1:obj.totalSimNum
                         indivData = tempData{j};
                         value = getfield(indivData, key);
@@ -119,7 +119,7 @@ classdef ParallelSimulator < handle
             end
             out = cell(size(keySet));
             for i = 1:numel(out)
-                out{i} = obj.data(keySet{i}).get();
+                out{i} = obj.data(keySet{i}).toMatrix();
             end
         end
         

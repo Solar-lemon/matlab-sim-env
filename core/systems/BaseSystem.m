@@ -116,7 +116,7 @@ classdef BaseSystem < SimObject
         
         % to be implemented
         function report(obj)
-            fprintf("== Report for %s ==", obj.name)
+            fprintf("== Report for %s == \n", obj.name)
         end
     end
     
