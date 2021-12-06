@@ -161,18 +161,36 @@ classdef BaseSystem < SimObject
         end
     end
     
-    methods(Access=protected)
-        function states = getState(obj)
-            states = cell(1, obj.stateVarNum);
-            for i = 1:obj.stateVarNum
-                states{i} = obj.stateVarList.get(i).state;
+    methods
+        function out = getState(obj, iVar)
+            if nargin < 2
+                iVar = 1:obj.stateVarNum;
+            end
+            
+            if numel(iVar) == 1
+                out = obj.stateVarList.get(iVar).state;
+                return
+            end
+            
+            out = cell(1, numel(iVar));
+            for j = 1:numel(iVar)
+                out{iVar(j)} = obj.stateVarList.get(iVar(j)).state;
             end
         end
         
-        function derivs = getDeriv(obj)
-            derivs = cell(1, obj.stateVarNum);
-            for i = 1:obj.stateVarNum
-                derivs{i} = obj.stateVarList.get(i).deriv;
+        function out = getDeriv(obj, iVar)
+            if nargin < 2
+                iVar = 1:obj.stateVarNum;
+            end
+            
+            if nume(iVar) == 1
+                out = obj.stateVarList.get(iVar).state;
+                return
+            end
+            
+            out = cell(1, obj.stateVarNum);
+            for j = 1:numel(iVar)
+                out{iVar(j)} = obj.stateVarList.get(iVar(j)).deriv;
             end
         end
     end
