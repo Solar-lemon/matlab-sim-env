@@ -21,7 +21,7 @@ classdef TimeVaryingDynSystem < BaseSystem
             obj.name = 'timeVaryingDynSystem';
             obj.initialState = initialState;
             
-            if isa(derivFun, 'SimObject')
+            if isa(derivFun, 'SimObject') || isa(derivFun, 'BaseFunction')
                 obj.derivFun = @derivFun.forward;
             else
                 obj.derivFun = derivFun;

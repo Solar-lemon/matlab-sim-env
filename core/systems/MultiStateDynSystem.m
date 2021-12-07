@@ -18,7 +18,7 @@ classdef MultiStateDynSystem < BaseSystem
             obj.name = 'multiStateDynSystem';
             obj.initialStates = initialStates;
             
-            if isa(derivFun, 'SimObject')
+            if isa(derivFun, 'SimObject') || isa(derivFun, 'BaseFunction')
                 obj.derivFun = @derivFun.forward;
             else
                 obj.derivFun = derivFun;
