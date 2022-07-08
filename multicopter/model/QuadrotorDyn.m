@@ -20,7 +20,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
                     R = Orientations.correctOrthogonality(R);
                 end
             end
-            obj.stateVarList{3}.attachCorrectionFun(@rotationCorrectionFun);
+            obj.stateVarList.get(3).attachCorrectionFun(@rotationCorrectionFun);
         end
         
         % override
@@ -51,7 +51,7 @@ classdef QuadrotorDyn < MultiStateDynSystem
             end
             
             loggedData = obj.history(...
-                'time', 'state1', 'state2', 'state3', 'state4', 'input1');
+                'time', 'state_1', 'state_2', 'state_3', 'state_4', 'u_1');
             [timeList, posList, velList, ...
                 rotationList, angVelList, controlList] = loggedData{:};
             dataNum = size(rotationList, 3);

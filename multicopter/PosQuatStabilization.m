@@ -33,7 +33,7 @@ classdef PosQuatStabilization < MultipleSystem
             K_pos = PosQuatControl.gain(Q_pos, R_pos);
             obj.posControl = PosQuatControl(m, K_pos);
             
-            obj.attachDynSystems({obj.quadrotor});
+            obj.attachSimObjects({obj.quadrotor});
         end
         
         % implement
@@ -41,7 +41,11 @@ classdef PosQuatStabilization < MultipleSystem
             p_d = [0; 0; 1];
             v_d = [0; 0; 0];
             
-            [p, v, R_iv, omega] = obj.quadrotor.stateValueList{:};
+            quadState = obj.quadrotor.state;
+            p = quadState{1};
+            v = quadState{2};
+            R_iv = quadState{3};
+            omega = quadState{4}; 
             q = Orientations.rotationToQuat(R_iv.');
             
             [f, q_d, omega_d] = obj.posControl.forward(p, v, p_d, v_d);

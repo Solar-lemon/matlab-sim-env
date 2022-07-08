@@ -27,7 +27,7 @@ classdef AttQuatStabilization < MultipleSystem
             K = AttQuatControl.gain(Q, R);
             obj.attControl = AttQuatControl(J, K);
             
-            obj.attachDynSystems({obj.quadrotor});
+            obj.attachSimObjects({obj.quadrotor});
         end
         
         % implement
@@ -35,7 +35,7 @@ classdef AttQuatStabilization < MultipleSystem
             q_d = [1; 0; 0; 0];
             omega_d = [0; 0; 0];
             
-            quadState = obj.quadrotor.stateValueList;
+            quadState = obj.quadrotor.state;
             R_iv = quadState{3};
             omega = quadState{4};
             q = Orientations.rotationToQuat(R_iv.');
