@@ -1,11 +1,18 @@
 classdef Logger < handle
     properties
         data
-        isOperating = true;
+        isOperating logical = true;
+    end
+    properties(Access=protected)
+        logTimer Timer
     end
     methods
         function obj = Logger()
-            obj.data = containers.Map();
+            obj.data = dictionary();
+        end
+
+        function attachLogTimer(obj, logTimer)
+            obj.logTimer = logTimer;
         end
         
         function turnOn(obj)
@@ -16,34 +23,43 @@ classdef Logger < handle
             obj.isOperating = false;
         end
         
+        function detachLogTimer(obj)
+            obj.logTimer = [];
+        end
+
         function clear(obj)
-            obj.data.remove(obj.data.keys());
+            obj.data = dictionary();
         end
         
         function out = isempty(obj)
-            out = isempty(obj.data);
+            out = (numEntries(obj.data) == 0);
         end
         
         function out = numel(obj)
-            if obj.data.isempty()
+            if isempty(obj.data)
                 out = 0;
                 return
             end
-            keys = obj.data.keys();
-            out = obj.data(keys{1}).numel();
+            dataValues = values(obj.data);
+            out = numel(dataValues{1});
         end
         
-        function append(obj, keySet, valueSet)
+        function append(obj, varargin)
+            % append(var1=value1, var2=value2, ..., varN=valueN)
+            keySet = varargin(1:2:end);
+            valueSet = varargin(2:2:end);
+            
             if obj.isOperating
-                for i = 1:numel(keySet)
-                    key = keySet{i};
-                    try
-                        list = obj.data(key);
-                    catch
-                        list = List();
-                        obj.data(key) = list;
+                if isempty(obj.logTimer) || obj.logTimer.isEvent
+                    for i = 1:numel(keySet)
+                        key = keySet{i};
+                        try
+                            obj.data(key).append(valueSet{i});
+                        catch
+                            obj.data(key) = List();
+                            obj.data(key).append(valueSet{i});
+                        end
                     end
-                    list.append(valueSet{i});
                 end
             end
         end
@@ -53,25 +69,63 @@ classdef Logger < handle
                 out = [];
                 return
             end
-            
-            keySet = varargin;
-            if numel(varargin) == 0
-                keySet = obj.data.keys();
-            end
-            
-            if numel(keySet) == 1
-                out = obj.data(keySet{1}).toMatrix();
+
+            if numel(varargin) == 1
+                out = toArray(obj.data(varargin{1}));
+                return
             else
-                out = cell(1, numel(keySet));
-                for i = 1:numel(keySet)
-                    key = keySet{i};
-                    out{i} = obj.data(key).toMatrix();
+                if isempty(varargin)
+                    varargin = obj.data.keys();
+                end
+                out = dictionary();
+                for i = 1:numel(varargin)
+                    key = varargin{i};
+                    out(key) = {toArray(obj.data(key))};
                 end
             end
         end
         
         function out = keys(obj)
             out = obj.data.keys();
+        end
+
+        function save(obj, filename, dataGroup)
+            % filename: name of the HDF5
+            arguments
+                obj
+                filename
+                dataGroup = ''
+            end
+
+            keys = obj.keys();
+            if ~isempty(keys)
+                for i = 1:numel(keys)
+                    key = keys(i);
+                    varData = obj.get(key);
+                    h5create(filename, strcat(dataGroup, '/', key), size(varData))
+                    h5write(filename, strcat(dataGroup, '/', key), varData)
+                end
+            end
+        end
+
+        function load(obj, filename, dataGroup)
+            arguments
+                obj
+                filename
+                dataGroup = ''
+            end
+
+            obj.data = dictionary();
+            try
+                info = h5info(filename, strcat(dataGroup, '/'));
+                datasets = info.Datasets;
+                for i = 1:numel(datasets)
+                    key = datasets(i).Name;
+                    varData = h5read(filename, strcat(dataGroup, '/', key));
+                    obj.data(key) = List(varData);
+                end
+            catch
+            end
         end
     end
     methods(Static)
@@ -91,15 +145,16 @@ classdef Logger < handle
             
             tic
             for i = 1:100
-                logger.append({'time', 'state', 'control'}, {simClock.time, x, u});
+                logger.append(time=simClock.time, state=x, control=u);
                 x = A*x + B*u;
                 simClock.elapse(dt);
             end
             elapsedTime = toc;
             fprintf("ElapsedTime: %.2f [s] \n", elapsedTime)
-            
-            loggedData = logger.get('time', 'state');
-            [time, state] = loggedData{:};
+
+            time = logger.get('time');
+            state = logger.get('state');
+
             figure();
             hold on
             plot(time, state(1, :), 'DisplayName', "Pos. [m]")

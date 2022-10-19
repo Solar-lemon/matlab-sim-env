@@ -1,4 +1,7 @@
 classdef List < handle
+    properties(Constant)
+        EXPANSION_RATIO = 1.4;
+    end
     properties
         items
         allocatedSize
@@ -7,10 +10,27 @@ classdef List < handle
     methods
         function obj = List(items)
             if nargin < 1
-                obj.items = cell(1, 1000);
-                obj.allocatedSize = 1000;
+                obj.items = cell(100, 1);
+                obj.allocatedSize = 100;
                 obj.dataNum = 0;
                 return
+            end
+            
+            if isa(items, 'numeric') || isa(items, 'logical')
+                items = shiftdim(items, ndims(items) - 1);
+                temp = cell(size(items, 1), 1);
+
+                shape = size(items);
+                if numel(shape) - 1 == 1
+                    for i = 1:numel(temp)
+                        temp{i} = items(i, :).';
+                    end
+                else
+                    for i = 1:numel(temp)
+                        temp{i} = reshape(items(i, :), shape(2:end));
+                    end
+                end
+                items = temp;
             end
             obj.items = items;
             obj.allocatedSize = numel(items);
@@ -18,20 +38,25 @@ classdef List < handle
         end
         
         function append(obj, item)
-            if obj.dataNum + 1 > numel(obj.items)
-                obj.doubleAllocatedSize();
+            if obj.dataNum >= numel(obj.items)
+                obj.expandAllocatedSize();
             end
-            obj.items{1, obj.dataNum + 1} = item;
+            obj.items{obj.dataNum + 1} = item;
             obj.dataNum = obj.dataNum + 1;
         end
         
-        function doubleAllocatedSize(obj)
-            obj.items = [obj.items, cell(1, obj.dataNum)];
+        function expandAllocatedSize(obj)
+            newSize = ceil(List.EXPANSION_RATIO*obj.allocatedSize);
+            obj.items = [obj.items; cell(newSize - numel(obj.items), 1)];
             obj.allocatedSize = numel(obj.items);
         end
         
         function out = numel(obj)
             out = obj.dataNum;
+        end
+
+        function out = isempty(obj)
+            out = (obj.dataNum == 0);
         end
         
         function out = get(obj, index)
@@ -48,20 +73,20 @@ classdef List < handle
             end
         end
         
-        function out = toMatrix(obj)
+        function out = toArray(obj)
             assert(isa(obj.items{1}, 'numeric') || isa(obj.items{1}, 'logical'),...
-                "Stored items are not numeric.")
+                "Stored items are not numeric nor logical.")
             shape = size(obj.items{1});
             if shape(end) == 1
-                out = cat(numel(shape), obj.items{1, :});
+                out = cat(numel(shape), obj.items{1:obj.dataNum});
             else
-                out = cat(numel(shape) + 1, obj.items{1, :});
+                out = cat(numel(shape) + 1, obj.items{1:obj.dataNum});
             end
         end
         
         function remove(obj, value)
             index = [];
-            if isa(value, 'numeric')
+            if isa(value, 'numeric') || isa(value, 'logical')
                 for i = 1:obj.dataNum
                     if all(obj.items{i} == value)
                         index = i;
@@ -87,13 +112,10 @@ classdef List < handle
                 for i = 1:numel(cell)
                     obj.append(newItems{i});
                 end
-                return
-            end
-            if isa(newItems, 'List')
+            elseif isa(newItems, 'List')
                 for i = 1:numel(newItems)
                     obj.append(newItems.get(i));
                 end
-                return
             end
         end
         
@@ -102,4 +124,3 @@ classdef List < handle
         end
     end
 end
-        

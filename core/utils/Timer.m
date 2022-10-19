@@ -1,54 +1,68 @@
 classdef Timer < handle
     properties
-        simClock
-        isOperating = false
+        simClock SimClock
         eventTimeInterval
+
+        isOperating logical = false
+        isEvent logical = false
+    end
+    properties(Access=protected)
         lastEventTime = -inf
-        isEvent = false
     end
     methods
         function obj = Timer(eventTimeInterval)
-            if nargin < 1 || isempty(eventTimeInterval)
-                eventTimeInterval = 0;
+            arguments
+                eventTimeInterval = -1
             end
-            
             obj.eventTimeInterval = eventTimeInterval;
         end
-        
+
+        function reset(obj)
+            obj.turnOn();
+            obj.lastEventTime = -inf;
+        end
+
         function attachSimClock(obj, simClock)
             obj.simClock = simClock;
         end
-        
-        function reset(obj)
-            obj.isOperating = false;
-            obj.lastEventTime = -inf;
-            obj.isEvent = false;
-        end
-        
+
         function turnOn(obj, eventTimeInterval)
+            if isempty(obj.simClock)
+                error('MATLAB:noSimClock', 'No SimClock object has been attached.')
+            end
             if nargin > 1
                 obj.eventTimeInterval = eventTimeInterval;
             end
-            assert(~isnan(obj.eventTimeInterval),...
-                "Set eventTimeInterval first before turning on the timer.")
             
             obj.isOperating = true;
-            obj.lastEventTime = obj.simClock.time;
             obj.isEvent = true;
+            obj.lastEventTime = obj.simClock.time;
         end
-        
+
         function turnOff(obj)
             obj.isOperating = false;
-            obj.lastEventTime = -inf;
             obj.isEvent = false;
+            obj.lastEventTime = -inf;
         end
-        
+
+        function detachSimClock(obj)
+            obj.simClock = [];
+        end
+
         function forward(obj)
-            if abs(obj.simClock.time - obj.lastEventTime) <= obj.simClock.timeRes
-                return
-            end
-            
             if obj.isOperating
+                % prevent repetitive calling
+                if abs(obj.simClock.time - obj.lastEventTime) <= obj.simClock.timeRes
+                    return
+                end
+
+                % always raise an event when the event time interval is -1
+                if obj.eventTimeInterval == -1
+                    obj.isEvent = true;
+                    obj.lastEventTime = obj.simClock.time;
+                    return
+                end
+
                 elapsedTime = obj.simClock.time - obj.lastEventTime;
                 if elapsedTime >= (obj.eventTimeInterval - obj.simClock.timeRes)
                     obj.isEvent = true;
@@ -58,27 +72,21 @@ classdef Timer < handle
                 end
             end
         end
-        
-        function isEvent = checkEvent(obj)
-            isEvent = obj.isEvent;
-        end
     end
-    
+
     methods(Static)
         function test()
             clc
             fprintf("== Test for Timer ==\n")
-            
+
             dt = 0.01;
-            timeRes = 0.0001*dt;
-            
-            simClock = SimClock(0, timeRes);
-            
+            simClock = SimClock();
+
             eventTimeInterval = 0.1;
             timer = Timer(eventTimeInterval);
             timer.attachSimClock(simClock);
             timer.turnOn();
-            
+
             fprintf('Initial time: 0.0[s] \n')
             fprintf('Event time interval: %.2f[s] \n', eventTimeInterval)
             fprintf('Sampling time interval: %.2f[s] \n\n', dt)
