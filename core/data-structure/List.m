@@ -58,6 +58,15 @@ classdef List < handle
         function out = isempty(obj)
             out = (obj.dataNum == 0);
         end
+
+        function out = contains(obj, item)
+            if isa(item, 'handle')
+                compare = @(x) eq(x, item);
+            else
+                compare = @(x) isequal(x, item);
+            end
+            out = any(cellfun(compare, obj.toCell()));
+        end
         
         function out = get(obj, index)
             if nargin < 2
@@ -72,6 +81,10 @@ classdef List < handle
                 out = List(obj.items(index));
             end
         end
+
+        function out = toCell(obj)
+            out = obj.items(1:obj.dataNum);
+        end
         
         function out = toArray(obj)
             assert(isa(obj.items{1}, 'numeric') || isa(obj.items{1}, 'logical'),...
@@ -84,18 +97,15 @@ classdef List < handle
             end
         end
         
-        function remove(obj, value)
-            index = [];
-            if isa(value, 'numeric') || isa(value, 'logical')
-                for i = 1:obj.dataNum
-                    if all(obj.items{i} == value)
-                        index = i;
-                        break
-                    end
-                end
-            elseif isa(value, 'char') || isa(value, 'string')
-                index = find(strcmp(obj.items, value));
+        function remove(obj, item)
+            if isa(item, 'handle')
+                compare = @(x) eq(x, item);
+            else
+                compare = @(x) isequal(x, item);
             end
+            compResult = cellfun(compare, obj.toCell());
+            index = find(compResult);
+
             if isempty(index)
                 return
             end
