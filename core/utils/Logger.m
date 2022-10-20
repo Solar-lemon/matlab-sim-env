@@ -46,18 +46,17 @@ classdef Logger < handle
         
         function append(obj, varargin)
             % append(var1=value1, var2=value2, ..., varN=valueN)
-            keySet = varargin(1:2:end);
-            valueSet = varargin(2:2:end);
+            [keys, values] = unpackKwargs(varargin{:});
             
             if obj.isOperating
                 if isempty(obj.logTimer) || obj.logTimer.isEvent
-                    for i = 1:numel(keySet)
-                        key = keySet{i};
+                    for i = 1:numel(keys)
+                        key = keys{i};
                         try
-                            obj.data(key).append(valueSet{i});
+                            obj.data(key).append(values{i});
                         catch
                             obj.data(key) = List();
-                            obj.data(key).append(valueSet{i});
+                            obj.data(key).append(values{i});
                         end
                     end
                 end
