@@ -1,14 +1,17 @@
 classdef Simulator < handle
     properties
-        simClock
-        logTimer
-        model
+        simClock SimClock
+        logTimer Timer
+        model SimObject
+        stateVars List
+        verbose
     end
     methods
-        function obj = Simulator(model)
-            % model: an object of BaseSystem class or its subclass
-            if nargin < 1
-                model = [];
+        function obj = Simulator(model, verbose, resetModel)
+            arguments
+                model SimObject
+                verbose logical = true
+                resetModel logical = true
             end
             obj.simClock = SimClock();
             obj.logTimer = Timer(inf);
@@ -17,6 +20,12 @@ classdef Simulator < handle
             obj.model = model;
             obj.model.attachSimClock(obj.simClock);
             obj.model.attachLogTimer(obj.logTimer);
+            if resetModel
+                obj.model.reset();
+            end
+
+            obj.stateVars = model.collectStateVars();
+            obj.verbose = verbose;
         end
         
         function reset(obj)
@@ -26,6 +35,7 @@ classdef Simulator < handle
         end
         
         function beginLogging(obj, logInterval)
+            % logInterval must be greater than or equal to dt
             obj.logTimer.turnOn(logInterval);
         end
         
@@ -34,33 +44,71 @@ classdef Simulator < handle
         end
         
         function step(obj, dt, varargin)
-            obj.model.step(dt, varargin{:});
+            t_0 = obj.simClock.time;
+
+            obj.simClock.majorTimeStep = true;
+            obj.logTimer.forward();
+            obj.model.forward(varargin{:});
+            for i = 1:numel(obj.stateVars)
+                obj.stateVars.get(i).rk4Update1(dt);
+            end
+            obj.simClock.majorTimeStep = false;
+
+            obj.simClock.applyTime(t_0 + dt/2);
+            obj.logTimer.forward();
+            obj.model.forward(varargin{:});
+            for i = 1:numel(obj.stateVars)
+                obj.stateVars.get(i).rk4Update2(dt);
+            end
+
+            obj.model.forward(varargin{:});
+            for i = 1:numel(obj.stateVars)
+                obj.stateVars.get(i).rk4Update3(dt);
+            end
+            
+            obj.simClock.applyTime(t_0 + dt - 10*obj.simClock.timeRes);
+            obj.logTimer.forward();
+            obj.model.forward(varargin{:});
+            for i = 1:numel(obj.stateVars)
+                obj.stateVars.get(i).rk4Update4(dt);
+            end
+
+            obj.simClock.applyTime(t_0 + dt);
         end
         
         function propagate(obj, dt, time, saveHistory, varargin)
-            if nargin < 4 || isempty(saveHistory)
-                saveHistory = true;
-            end
-            
-            try
-                measureElapsedTime = isempty(getCurrentTask());
-            catch
-                measureElapsedTime = true;
-            end
-            
             if saveHistory
                 obj.beginLogging(dt);
             end
-            if measureElapsedTime
-                fprintf("[Simulator] Simulating... \n")
-                tic
+
+            obj.simClock.setTimeInterval(dt);
+            obj.model.checkSimClock();
+            obj.model.initialize();
+
+            if obj.verbose
+                fprintf("[simulator] Simulating... \n")
+                if isempty(getCurrentTask()) % check if parallel computing is being performed.
+                    tic
+                end
             end
-            obj.model.propagate(dt, time, varargin{:});
-            if measureElapsedTime
+
+            % perform propagation
+            iterNum = min(round(time/dt), intmax);
+            for i = 1:iterNum
+                toStop = obj.model.checkStopCondition();
+                if toStop
+                    break
+                end
+                obj.step(dt, varargin{:});
+            end
+
+            obj.logTimer.forward();
+            obj.model.forward(varargin{:});
+
+            if obj.verbose && isempty(getCurrentTask())
                 elapsedTime = toc;
-                fprintf("[Simulator] Elapsed time: %.2f [s] \n", elapsedTime);
+                fprintf("[simulator] Elapsed time: %.2f (s) \n", elapsedTime);
             end
-            
             obj.finishLogging();
         end
     end
