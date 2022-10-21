@@ -3,7 +3,7 @@ classdef SimClock < handle
         time
         timeRes
         dt
-        majorTimeStep = true
+        majorTimeStep
     end
     methods
         function obj = SimClock(time, timeRes)
@@ -14,6 +14,7 @@ classdef SimClock < handle
             
             obj.time = time;
             obj.timeRes = timeRes;
+            obj.majorTimeStep = true;
         end
         
         function reset(obj)

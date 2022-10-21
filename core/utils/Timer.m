@@ -3,11 +3,11 @@ classdef Timer < handle
         simClock SimClock
         eventTimeInterval
 
-        isOperating logical = false
-        isEvent logical = false
+        isOperating logical
+        isEvent logical
     end
     properties(Access=protected)
-        lastEventTime = -inf
+        lastEventTime
     end
     methods
         function obj = Timer(eventTimeInterval)
@@ -15,6 +15,9 @@ classdef Timer < handle
                 eventTimeInterval = -1
             end
             obj.eventTimeInterval = eventTimeInterval;
+            obj.isOperating = false;
+            obj.isEvent = false;
+            obj.lastEventTime = -inf;
         end
 
         function reset(obj)

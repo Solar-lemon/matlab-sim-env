@@ -1,7 +1,7 @@
 classdef Logger < handle
     properties
         data
-        isOperating logical = true;
+        isOperating logical
     end
     properties(Access=protected)
         logTimer Timer
@@ -9,6 +9,7 @@ classdef Logger < handle
     methods
         function obj = Logger()
             obj.data = dictionary();
+            obj.isOperating = true;
         end
 
         function attachLogTimer(obj, logTimer)

@@ -11,8 +11,8 @@ classdef DynSystem < SimObject
             arguments
                 initialStates dictionary
                 derivFun
-                outputFun
-                name
+                outputFun = []
+                name = []
             end
             obj = obj@SimObject(-1, name);
             obj.addStateVars(initialStates);
@@ -36,7 +36,7 @@ classdef DynSystem < SimObject
         end
 
         % may be implemented
-        function out = deriv_(obj, inputs)
+        function out = deriv_(obj, varargin)
             % implement this method if needed
             % kwargs = dictionary(name1, state1, name2, state2, ... inputName1,
             % input1, ...)
@@ -44,22 +44,21 @@ classdef DynSystem < SimObject
             if isempty(obj.derivFun)
                 error('MATLAB:notImplemented', 'Method not implemented')
             end
-            out = obj.derivFun(inputs);
+            out = obj.derivFun(varargin{:});
         end
 
         % implement
-        function out = forward_(obj, inputs)
-            states = obj.getStates_();
-            derivs = obj.deriv_(concatDict(states, inputs));
+        function out = forward_(obj, varargin)
+            states = dictToKwargs(obj.getStates_());
+            inputs = varargin;
+            derivs = obj.deriv_(states{:}, inputs{:});
 
             names = obj.stateVars.keys();
             for i = 1:numel(names)
                 obj.stateVars(names(i)).setDeriv(derivs(names(i)));
             end
 
-            obj.logger.append('t', obj.time)
-            obj.logger.append(states);
-            obj.logger.append(inputs);
+            obj.logger.append('time', obj.time, states{:}, inputs{:});
 
             out = obj.output_();
         end
@@ -70,8 +69,8 @@ classdef DynSystem < SimObject
                 out = [];
                 return
             end
-            states = obj.getStates_();
-            out = obj.outputFun(states);
+            states = dictToKwargs(obj.getStates_());
+            out = obj.outputFun(states{:});
         end
     end
 end

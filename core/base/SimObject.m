@@ -5,16 +5,16 @@ classdef SimObject < handle
     properties
         id
         name
-        flag = SimObject.FLAG_OPERATING;
-        isStatic = true;
-        stateVars dictionary = dictionary(string([]), StateVariable([]));
+        flag
+        isStatic
+        stateVars
 
-        simObjs List = List();
+        simObjs List
     end
     properties(Access=protected)
         simClock SimClock
         timer Timer
-        logger Logger = Logger();
+        logger Logger
         lastOutput
     end
     properties(Dependent)
@@ -35,11 +35,18 @@ classdef SimObject < handle
             else
                 obj.name = name;
             end
+            obj.flag = SimObject.FLAG_OPERATING;
+            obj.isStatic = true;
+            obj.stateVars = dictionary(string([]), StateVariable([]));
+
+            obj.simObjs = List();
             obj.timer = Timer(interval);
+            obj.logger = Logger();
         end
 
         function delete(obj)
             obj.incrementCount(-1);
+            obj.delete@handle();
         end
 
         function collectedVars = collectStateVars(obj)
@@ -76,7 +83,7 @@ classdef SimObject < handle
         function attachLogTimer(obj, logTimer)
             obj.attachLogTimer_(logTimer);
             for i = 1:numel(obj.simObjs)
-                obj.simObjs.get(i).attachLogTimer();
+                obj.simObjs.get(i).attachLogTimer(logTimer);
             end
         end
 
@@ -118,7 +125,11 @@ classdef SimObject < handle
         end
 
         function setState(obj, varargin)
-            d = kwargsToDict(varargin{:});
+            if isa(varargin{1}, 'dictionary')
+                d = varargin{1};
+            else
+                d = kwargsToDict(varargin{:});
+            end
             names = d.keys();
             states = d.values();
 
@@ -174,13 +185,11 @@ classdef SimObject < handle
             obj.timer.forward();
             if obj.isStatic
                 if obj.timer.isEvent
-                    inputs = kwargsToDict(varargin{:});
-                    temp = obj.forward_(inputs);
+                    temp = obj.forward_(varargin{:});
                     obj.lastOutput = temp;
                 end
             else
-                inputs = kwargsToDict(varargin{:});
-                temp = obj.forward_(inputs);
+                temp = obj.forward_(varargin{:});
                 if obj.timer.isEvent
                     obj.lastOutput = temp;
                 end
@@ -189,9 +198,8 @@ classdef SimObject < handle
         end
 
         function toStop = checkStopCondition(obj, varargin)
-            kwargs = kwargsToDict(varargin{:});
             toStopList = List();
-            toStopList.append(obj.checkStopCondition_(kwargs));
+            toStopList.append(obj.checkStopCondition_(varargin{:}));
             for i = 1:numel(obj.simObjs)
                 toStopList.append(obj.simObjs.get(i).checkStopCondition(varargin{:}));
             end
@@ -274,7 +282,11 @@ classdef SimObject < handle
 
     methods(Access=protected)
         function addStateVars(obj, varargin)
-            d = kwargsToDict(varargin{:});
+            if isa(varargin{1}, 'dictionary')
+                d = varargin{1};
+            else
+                d = kwargsToDict(varargin{:});
+            end
             names = d.keys();
             initialStates = d.values();
             
@@ -348,21 +360,13 @@ classdef SimObject < handle
             end
         end
 
-        function out = forward_(obj, inputs)
+        function out = forward_(obj, varargin)
             % should be implemented
-            arguments
-                obj
-                inputs dictionary
-            end
             out = [];
         end
 
-        function toStop = checkStopCondition_(obj, inputs)
+        function toStop = checkStopCondition_(obj, varargin)
             % to be implemented
-            arguments
-                obj
-                inputs dictionary
-            end
             toStop = false;
         end
     end
