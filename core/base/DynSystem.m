@@ -36,21 +36,21 @@ classdef DynSystem < SimObject
         end
 
         % may be implemented
-        function out = deriv_(obj, varargin)
+        function out = deriv_(obj, inputs)
             % implement this method if needed
-            % varargin = {name1, state1, name2, state2, ... inputName1,
-            % input1, ...}
-            % out: dicionary(name1 = derivState1, name2 = derivState2, ...)
+            % kwargs = dictionary(name1, state1, name2, state2, ... inputName1,
+            % input1, ...)
+            % out: dicionary(name1, derivState1, name2, derivState2, ...)
             if isempty(obj.derivFun)
                 error('MATLAB:notImplemented', 'Method not implemented')
             end
-            out = obj.derivFun(varargin{:});
+            out = obj.derivFun(inputs);
         end
 
         % implement
-        function out = forward_(obj, varargin)
-            states = unpackDict(obj.getStates_());
-            derivs = obj.deriv_(states{:}, varargin{:});
+        function out = forward_(obj, inputs)
+            states = obj.getStates_();
+            derivs = obj.deriv_(concatDict(states, inputs));
 
             names = obj.stateVars.keys();
             for i = 1:numel(names)
@@ -58,7 +58,8 @@ classdef DynSystem < SimObject
             end
 
             obj.logger.append('t', obj.time)
-            obj.logger.append(states{:}, varargin{:});
+            obj.logger.append(states);
+            obj.logger.append(inputs);
 
             out = obj.output_();
         end
@@ -69,38 +70,8 @@ classdef DynSystem < SimObject
                 out = [];
                 return
             end
-            states = unpackDict(obj.getStates_());
-            out = obj.outputFun(states{:});
-        end
-    end
-    
-    methods(Static)
-        function test()
-            clc
-            close all
-            
-            fprintf('== Test for DynSystem == \n')
-            dt = 0.01;
-            simClock = SimClock();
-            logTimer = Timer(dt);
-            logTimer.attachSimClock(simClock);
-            logTimer.turnOn();
-            
-            A = [0, 1;
-                -1, -1];
-            B = [0; 1];
-            derivFun = @(x, u) A*x + B*u;
-            model = DynSystem([0; 1], derivFun);
-            model.attachSimClock(simClock);
-            model.attachLogTimer(logTimer);
-            
-            tic
-            u_step = 1;
-            model.propagate(0.01, 10, u_step);
-            elapsedTime = toc;
-            
-            fprintf('ElapsedTime: %.2f [s] \n', elapsedTime)
-            model.plot();
+            states = obj.getStates_();
+            out = obj.outputFun(states);
         end
     end
 end

@@ -7,7 +7,7 @@ classdef SimObject < handle
         name
         flag = SimObject.FLAG_OPERATING;
         isStatic = true;
-        stateVars = dictionary();
+        stateVars dictionary = dictionary(string([]), StateVariable([]));
 
         simObjs List = List();
     end
@@ -118,7 +118,9 @@ classdef SimObject < handle
         end
 
         function setState(obj, varargin)
-            [names, states] = unpackKwargs(varargin{:});
+            d = kwargsToDict(varargin{:});
+            names = d.keys();
+            states = d.values();
 
             for i = 1:numel(names)
                 obj.stateVars(names{i}).applyState(states{i});
@@ -139,7 +141,7 @@ classdef SimObject < handle
             elseif numel(varargin) == 0
                 out = obj.getStates_();
             else
-                out = dictionary();
+                out = dictionary(string([]), {});
                 for i = 1:numel(varargin)
                     out(varargin{i}) = obj.stateVars(varargin{i}).state;
                 end
@@ -152,7 +154,7 @@ classdef SimObject < handle
             elseif numel(varargin) == 0
                 out = obj.getDerivs_();
             else
-                out = dictionary();
+                out = dictionary(string([]), {});
                 for i = 1:numel(varargin)
                     out(varargin{i}) = obj.stateVars(varargin{i}).deriv;
                 end
@@ -172,21 +174,24 @@ classdef SimObject < handle
             obj.timer.forward();
             if obj.isStatic
                 if obj.timer.isEvent
-                    output_ = obj.forward_(varargin{:});
-                    obj.lastOutput = output_;
+                    inputs = kwargsToDict(varargin{:});
+                    temp = obj.forward_(inputs);
+                    obj.lastOutput = temp;
                 end
             else
-                output_ = obj.forward_(varargin{:});
+                inputs = kwargsToDict(varargin{:});
+                temp = obj.forward_(inputs);
                 if obj.timer.isEvent
-                    obj.lastOutput = output_;
+                    obj.lastOutput = temp;
                 end
             end
             out = obj.lastOutput;
         end
 
         function toStop = checkStopCondition(obj, varargin)
+            kwargs = kwargsToDict(varargin{:});
             toStopList = List();
-            toStopList.append(obj.checkStopCondition_(varargin{:}));
+            toStopList.append(obj.checkStopCondition_(kwargs));
             for i = 1:numel(obj.simObjs)
                 toStopList.append(obj.simObjs.get(i).checkStopCondition(varargin{:}));
             end
@@ -269,8 +274,10 @@ classdef SimObject < handle
 
     methods(Access=protected)
         function addStateVars(obj, varargin)
-            [names, initialStates] = unpackKwargs(varargin{:});
-
+            d = kwargsToDict(varargin{:});
+            names = d.keys();
+            initialStates = d.values();
+            
             for i = 1:numel(names)
                 obj.stateVars(names{i}) = StateVariable(initialStates{i});
             end
@@ -326,7 +333,7 @@ classdef SimObject < handle
         end
 
         function states = getStates_(obj)
-            states = dictionary();
+            states = dictionary(string([]), {});
             names = obj.stateVars.keys();
             for i = 1:numel(names)
                 states(names{i}) = {obj.stateVars(names{i}).state};
@@ -334,20 +341,28 @@ classdef SimObject < handle
         end
 
         function derivs = getDerivs_(obj)
-            derivs = dictionary();
+            derivs = dictionary(string([]), {});
             names = obj.stateVars.keys();
             for i = 1:numel(names)
                 derivs(names{i}) = {obj.stateVars(names{i}).deriv};
             end
         end
 
-        function out = forward_(obj, kwargs)
+        function out = forward_(obj, inputs)
             % should be implemented
+            arguments
+                obj
+                inputs dictionary
+            end
             out = [];
         end
 
-        function toStop = checkStopCondition_(obj, kwargs)
+        function toStop = checkStopCondition_(obj, inputs)
             % to be implemented
+            arguments
+                obj
+                inputs dictionary
+            end
             toStop = false;
         end
     end

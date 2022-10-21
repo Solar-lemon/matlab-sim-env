@@ -95,7 +95,7 @@ classdef Simulator < handle
             % perform propagation
             iterNum = min(round(time/dt), intmax);
             for i = 1:iterNum
-                toStop = obj.model.checkStopCondition();
+                toStop = obj.model.checkStopCondition(varargin{:});
                 if toStop
                     break
                 end
