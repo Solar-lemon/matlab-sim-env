@@ -7,8 +7,9 @@ classdef SimObject < handle
         name
         flag
         isStatic
-        stateVars
 
+        stateVarNames List
+        stateVars List
         simObjs List
     end
     properties(Access=protected)
@@ -37,8 +38,9 @@ classdef SimObject < handle
             end
             obj.flag = SimObject.FLAG_OPERATING;
             obj.isStatic = true;
-            obj.stateVars = dictionary(string([]), StateVariable([]));
 
+            obj.stateVarNames = List();
+            obj.stateVars = List();
             obj.simObjs = List();
             obj.timer = Timer(interval);
             obj.logger = Logger();
@@ -46,16 +48,10 @@ classdef SimObject < handle
 
         function delete(obj)
             obj.incrementCount(-1);
-            obj.delete@handle();
         end
 
         function collectedVars = collectStateVars(obj)
-            collectedVars = List();
-
-            vars = obj.stateVars.values();
-            for i = 1:numel(vars)
-                collectedVars.append(vars(i));
-            end
+            collectedVars = obj.stateVars.copy();
 
             for i = 1:numel(obj.simObjs)
                 simObj = obj.simObjs.get(i);
@@ -65,7 +61,7 @@ classdef SimObject < handle
 
         % dynamic property
         function out = get.numStateVars(obj)
-            out = numEntries(obj.stateVars);
+            out = numel(obj.stateVars);
         end
 
         % dynamic property
@@ -125,16 +121,8 @@ classdef SimObject < handle
         end
 
         function setState(obj, varargin)
-            if isa(varargin{1}, 'dictionary')
-                d = varargin{1};
-            else
-                d = kwargsToDict(varargin{:});
-            end
-            names = d.keys();
-            states = d.values();
-
-            for i = 1:numel(names)
-                obj.stateVars(names{i}).applyState(states{i});
+            for i = 1:numel(varargin)
+                obj.stateVars.get(i).applyState(varargin{i});
             end
         end
 
@@ -146,37 +134,44 @@ classdef SimObject < handle
             out = obj.simClock.time;
         end
 
-        function out = state(obj, varargin)
-            if numel(varargin) == 1
-                out = obj.stateVars(varargin{1}).state;
-            elseif numel(varargin) == 0
+        function out = state(obj, ind)
+            if nargin < 2 || isempty(ind)
                 out = obj.getStates_();
-            else
-                out = dictionary(string([]), {});
-                for i = 1:numel(varargin)
-                    out(varargin{i}) = obj.stateVars(varargin{i}).state;
-                end
+                return
+            end
+            if numel(ind) == 1
+                out = obj.stateVars.get(ind).state;
+                return
+            end
+
+            out = cell(1, numel(ind));
+            for k = 1:numel(ind)
+                out{k} = obj.stateVars.get(ind(k)).state;
             end
         end
 
-        function out = deriv(obj, varargin)
-            if numel(varargin) == 1
-                out = obj.stateVars(varargin{1}).deriv;
-            elseif numel(varargin) == 0
+        function out = deriv(obj, ind)
+            if nargin < 2 || isempty(ind)
                 out = obj.getDerivs_();
-            else
-                out = dictionary(string([]), {});
-                for i = 1:numel(varargin)
-                    out(varargin{i}) = obj.stateVars(varargin{i}).deriv;
-                end
+                return
+            end
+            if numel(ind) == 1
+                out = obj.stateVars.get(ind).deriv;
+                return
+            end
+
+            out = cell(1, numel(ind));
+            for k = 1:numel(ind)
+                out{k} = obj.stateVars.get(ind(k)).deriv;
             end
         end
 
-        % property
+        % dynamic property
         function out = get.output(obj)
             out = obj.getOutput();
         end
 
+        % dynamic property
         function out = getOutput(obj)
             out = obj.lastOutput;
         end
@@ -219,11 +214,11 @@ classdef SimObject < handle
         function figs = defaultPlot(obj, varKeys)
             if nargin < 2
                 varKeys = List(obj.logger.keys());
-                varKeys.remove('time');
+                varKeys.remove('t');
             end
             
             figs = List();
-            timeLog = obj.history('time');
+            timeLog = obj.history('t');
             
             for i = 1:numel(varKeys)
                 varKey = varKeys.get(i);
@@ -281,18 +276,20 @@ classdef SimObject < handle
     end
 
     methods(Access=protected)
-        function addStateVars(obj, varargin)
-            if isa(varargin{1}, 'dictionary')
-                d = varargin{1};
-            else
-                d = kwargsToDict(varargin{:});
+        function addStateVars(obj, names, initialStates)
+            if ischar(names) || isstring(names)
+                names = {names};
             end
-            names = d.keys();
-            initialStates = d.values();
-            
-            for i = 1:numel(names)
-                obj.stateVars(names{i}) = StateVariable(initialStates{i});
+            if isnumeric(initialStates)
+                initialStates = {initialStates};
             end
+
+            vars = cell(size(initialStates));
+            for i = 1:numel(initialStates)
+                vars{i} = StateVariable(initialStates{i});
+            end
+            obj.stateVarNames.extend(names);
+            obj.stateVars.extend(vars);
             obj.isStatic = false;
         end
 
@@ -345,18 +342,16 @@ classdef SimObject < handle
         end
 
         function states = getStates_(obj)
-            states = dictionary(string([]), {});
-            names = obj.stateVars.keys();
-            for i = 1:numel(names)
-                states(names{i}) = {obj.stateVars(names{i}).state};
+            states = cell(numel(obj.stateVars), 1);
+            for i = 1:numel(states)
+                states{i} = obj.stateVars.get(i).state;
             end
         end
 
         function derivs = getDerivs_(obj)
-            derivs = dictionary(string([]), {});
-            names = obj.stateVars.keys();
-            for i = 1:numel(names)
-                derivs(names{i}) = {obj.stateVars(names{i}).deriv};
+            derivs = cell(size(obj.stateVars));
+            for i = 1:numel(derivs)
+                derivs{i} = obj.stateVars.get(i).deriv;
             end
         end
 

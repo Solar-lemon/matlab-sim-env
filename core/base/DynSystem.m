@@ -1,25 +1,38 @@
 classdef DynSystem < SimObject
     properties
         initialStates
+        stateNames
+        inputNames
         derivFun
         outputFun
     end
     methods
-        function obj = DynSystem(initialStates, derivFun, outputFun, name)
-            % initialStates = dictionary(var1 = {state1}, var2 = {state2},
-            % ...)
+        function obj = DynSystem(initialStates, stateNames, inputNames, derivFun, outputFun, name)
             arguments
-                initialStates dictionary
-                derivFun
+                initialStates
+                stateNames
+                inputNames
+                derivFun = []
                 outputFun = []
                 name = []
             end
+            if ischar(stateNames) || isstring(stateNames)
+                stateNames = {stateNames};
+            end
+            if ischar(inputNames) || isstring(inputNames)
+                inputNames = {inputNames};
+            end
+
             obj = obj@SimObject(-1, name);
-            obj.addStateVars(initialStates);
+
             obj.initialStates = initialStates;
+            obj.stateNames = stateNames;
+            obj.inputNames = inputNames;
 
             obj.derivFun = derivFun;
             obj.outputFun = outputFun;
+
+            obj.addStateVars(stateNames, initialStates);
         end
         
         % override
@@ -32,15 +45,14 @@ classdef DynSystem < SimObject
         % override
         function reset_(obj)
             reset_@SimObject(obj);
-            obj.setState(obj.initialStates);
+            obj.setState(obj.initialStates{:});
         end
 
         % may be implemented
         function out = deriv_(obj, varargin)
             % implement this method if needed
-            % kwargs = dictionary(name1, state1, name2, state2, ... inputName1,
-            % input1, ...)
-            % out: dicionary(name1, derivState1, name2, derivState2, ...)
+            % varargin = {state1, state2, ..., input1, ...}
+            % out: {derivState1, derivState2, ...}
             if isempty(obj.derivFun)
                 error('MATLAB:notImplemented', 'Method not implemented')
             end
@@ -49,17 +61,17 @@ classdef DynSystem < SimObject
 
         % implement
         function out = forward_(obj, varargin)
-            states = dictToKwargs(obj.getStates_());
-            inputs = varargin;
-            derivs = obj.deriv_(states{:}, inputs{:});
-
-            names = obj.stateVars.keys();
-            for i = 1:numel(names)
-                obj.stateVars(names(i)).setDeriv(derivs(names(i)));
+            states = obj.getStates_();
+            derivs = obj.deriv_(states{:}, varargin{:});
+            
+            for i = 1:numel(states)
+                obj.stateVars.get(i).setDeriv(derivs{i});
             end
 
-            obj.logger.append('time', obj.time, states{:}, inputs{:});
-
+            obj.logger.append({'t'}, {obj.time});
+            obj.logger.append(obj.stateNames, states);
+            obj.logger.append(obj.inputNames, varargin);
+            
             out = obj.output_();
         end
 
@@ -69,7 +81,7 @@ classdef DynSystem < SimObject
                 out = [];
                 return
             end
-            states = dictToKwargs(obj.getStates_());
+            states = obj.getStates_();
             out = obj.outputFun(states{:});
         end
     end

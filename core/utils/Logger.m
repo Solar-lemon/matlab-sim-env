@@ -45,20 +45,21 @@ classdef Logger < handle
             out = numel(dataValues{1});
         end
         
-        function append(obj, varargin)
-            % append(var1, value1, var2, value2, ..., varN, valueN)
-            d = kwargsToDict(varargin{:});
-            
+        function append(obj, names, values)
+            arguments
+                obj
+                names cell
+                values cell
+            end
+
             if obj.isOperating
                 if isempty(obj.logTimer) || obj.logTimer.isEvent
-                    keys = d.keys();
-                    values = d.values();
-                    for i = 1:numel(keys)
+                    for i = 1:numel(names)
                         try
-                            obj.data(keys{i}).append(values{i});
+                            obj.data(names{i}).append(values{i});
                         catch
-                            obj.data(keys{i}) = List();
-                            obj.data(keys{i}).append(values{i});
+                            obj.data(names{i}) = List();
+                            obj.data(names{i}).append(values{i});
                         end
                     end
                 end
@@ -71,18 +72,17 @@ classdef Logger < handle
                 return
             end
 
+            if nargin < 2 || isempty(varargin)
+                varargin = obj.data.keys();
+            end
             if numel(varargin) == 1
                 out = toArray(obj.data(varargin{1}));
                 return
-            else
-                if isempty(varargin)
-                    varargin = obj.data.keys();
-                end
-                out = dictionary();
-                for i = 1:numel(varargin)
-                    key = varargin{i};
-                    out(key) = {toArray(obj.data(key))};
-                end
+            end
+            out = cell(size(varargin));
+            for i = 1:numel(varargin)
+                key = varargin{i};
+                out{i} = toArray(obj.data(key));
             end
         end
         
@@ -146,7 +146,7 @@ classdef Logger < handle
             
             tic
             for i = 1:100
-                logger.append(time=simClock.time, state=x, control=u);
+                logger.append({'time', 'state', 'control'}, {simClock.time, x, u});
                 x = A*x + B*u;
                 simClock.elapse(dt);
             end

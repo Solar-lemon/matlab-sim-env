@@ -119,7 +119,7 @@ classdef List < handle
         
         function extend(obj, newItems)
             if isa(newItems, 'cell')
-                for i = 1:numel(cell)
+                for i = 1:numel(newItems)
                     obj.append(newItems{i});
                 end
             elseif isa(newItems, 'List')
@@ -130,7 +130,7 @@ classdef List < handle
         end
         
         function newList = copy(obj)
-            newList = List(obj.items);
+            newList = List(obj.items(1:obj.dataNum));
         end
     end
 end

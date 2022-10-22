@@ -112,40 +112,4 @@ classdef Simulator < handle
             obj.finishLogging();
         end
     end
-    
-    methods(Static)
-        function test()
-            clc
-            close all
-            
-            fprintf('== Test for Simulator class == \n')
-            fprintf('Test for propagate method \n')
-            
-            A = [0, 1; -1, -1];
-            B = [0; 1];
-            derivFun = @(x, u) A*x + B*u;
-            
-            model = DynSystem([0; 1], derivFun);
-            simulator = Simulator(model);
-            
-            dt = 0.01;
-            finalTime = 5;
-            saveHistory = true;
-            u_step = 1;
-            
-            simulator.propagate(dt, finalTime, saveHistory, u_step);
-            simulator.propagate(dt, finalTime, saveHistory, u_step);
-            
-            model.plot();
-            
-            fprintf('Test for step method \n')
-            simulator.reset();
-            simulator.beginLogging(dt);
-            for i = 1:1000
-                simulator.step(dt, u_step);
-            end
-            simulator.finishLogging();
-            model.plot();
-        end
-    end
 end
