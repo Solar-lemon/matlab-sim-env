@@ -6,6 +6,10 @@ classdef Logger < handle
     properties(Access=protected)
         logTimer Timer
     end
+    properties(Dependent)
+        isEvent
+    end
+
     methods
         function obj = Logger()
             obj.data = dictionary();
@@ -45,6 +49,11 @@ classdef Logger < handle
             out = numel(dataValues{1});
         end
         
+        % dynamic property
+        function out = get.isEvent(obj)
+            out = obj.logTimer.isEvent;
+        end
+        
         function append(obj, names, values)
             arguments
                 obj
@@ -58,7 +67,7 @@ classdef Logger < handle
                         try
                             obj.data(names{i}).append(values{i});
                         catch
-                            obj.data(names{i}) = List();
+                            obj.data(names{i}) = List({}, 10000);
                             obj.data(names{i}).append(values{i});
                         end
                     end
@@ -96,6 +105,14 @@ classdef Logger < handle
                 obj
                 filename
                 dataGroup = ''
+            end
+
+            [filepath, ~, ext] = fileparts(filename);
+            if ~strcmp(ext, '.hdf5')
+                error("Set the extension of the file as .hdf5")
+            end
+            if ~isfolder(filepath)
+                mkdir(filepath);
             end
 
             keys = obj.keys();

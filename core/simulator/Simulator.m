@@ -3,7 +3,7 @@ classdef Simulator < handle
         simClock SimClock
         logTimer Timer
         model SimObject
-        stateVars List
+        stateVars cell
         verbose
     end
     methods
@@ -13,6 +13,8 @@ classdef Simulator < handle
                 verbose logical = true
                 resetModel logical = true
             end
+            model.resetCounter(0);
+            
             obj.simClock = SimClock();
             obj.logTimer = Timer(inf);
             obj.logTimer.attachSimClock(obj.simClock);
@@ -50,7 +52,7 @@ classdef Simulator < handle
             obj.logTimer.forward();
             obj.model.forward(varargin{:});
             for i = 1:numel(obj.stateVars)
-                obj.stateVars.get(i).rk4Update1(dt);
+                obj.stateVars{i}.rk4Update1(dt);
             end
             obj.simClock.majorTimeStep = false;
 
@@ -58,19 +60,19 @@ classdef Simulator < handle
             obj.logTimer.forward();
             obj.model.forward(varargin{:});
             for i = 1:numel(obj.stateVars)
-                obj.stateVars.get(i).rk4Update2(dt);
+                obj.stateVars{i}.rk4Update2(dt);
             end
 
             obj.model.forward(varargin{:});
             for i = 1:numel(obj.stateVars)
-                obj.stateVars.get(i).rk4Update3(dt);
+                obj.stateVars{i}.rk4Update3(dt);
             end
             
             obj.simClock.applyTime(t_0 + dt - 10*obj.simClock.timeRes);
             obj.logTimer.forward();
             obj.model.forward(varargin{:});
             for i = 1:numel(obj.stateVars)
-                obj.stateVars.get(i).rk4Update4(dt);
+                obj.stateVars{i}.rk4Update4(dt);
             end
 
             obj.simClock.applyTime(t_0 + dt);

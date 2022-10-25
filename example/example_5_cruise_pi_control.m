@@ -1,7 +1,7 @@
 addpath(genpath('../core'))
 addpath(genpath('./'))
 
-clear
+clear all
 clc
 close all
 

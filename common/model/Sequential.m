@@ -24,7 +24,11 @@ classdef Sequential < MultipleSystem
         function out = forward(obj, varargin)
             out = obj.firstObj.forward(varargin{:});
             for i = 1:numel(obj.otherObjList)
-                out = obj.otherObjList.get(i).forward(out);
+                if iscell(out)
+                    out = obj.otherObjList{i}.forward(out{:});
+                else
+                    out = obj.otherObjList{i}.forward(out);
+                end
             end
         end
     end

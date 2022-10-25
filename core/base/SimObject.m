@@ -1,6 +1,7 @@
 classdef SimObject < handle
     properties(Constant)
         FLAG_OPERATING = 0;
+        ids = Counter(0);
     end
     properties
         id
@@ -8,9 +9,9 @@ classdef SimObject < handle
         flag
         isStatic
 
-        stateVarNames List
-        stateVars List
-        simObjs List
+        stateVarNames cell
+        stateVars cell
+        simObjs cell
     end
     properties(Access=protected)
         simClock SimClock
@@ -30,7 +31,7 @@ classdef SimObject < handle
                 interval = -1
                 name = []
             end
-            obj.id = obj.incrementCount(1);
+            obj.id = SimObject.ids.next();
             if isempty(name)
                 obj.name = strcat('simObj_', num2str(obj.id));
             else
@@ -39,24 +40,21 @@ classdef SimObject < handle
             obj.flag = SimObject.FLAG_OPERATING;
             obj.isStatic = true;
 
-            obj.stateVarNames = List();
-            obj.stateVars = List();
-            obj.simObjs = List();
+            obj.stateVarNames = {};
+            obj.stateVars = {};
+            obj.simObjs = {};
             obj.timer = Timer(interval);
             obj.logger = Logger();
         end
 
-        function delete(obj)
-            obj.incrementCount(-1);
-        end
-
-        function collectedVars = collectStateVars(obj)
-            collectedVars = obj.stateVars.copy();
+        function colVars = collectStateVars(obj)
+            colVars = cell(1 + obj.numSimObjs, 1);
+            colVars{1} = obj.stateVars;
 
             for i = 1:numel(obj.simObjs)
-                simObj = obj.simObjs.get(i);
-                collectedVars.extend(simObj.collectStateVars());
+                colVars{1 + i} = obj.simObjs{i}.collectStateVars();
             end
+            colVars = [colVars{:}];
         end
 
         % dynamic property
@@ -72,42 +70,42 @@ classdef SimObject < handle
         function attachSimClock(obj, simClock)
             obj.attachSimClock_(simClock);
             for i = 1:numel(obj.simObjs)
-                obj.simObjs.get(i).attachSimClock(simClock);
+                obj.simObjs{i}.attachSimClock(simClock);
             end
         end
 
         function attachLogTimer(obj, logTimer)
             obj.attachLogTimer_(logTimer);
             for i = 1:numel(obj.simObjs)
-                obj.simObjs.get(i).attachLogTimer(logTimer);
+                obj.simObjs{i}.attachLogTimer(logTimer);
             end
         end
 
         function initialize(obj)
             obj.initialize_();
             for i = 1:numel(obj.simObjs)
-                obj.simObjs.get(i).initialize();
+                obj.simObjs{i}.initialize();
             end
         end
 
         function detachSimClock(obj)
             obj.detachSimClock_();
             for i = 1:numel(obj.simObjs)
-                obj.simObjs.get(i).detachSimClock();
+                obj.simObjs{i}.detachSimClock();
             end
         end
 
         function detachLogTimer(obj)
             obj.detachLogTimer_();
             for i = 1:numel(obj.simObjs)
-                obj.simObjs.get(i).detachLogTimer();
+                obj.simObjs{i}.detachLogTimer();
             end
         end
 
         function reset(obj)
             obj.reset_();
             for i = 1:numel(obj.simObjs)
-                obj.simObjs.get(i).reset();
+                obj.simObjs{i}.reset();
             end
         end
 
@@ -116,13 +114,13 @@ classdef SimObject < handle
                 error('MATLAB:noSimClock', 'No SimClock object has been attached.')
             end
             for i = 1:numel(obj.simObjs)
-                obj.simObjs.get(i).checkSimClock();
+                obj.simObjs{i}.checkSimClock();
             end
         end
 
         function setState(obj, varargin)
             for i = 1:numel(varargin)
-                obj.stateVars.get(i).applyState(varargin{i});
+                obj.stateVars{i}.applyState(varargin{i});
             end
         end
 
@@ -140,13 +138,13 @@ classdef SimObject < handle
                 return
             end
             if numel(ind) == 1
-                out = obj.stateVars.get(ind).state;
+                out = obj.stateVars{ind}.state;
                 return
             end
 
             out = cell(1, numel(ind));
             for k = 1:numel(ind)
-                out{k} = obj.stateVars.get(ind(k)).state;
+                out{k} = obj.stateVars{ind(k)}.state;
             end
         end
 
@@ -156,13 +154,13 @@ classdef SimObject < handle
                 return
             end
             if numel(ind) == 1
-                out = obj.stateVars.get(ind).deriv;
+                out = obj.stateVars{ind}.deriv;
                 return
             end
 
             out = cell(1, numel(ind));
             for k = 1:numel(ind)
-                out{k} = obj.stateVars.get(ind(k)).deriv;
+                out{k} = obj.stateVars{ind(k)}.deriv;
             end
         end
 
@@ -193,13 +191,13 @@ classdef SimObject < handle
         end
 
         function toStop = checkStopCondition(obj, varargin)
-            toStopList = List();
-            toStopList.append(obj.checkStopCondition_(varargin{:}));
+            toStopList = cell(1 + obj.numSimObjs, 1);
+            toStopList{1} = obj.checkStopCondition_(varargin{:});
             for i = 1:numel(obj.simObjs)
-                toStopList.append(obj.simObjs.get(i).checkStopCondition(varargin{:}));
+                toStopList{1 + i} = obj.simObjs{i}.checkStopCondition(varargin{:});
             end
 
-            toStop = any(toStopList.toArray());
+            toStop = any(cell2mat(toStopList));
         end
 
         function out = history(obj, varargin)
@@ -213,19 +211,24 @@ classdef SimObject < handle
 
         function figs = defaultPlot(obj, varKeys)
             if nargin < 2
-                varKeys = List(obj.logger.keys());
-                varKeys.remove('t');
+                varKeys = obj.logger.keys();
+                varKeys(find(varKeys == 't', 1)) = [];
             end
             
-            figs = List();
-            timeLog = obj.history('t');
-            
+            try
+                timeLog = obj.history('t');
+            catch
+                error('No key exists for the time variable');
+            end
+
+            figs = cell(size(varKeys));
             for i = 1:numel(varKeys)
-                varKey = varKeys.get(i);
+                varKey = varKeys(i);
                 fig = figure();
-                figs.append(fig);
+                figs{i} = fig;
                 
                 varLog = obj.history(varKey);
+                varLog = reshape(varLog, [], size(varLog, ndims(varLog)));
 
                 ind = 1:size(varLog, 1);
                 names = cell(numel(ind), 1);
@@ -257,7 +260,7 @@ classdef SimObject < handle
             dataGroup = dataGroup + '/' + obj.name;
             obj.logger.save(filename, dataGroup)
             for i = 1:numel(obj.simObjs)
-                obj.simObjs.get(i).save(filename, dataGroup);
+                obj.simObjs{i}.save(filename, dataGroup);
             end
         end
 
@@ -270,7 +273,7 @@ classdef SimObject < handle
             dataGroup = dataGroup + '/' + obj.name;
             obj.logger.load(filename, dataGroup);
             for i = 1:numel(obj.simObjs)
-                obj.simObjs.get(i).load(filename, dataGroup);
+                obj.simObjs{i}.load(filename, dataGroup);
             end
         end
     end
@@ -288,8 +291,8 @@ classdef SimObject < handle
             for i = 1:numel(initialStates)
                 vars{i} = StateVariable(initialStates{i});
             end
-            obj.stateVarNames.extend(names);
-            obj.stateVars.extend(vars);
+            obj.stateVarNames = [obj.stateVarNames, names];
+            obj.stateVars = [obj.stateVars, vars];
             obj.isStatic = false;
         end
 
@@ -297,18 +300,25 @@ classdef SimObject < handle
             if isa(newObjs, 'SimObject')
                 newObjs = {newObjs};
             end
+            
+            newSimObjs = cell(size(newObjs));
+            numNewSimObjs = 0;
 
             for i = 1:numel(newObjs)
                 newObj = newObjs{i};
                 if ~isa(newObj, 'SimObject')
                     continue
                 end
-                if obj.simObjs.contains(newObj)
+                compare = @(x) eq(x, newObj);
+                if any(cellfun(compare, obj.simObjs))
                     continue
                 end
-                obj.simObjs.append(newObj);
+                numNewSimObjs = numNewSimObjs + 1;
+                newSimObjs{numNewSimObjs} = newObj;
+
                 obj.isStatic = obj.isStatic && newObj.isStatic;
             end
+            obj.simObjs = [obj.simObjs, newSimObjs(1:numNewSimObjs)];
         end
 
         function attachSimClock_(obj, simClock)
@@ -342,16 +352,16 @@ classdef SimObject < handle
         end
 
         function states = getStates_(obj)
-            states = cell(numel(obj.stateVars), 1);
+            states = cell(1, numel(obj.stateVars));
             for i = 1:numel(states)
-                states{i} = obj.stateVars.get(i).state;
+                states{i} = obj.stateVars{i}.state;
             end
         end
 
         function derivs = getDerivs_(obj)
             derivs = cell(size(obj.stateVars));
             for i = 1:numel(derivs)
-                derivs{i} = obj.stateVars.get(i).deriv;
+                derivs{i} = obj.stateVars{i}.deriv;
             end
         end
 
@@ -365,15 +375,12 @@ classdef SimObject < handle
             toStop = false;
         end
     end
-    
-    methods(Static, Access=private)
-        function out = incrementCount(value)
-            persistent count
-            if isempty(count)
-                count = 0;
+    methods(Static)
+        function resetCounter(val)
+            arguments
+                val = 0;
             end
-            count = count + value;
-            out = count;
+            SimObject.ids.reset(val);
         end
     end
 end

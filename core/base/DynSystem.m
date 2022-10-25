@@ -65,12 +65,14 @@ classdef DynSystem < SimObject
             derivs = obj.deriv_(states{:}, varargin{:});
             
             for i = 1:numel(states)
-                obj.stateVars.get(i).setDeriv(derivs{i});
+                obj.stateVars{i}.setDeriv(derivs{i});
             end
 
-            obj.logger.append({'t'}, {obj.time});
-            obj.logger.append(obj.stateNames, states);
-            obj.logger.append(obj.inputNames, varargin);
+            if obj.logger.isEvent
+                obj.logger.append({'t'}, {obj.time});
+                obj.logger.append(obj.stateNames, states);
+                obj.logger.append(obj.inputNames, varargin);
+            end
             
             out = obj.output_();
         end

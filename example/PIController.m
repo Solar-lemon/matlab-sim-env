@@ -15,7 +15,7 @@ classdef PIController < SimObject
     methods(Access=protected)
         % implement
         function u_pi = forward_(obj, e)
-            obj.stateVars.get(1).setDeriv(e);
+            obj.stateVars{1}.setDeriv(e);
             
             e_i = obj.state(1);
             u_pi = obj.k_p*e + obj.k_i*e_i;

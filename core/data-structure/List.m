@@ -8,14 +8,12 @@ classdef List < handle
         dataNum
     end
     methods
-        function obj = List(items)
-            if nargin < 1
-                obj.items = cell(100, 1);
-                obj.allocatedSize = 100;
-                obj.dataNum = 0;
-                return
+        function obj = List(items, allocatedSize)
+            arguments
+                items = {}
+                allocatedSize = 100;
             end
-            
+
             if isa(items, 'numeric') || isa(items, 'logical')
                 items = shiftdim(items, ndims(items) - 1);
                 temp = cell(size(items, 1), 1);
@@ -32,8 +30,10 @@ classdef List < handle
                 end
                 items = temp;
             end
-            obj.items = items;
-            obj.allocatedSize = numel(items);
+            allocatedSize = max(numel(items), allocatedSize);
+            
+            obj.items = cell(allocatedSize, 1);
+            obj.allocatedSize = allocatedSize;
             obj.dataNum = numel(items);
         end
         

@@ -62,7 +62,7 @@ classdef TimeVaryingDynSystem < SimObject
             derivs = obj.deriv_(obj.time, states{:}, varargin{:});
 
             for i = 1:numel(states)
-                obj.stateVars.get(i).setDeriv(derivs{i});
+                obj.stateVars{i}.setDeriv(derivs{i});
             end
 
             obj.logger.append({'t'}, {obj.time});
