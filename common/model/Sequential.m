@@ -1,4 +1,4 @@
-classdef Sequential < MultipleSystem
+classdef Sequential < SimObject
     properties
         objList
         firstObj
@@ -6,25 +6,34 @@ classdef Sequential < MultipleSystem
     end
     
     methods
-        function obj = Sequential(objList)
-            assert(numel(objList) > 0,...
-                "[Sequential] Invalid objList")
-            if isa(objList, 'cell')
-                objList = List(objList);
+        function obj = Sequential(objList, interval, name)
+            arguments
+                objList cell
+                interval = -1;
+                name = [];
             end
+            if numel(objList) == 0
+                error('[sequential] Invalid objList')
+            end
+
+            obj = obj@SimObject(interval, name);
             obj.objList = objList;
-            obj.firstObj = objList.get(1);
-            obj.otherObjList = objList.copy();
-            obj.otherObjList.pop(1);
-            
-            obj.attachSimObjects(objList);
+            obj.firstObj = objList{1};
+            obj.otherObjList = objList(2:end);
+
+            obj.addSimObjs(objList);
         end
-        
+    end
+    methods(Access=protected)
         % implement
-        function out = forward(obj, varargin)
+        function out = forward_(obj, varargin)
             out = obj.firstObj.forward(varargin{:});
             for i = 1:numel(obj.otherObjList)
-                out = obj.otherObjList.get(i).forward(out);
+                if iscell(out)
+                    out = obj.otherObjList{i}.forward(out{:});
+                else
+                    out = obj.otherObjList{i}.forward(out);
+                end
             end
         end
     end
