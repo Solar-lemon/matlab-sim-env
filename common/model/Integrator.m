@@ -2,8 +2,8 @@ classdef Integrator < DynSystem
     methods
         function obj = Integrator(x_0)
             % x_0: initial value of the integrator
-            derivFun = @(x, u) u;
-            obj = obj@DynSystem(x_0, derivFun);
+            derivFun = @(x, u) {u};
+            obj = obj@DynSystem({x_0}, {'x'}, {'u'}, derivFun);
         end
     end
     methods(Static)
